@@ -1,0 +1,33 @@
+
+# 1. Ignorer absolument tout par défaut
+*
+
+# 2. Ne pas ignorer le dossier courant pour parcourir l'arborescence
+!**/
+
+# ==========================================
+# 3. Exceptions : Fichiers et extensions autorisés
+# ==========================================
+
+# Fichiers sources et headers C++
+!*.cpp
+!*.h
+!*.hxx
+!*.c
+!*.hpp
+!*.bat
+!*.user
+
+# Fichiers de build et configuration
+!/Makefile
+!*.cmake
+!CMakeLists.txt
+
+# Ressources graphiques et 3D
+!*.svg
+!*.ui
+!*.qrc
+
+# Le fichier .gitignore lui-même
+!.gitignore
+

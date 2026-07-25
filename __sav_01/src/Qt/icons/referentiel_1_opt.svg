@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="48" height="48" version="1.1" viewBox="0 0 12.7 12.7" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <marker id="Triangle" overflow="visible" markerHeight="1" markerWidth="1" orient="auto-start-reverse" preserveAspectRatio="xMidYMid" viewBox="0 0 1 1">
+   <path transform="scale(.5)" d="m5.77 0-8.65 5v-10z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-width="1pt"/>
+  </marker>
+  <marker id="Triangle-4" overflow="visible" markerHeight="1" markerWidth="1" orient="auto-start-reverse" preserveAspectRatio="xMidYMid" viewBox="0 0 1 1">
+   <path transform="scale(.5)" d="m5.77 0-8.65 5v-10z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-width="1pt"/>
+  </marker>
+  <marker id="Triangle-4-6" overflow="visible" markerHeight="1" markerWidth="1" orient="auto-start-reverse" preserveAspectRatio="xMidYMid" viewBox="0 0 1 1">
+   <path transform="scale(.5)" d="m5.77 0-8.65 5v-10z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-width="1pt"/>
+  </marker>
+ </defs>
+ <g stroke-miterlimit="3.6">
+  <g fill="none">
+   <path d="m6.2501 7.4263v-4.8815" marker-end="url(#Triangle)" stroke="#6d4fff" stroke-width=".6"/>
+   <path d="m6.4058 7.841-4.4896 2.9455" marker-end="url(#Triangle-4)" stroke="#00b665" stroke-width=".594"/>
+   <path d="m6.3783 7.92 4.4896 2.9455" marker-end="url(#Triangle-4-6)" stroke="#ff2c2c" stroke-width=".594"/>
+  </g>
+  <ellipse cx="6.2406" cy="7.983" rx=".45552" ry=".46691" fill="#454545" stroke="#464646" stroke-width=".433"/>
+ </g>
+</svg>
