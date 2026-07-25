@@ -85,7 +85,6 @@ struct Tool_Dimensions  {
     bool    m_b_MouseLIsPressed = false;
     bool    b_IsSomethingSelected = false;
     int     m_SelectedPrimitiveId = -1;
-    int     m_SelectedPrimitiveSub = -1;
 
     vtk3d_Sketch_Render_Cotations::RefLine_type    CotationStrRef;
 

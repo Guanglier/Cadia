@@ -42,6 +42,12 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
     }
     //ScopedTimer timer("rafraichirAffichageEsquisseInteractif");
 
+    if (true == PrimitiveIsSelected) {
+        m_Parent->GetView()->m_Chighlighter->masquerSurbrillance();
+        PrimitiveIsSelected = false;
+    }
+
+
     // 1. Calculer la nouvelle position de la souris sur le plan d'esquisse
     gp_Pnt2d mousePoint2D;
     gp_Pnt mousePoint3D;
@@ -100,6 +106,7 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
                     gp_Pnt2d PntStart = curr_prim.start.p2d;
                     gp_Pnt2d PntStop = curr_prim.stop.p2d;
 
+
                     curr_prim.start.setPoint (
                         gp_Pnt2d ( PntStart.X() + deltaX, PntStart.Y() + deltaY ),
                         &m_Parent->m_sketchPlane );
@@ -107,11 +114,12 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
                         gp_Pnt2d ( PntStop.X() + deltaX, PntStop.Y() + deltaY ),
                         &m_Parent->m_sketchPlane );
 
+
                     // On applique le delta sur tous les indices de la primitive entière
                     for (int idx : m_Parent->m_SolverSession.activeVarIndicesAll) {
                         double currentVal = m_Parent->m_SolverSession.GetVarValue(idx);
                         double newVal = currentVal + ((idx % 2 == 0) ? deltaX : deltaY);
-                        m_Parent->m_SolverSession.UpdatePoint(*sketchParams, idx, newVal);
+                       // m_Parent->m_SolverSession.UpdatePoint(*sketchParams, idx, newVal);
                     }
 
                 }else if constexpr ( std::is_same_v<T,SketchCircle>){
@@ -119,6 +127,8 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
                     curr_prim.center.setPoint(
                         gp_Pnt2d( PntCenter.X() + deltaX, PntCenter.Y() + deltaY ),
                         &m_Parent->m_sketchPlane);
+
+                    std::cout<<"E ; " << PntCenter.X() + deltaX << " " << std::endl;
                 }else{
                     LOG_ERROR << " Tool_Select::gererMouseMove : if constexpr ( std::is_same_v<T,SketchCircle> DEFAULT case" << std::endl;
                 }
@@ -127,7 +137,7 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
                 DynamicDrag.m_lastMousePos2D = mousePoint2D;
 
                 // On lance le solveur pour propoger/maintenir les contraintes si nécessaire, puis on rafraîchit
-                m_Parent->m_SolverSession.Step(*sketchParams);
+                //m_Parent->m_SolverSession.Step(*sketchParams);
 
                 //m_Parent->rafraichirPoignees(sketchParams);
                 //m_Parent->rafraichirAffichageEsquisseInteractif();
@@ -166,9 +176,9 @@ bool Tool_Select::gererMouseRelease(QMouseEvent* event) {
         m_Parent->SolveEsquisse();
     }
 
-    b_IsSomethingSelected = false;
+    //b_IsSomethingSelected = false;
     m_b_MouseLIsPressed = false;
-    m_SelectedPrimitiveId = -1;
+
     return false;
 }
 
@@ -238,7 +248,7 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
             }
         }
 
-        b_IsSomethingSelected = false;
+        PrimitiveIsSelected = false;
 
         // CAS 1 : On a cliqué sur une POIGNÉE (déplacement d'un point unique)
         if (pickedActor && pickedActor == m_Parent->m_ActorSquareOfPrim) {
@@ -256,7 +266,8 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
                         int edgeId = edgeIdArray->GetValue(originalPointId);
                         int handleType = typeArray->GetValue(originalPointId);
 
-                        b_IsSomethingSelected = true;
+                        //b_IsSomethingSelected = true;
+                        PrimitiveIsSelected = true;
                         DynamicDrag.m_isDragging = true;
                         DynamicDrag.m_mode = DragMode::PointUnique;
                         DynamicDrag.m_activePointIndex = originalPointId;
@@ -312,7 +323,7 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
                 if (edgeIdsArray && cellId < edgeIdsArray->GetNumberOfValues()) {
                     int primitiveId = edgeIdsArray->GetValue(cellId);
 
-                    b_IsSomethingSelected = true;
+                    //b_IsSomethingSelected = true;
                     PrimitiveIsSelected = true;
                     SelectedPrimitiveId = primitiveId;
 
@@ -348,7 +359,7 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
         }
         else {
             // Clic dans le vide : Désélection
-            if (!b_IsSomethingSelected) {
+            if (true == PrimitiveIsSelected ) {
                 m_Parent->GetView()->m_Chighlighter->masquerSurbrillance();
                 PrimitiveIsSelected = false;
             }

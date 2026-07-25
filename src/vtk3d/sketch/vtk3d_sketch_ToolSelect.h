@@ -56,9 +56,6 @@ struct Tool_Select  {
     int     SelectedPrimitiveId = 0;
 
     bool    m_b_MouseLIsPressed = false;
-    bool    b_IsSomethingSelected = false;
-    int     m_SelectedPrimitiveId = -1;
-    int     m_SelectedPrimitiveSub = -1;
 
     QPoint     m_MouseclickStartPosition;
 
