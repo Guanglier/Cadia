@@ -17,7 +17,7 @@
 //#define gererMouseReleaseSketch_DBG
 constexpr int TOLERANCE_CLIC = 10;
 
-// --- Placeholders pour développements futurs ---
+
 
 void Tool_Select::activate() {
     // TODO: Implémenter l'activation de l'outil
