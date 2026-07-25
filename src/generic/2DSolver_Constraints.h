@@ -68,6 +68,12 @@ using ConstraintHorizontal = ConstraintCoincident1D;
 using ConstraintVertical = ConstraintCoincident1D;
 
 
+using ConstraintHorizontalAlign = ConstraintCoincident1D;
+
+using ConstraintVerticalAlign = ConstraintCoincident1D;
+
+
+
 // ============================================================================
 // 2. CONTRAINTES DE DISTANCE & RAYON
 // ============================================================================
