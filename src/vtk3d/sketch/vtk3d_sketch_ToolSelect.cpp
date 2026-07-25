@@ -246,67 +246,71 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
         // CAS 1 : On a cliqué sur une POIGNÉE (déplacement d'un point unique)
         if (pickedActor && pickedActor == m_Parent->m_ActorSquareOfPrim) {
             vtkIdType originalPointId = cellPicker->GetPointId();
-
-            if (originalPointId != -1) {
-                auto mapper = vtkPolyDataMapper::SafeDownCast(m_Parent->m_ActorSquareOfPrim->GetMapper());
-                auto polyData = vtkPolyData::SafeDownCast(mapper->GetInput());
-
-                if (polyData) {
-                    auto edgeIdArray = vtkIntArray::SafeDownCast(polyData->GetPointData()->GetArray("OpenCascadeEdgeID"));
-                    auto typeArray   = vtkIntArray::SafeDownCast(polyData->GetPointData()->GetArray("ArrayTypeHandle"));
-
-                    if (edgeIdArray && typeArray) {
-                        int edgeId = edgeIdArray->GetValue(originalPointId);
-                        int handleType = typeArray->GetValue(originalPointId);
-
-
-                        DynamicDrag.m_mode = DragMode::PointUnique;
-                        DynamicDrag.m_activePointIndex = originalPointId;
-                        DynamicDrag.m_activePrimitiveId = edgeId;
-
-
-                        //voir rafraichirPoignees donne le départ etc
-                        // 1 = Point de départ de la ligne (StartPoint)
-                        // 2 = Point d'arrivée de la ligne (EndPoint)
-                        // 3 = Centre du cercle (CercleCentre)
-                        DynamicDrag.m_activeHandleType = handleType;
-
-                        auto* sketchParams = std::get_if<SketchParams>(&m_Parent->m_Operation->getParamsMutable());
-                        if (sketchParams) {
-
-
-                            SketchPrimitive *Primm = sketchParams->GetPrimitiveMutable(DynamicDrag.m_activePrimitiveId);
-                            if ( Primm ){
-                                std::visit ([&](auto& ConcretePrim) {
-                                    using T = std::decay_t<decltype(ConcretePrim)>;
-                                    if constexpr (std::is_same_v<T, SketchLine> || std::is_same_v<T, SketchCircle>)
-                                    {
-                                        PrimitiveIsSelected = true;
-                                        DynamicDrag.m_isDragging = true;
-                                        m_Parent->m_SolverSession.Initialize(*sketchParams);
-                                        SolverInteractiveSession::GetIndicesForHandle(
-                                            *sketchParams, DynamicDrag.m_activePrimitiveId, DynamicDrag.m_activeHandleType,
-                                            m_Parent->m_SolverSession.activeVarIndexX,
-                                            m_Parent->m_SolverSession.activeVarIndexY
-                                            );
-                                    }else if constexpr( std::is_same_v<T,SketchArc>){
-                                        LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> std::visit ([&](auto& ConcretePrim)  non code " << std::endl;
-                                    }else{
-                                        LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> std::visit ([&](auto& ConcretePrim)  non traité " << std::endl;
-                                    }
-                                }, *Primm);
-
-                            }else{
-                                LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> if ( Primm ) " << std::endl;
-                            }
-                        }else{
-                            LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> if ( sketchParams ) " << std::endl;
-                        }
-
-                    }
-                }
+            if (originalPointId == -1) {
+                return false;
             }
+
+            auto mapper = vtkPolyDataMapper::SafeDownCast(m_Parent->m_ActorSquareOfPrim->GetMapper());
+            auto polyData = mapper ? vtkPolyData::SafeDownCast(mapper->GetInput()) : nullptr;
+            if (!polyData) {
+                LOG_ERROR << "Tool_Select::gererMousePress -> polyData est nullptr" << std::endl;
+                return false;
+            }
+
+            auto edgeIdArray = vtkIntArray::SafeDownCast(polyData->GetPointData()->GetArray("OpenCascadeEdgeID"));
+            auto typeArray   = vtkIntArray::SafeDownCast(polyData->GetPointData()->GetArray("ArrayTypeHandle"));
+            if (!edgeIdArray || !typeArray) {
+                LOG_ERROR << "Tool_Select::gererMousePress -> edgeIdArray ou typeArray est nullptr" << std::endl;
+                return false;
+            }
+
+            int edgeId = edgeIdArray->GetValue(originalPointId);
+            int handleType = typeArray->GetValue(originalPointId);
+
+            DynamicDrag.m_mode = DragMode::PointUnique;
+            DynamicDrag.m_activePointIndex = originalPointId;
+            DynamicDrag.m_activePrimitiveId = edgeId;
+
+            // voir rafraichirPoignees donne le départ etc
+            // 1 = Point de départ de la ligne (StartPoint)
+            // 2 = Point d'arrivée de la ligne (EndPoint)
+            // 3 = Centre du cercle (CercleCentre)
+            DynamicDrag.m_activeHandleType = handleType;
+
+            auto* sketchParams = std::get_if<SketchParams>(&m_Parent->m_Operation->getParamsMutable());
+            if (!sketchParams) {
+                LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> if ( sketchParams ) " << std::endl;
+                return false;
+            }
+
+            SketchPrimitive *Primm = sketchParams->GetPrimitiveMutable(DynamicDrag.m_activePrimitiveId);
+            if (!Primm) {
+                LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> if ( Primm ) " << std::endl;
+                return false;
+            }
+
+            std::visit ([&](auto& ConcretePrim) {
+                using T = std::decay_t<decltype(ConcretePrim)>;
+                if constexpr (std::is_same_v<T, SketchLine> || std::is_same_v<T, SketchCircle>)
+                {
+                    PrimitiveIsSelected = true;
+                    DynamicDrag.m_isDragging = true;
+                    m_Parent->m_SolverSession.Initialize(*sketchParams);
+                    SolverInteractiveSession::GetIndicesForHandle(
+                        *sketchParams, DynamicDrag.m_activePrimitiveId, DynamicDrag.m_activeHandleType,
+                        m_Parent->m_SolverSession.activeVarIndexX,
+                        m_Parent->m_SolverSession.activeVarIndexY
+                        );
+                }else if constexpr( std::is_same_v<T,SketchArc>){
+                    LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> std::visit ([&](auto& ConcretePrim)  non code " << std::endl;
+                }else{
+                    LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> std::visit ([&](auto& ConcretePrim)  non traité " << std::endl;
+                }
+            }, *Primm);
         }
+
+
+
         // CAS 2 : On a cliqué DIRECTEMENT SUR LA LIGNE (sélection + déplacement de toute la ligne)
         else if (pickedActor && pickedActor == m_Parent->m_ActorSketchDisplay) {
             vtkPolyData* polyData = vtkPolyData::SafeDownCast(m_Parent->m_ActorSketchDisplay->GetMapper()->GetInput());
@@ -314,67 +318,73 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
             if (polyData && cellId != -1) {
                 auto* edgeIdsArray = vtkIntArray::SafeDownCast(polyData->GetCellData()->GetArray("OpenCascadeEdgeID"));
 
-                if (edgeIdsArray && cellId < edgeIdsArray->GetNumberOfValues())
-                {
-                    int primitiveId = edgeIdsArray->GetValue(cellId);
-
-                    gp_Pnt2d startPoint2D;
-                    gp_Pnt startPoint3D;
-                    if (m_Parent->calculerIntersectionSourisSurPlan(event->position().x(), event->position().y(), startPoint2D, startPoint3D))
-                    {
-                        PrimitiveIsSelected = true;
-                        SelectedPrimitiveId = primitiveId;
-
-                        DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d = startPoint2D;
-
-                        // Mettre en surbrillance l'edge (ton code d'origine)
-                        m_Parent->GetView()->m_Chighlighter->mettreEnSurbrillanceEdgeParId(polyData, primitiveId);
-
-                        // Activer le drag complet de la ligne
-                        DynamicDrag.m_isDragging = true;
-                        DynamicDrag.m_mode = DragMode::LigneComplete; // Ligne entière
-                        DynamicDrag.m_activePrimitiveId = primitiveId;
-
-                        DynamicDrag.m_lastMousePos2D = startPoint2D;
-
-                        auto* sketchParams = std::get_if<SketchParams>(&m_Parent->m_Operation->getParamsMutable());
-                        if (sketchParams) {
-                            m_Parent->m_SolverSession.Initialize(*sketchParams);
-                            // Récupérer tous les indices de la ligne d'un coup
-                            SolverInteractiveSession::GetIndicesForEntireEdge(*sketchParams, DynamicDrag.m_activePrimitiveId, m_Parent->m_SolverSession.activeVarIndicesAll);
-
-                            // Remonter l'événement à l'IHM
-                            std::string l_string = "[Sketch Mode] Primitive sélectionnée ! ID unique CAO " + std::to_string(primitiveId);
-                            CadResponseEvent resp;
-                            resp.documentId = 0;
-                            resp.params = CadEvent::Sketch::RespStatus{ l_string };
-                            m_Parent->CADEvent_RemonterEvent(resp);
-
-
-                            SketchPrimitive *Primm = sketchParams->GetPrimitiveMutable(DynamicDrag.m_activePrimitiveId);
-                            if ( Primm ){
-                                std::visit ([&](auto& ConcretePrim) {
-                                    using T = std::decay_t<decltype(ConcretePrim)>;
-                                    if constexpr( std::is_same_v<T,SketchLine>){
-                                        DynamicDrag.PrimToMoseVects.line.start = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , ConcretePrim.start.p2d);
-                                        DynamicDrag.PrimToMoseVects.line.stop = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , ConcretePrim.stop.p2d );
-                                    }else if constexpr( std::is_same_v<T,SketchCircle>){
-                                        DynamicDrag.PrimToMoseVects.circle.center = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , ConcretePrim.center.p2d);
-                                    }else if constexpr( std::is_same_v<T,SketchArc>){
-                                        LOG_ERROR << "456 " << std::endl;
-                                    }else{
-                                        LOG_ERROR << "457 " << std::endl;
-                                    }
-                                }, *Primm);
-
-                            }
-
-                        }
-
-                    }else{
-                        LOG_ERROR << " Tool_Select::gererMousePress: calculerIntersectionSourisSurPlan pas d intersection " << std::endl;
-                    }
+                if (!edgeIdsArray || cellId >= edgeIdsArray->GetNumberOfValues()) {
+                    LOG_ERROR << " Tool_Select::gererMousePress: cellId invalide ou edgeIdsArray null " << std::endl;
+                    return false; // Ou return; selon la fonction
                 }
+
+                int primitiveId = edgeIdsArray->GetValue(cellId);
+
+                gp_Pnt2d startPoint2D;
+                gp_Pnt startPoint3D;
+                if (!m_Parent->calculerIntersectionSourisSurPlan(event->position().x(), event->position().y(), startPoint2D, startPoint3D)){
+                    LOG_ERROR << " Tool_Select::gererMousePress: calculerIntersectionSourisSurPlan pas d intersection " << std::endl;
+                    return false;
+                }
+                PrimitiveIsSelected = true;
+                SelectedPrimitiveId = primitiveId;
+
+                DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d = startPoint2D;
+
+                // Mettre en surbrillance l'edge (ton code d'origine)
+                m_Parent->GetView()->m_Chighlighter->mettreEnSurbrillanceEdgeParId(polyData, primitiveId);
+
+                // Activer le drag complet de la ligne
+                DynamicDrag.m_isDragging = true;
+                DynamicDrag.m_mode = DragMode::LigneComplete; // Ligne entière
+                DynamicDrag.m_activePrimitiveId = primitiveId;
+
+                DynamicDrag.m_lastMousePos2D = startPoint2D;
+
+                auto* sketchParams = std::get_if<SketchParams>(&m_Parent->m_Operation->getParamsMutable());
+                if ( nullptr == sketchParams) {
+                    LOG_ERROR << " Tool_Select::gererMousePress: sketchParams = nullptr " << std::endl;
+                    return false;
+                }
+
+                m_Parent->m_SolverSession.Initialize(*sketchParams);
+                // Récupérer tous les indices de la ligne d'un coup
+                SolverInteractiveSession::GetIndicesForEntireEdge(*sketchParams, DynamicDrag.m_activePrimitiveId, m_Parent->m_SolverSession.activeVarIndicesAll);
+
+                // Remonter l'événement à l'IHM
+                std::string l_string = "[Sketch Mode] Primitive sélectionnée ! ID unique CAO " + std::to_string(primitiveId);
+                CadResponseEvent resp;
+                resp.documentId = 0;
+                resp.params = CadEvent::Sketch::RespStatus{ l_string };
+                m_Parent->CADEvent_RemonterEvent(resp);
+
+
+                SketchPrimitive *Primm = sketchParams->GetPrimitiveMutable(DynamicDrag.m_activePrimitiveId);
+                if ( nullptr == Primm ){
+                    LOG_ERROR << " Tool_Select::gererMousePress: Primm = nullptr " << std::endl;
+                    return false;
+                }
+
+                std::visit ([&](auto& ConcretePrim) {
+                    using T = std::decay_t<decltype(ConcretePrim)>;
+                    if constexpr( std::is_same_v<T,SketchLine>){
+                        DynamicDrag.PrimToMoseVects.line.start = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , ConcretePrim.start.p2d);
+                        DynamicDrag.PrimToMoseVects.line.stop = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , ConcretePrim.stop.p2d );
+                    }else if constexpr( std::is_same_v<T,SketchCircle>){
+                        DynamicDrag.PrimToMoseVects.circle.center = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , ConcretePrim.center.p2d);
+                    }else if constexpr( std::is_same_v<T,SketchArc>){
+                        LOG_ERROR << "456 " << std::endl;
+                    }else{
+                        LOG_ERROR << "457 " << std::endl;
+                    }
+                }, *Primm);
+
+
             }
         }
         else {
