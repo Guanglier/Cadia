@@ -38,7 +38,6 @@ public:
      * @param numVars [Entrée] Nombre total de variables (ex: 4 pour deux points 2D).
      * @return void
      */
-    // Définit le nombre total de scalaires à résoudre (ex: 4 pour deux points 2D)
     void setNumVariables(int numVars) {
         m_numVariables = numVars;
     }
@@ -48,7 +47,6 @@ public:
      * @param constraint [Entrée] Pointeur intelligent unique vers la contrainte IConstraint2D à ajouter.
      * @return void
      */
-    // Ajoute une contrainte au système (transfert de propriété)
     void addConstraint(std::unique_ptr<IConstraint2D> constraint) {
         m_constraints.push_back(std::move(constraint));
     }
@@ -57,7 +55,6 @@ public:
      * @brief Vide l'ensemble des contraintes pour reconstruire un nouveau système.
      * @return void
      */
-    // Vide les contraintes pour reconstruire un système
     void clearConstraints() {
         m_constraints.clear();
     }

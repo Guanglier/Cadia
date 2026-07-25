@@ -148,34 +148,22 @@ void SolverInteractiveSession::pushToSketch() {
 // --------------------------------------------------------------------
 // Phase légère : Mise à jour d'une coordonnée et résolution instantanée (pour le MouseMove)
 // --------------------------------------------------------------------
-/*
-void SolverInteractiveSession::UpdatePoint(SketchParams& sketch, int varIndex, double newValue) {
-    if (!isInitialized) return;
 
-    // 1. Modifier directement la variable pilotée par la souris dans le vecteur d'état X
-    if (varIndex >= 0 && varIndex < Vector_X.size()) {
-        Vector_X[varIndex] = newValue;
-    }else{
-        LOG_ERROR << "[Solver] Tentative de mise à jour d'une variable inexistante ! Index : "
-                         + std::to_string(varIndex) + " (Max: " + std::to_string(Vector_X.size())  + ")";
-    }
-}
-*/
 /**
- * @brief Met à jour une variable spécifique dans le vecteur d'état à partir de sa source dans l'esquisse.
- * @param sketch [Entrée/Sortie] Référence vers l'esquisse.
+ * @brief Met à jour une variable spécifique dans le vecteur d'état à partir de sa source liée.
  * @param varIndex [Entrée] Index de la variable à actualiser.
  * @return void
  */
-void SolverInteractiveSession::UpdatePoint(SketchParams& sketch, int varIndex) {
+void SolverInteractiveSession::UpdatePoint(int varIndex) {
     if (!isInitialized) return;
 
-    // 1. Modifier directement la variable pilotée par la souris dans le vecteur d'état X
-    if (varIndex >= 0 && varIndex < Vector_X.size() && varIndex < variablePointers.size() ) {
+    // 1. Récupère la nouvelle valeur directement depuis la source pointée par variablePointers
+    //    et la reporte dans le vecteur d'état numérique X.
+    if (varIndex >= 0 && varIndex < Vector_X.size() && varIndex < variablePointers.size()) {
         Vector_X[varIndex] = *(variablePointers[varIndex]);
-    }else{
+    } else {
         LOG_ERROR << "[Solver] Tentative de mise à jour d'une variable inexistante ! Index : "
-                         + std::to_string(varIndex) + " (Max: " + std::to_string(Vector_X.size())  + ")";
+                  << std::to_string(varIndex) << " (Max: " + std::to_string(Vector_X.size()) + ")";
     }
 }
 

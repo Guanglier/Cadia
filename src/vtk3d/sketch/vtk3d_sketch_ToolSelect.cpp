@@ -87,8 +87,8 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
                     }
                 }
                 // On met à jour le solveur avec les nouvelles coordonnées X et Y de la souris
-                 m_Parent->m_SolverSession.UpdatePoint(*sketchParams, m_Parent->m_SolverSession.activeVarIndexX );
-                 m_Parent->m_SolverSession.UpdatePoint(*sketchParams, m_Parent->m_SolverSession.activeVarIndexY );
+                 m_Parent->m_SolverSession.UpdatePoint( m_Parent->m_SolverSession.activeVarIndexX );
+                 m_Parent->m_SolverSession.UpdatePoint( m_Parent->m_SolverSession.activeVarIndexY );
 
                 m_Parent->m_SolverSession.Step(*sketchParams);
                 //m_Parent->rafraichirPoignees(sketchParams);
@@ -110,7 +110,7 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
 
                     // On applique le delta sur tous les indices de la primitive entière
                     for (int idx : m_Parent->m_SolverSession.activeVarIndicesAll) {
-                        m_Parent->m_SolverSession.UpdatePoint(*sketchParams, idx );
+                        m_Parent->m_SolverSession.UpdatePoint( idx );
                     }
 
                 }else if constexpr ( std::is_same_v<T,SketchCircle>){
@@ -119,7 +119,7 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
 
                     // On applique le delta sur tous les indices de la primitive entière
                     for (int idx : m_Parent->m_SolverSession.activeVarIndicesAll) {
-                        m_Parent->m_SolverSession.UpdatePoint(*sketchParams, idx );
+                        m_Parent->m_SolverSession.UpdatePoint( idx );
                     }
 
                     //std::cout<<" -> " << PntCenter.X() << " " << PntCenter.Y() << " " << std::endl;

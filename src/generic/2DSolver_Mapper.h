@@ -13,6 +13,64 @@
      *   2. En boucle (`MouseMove`) : `session.UpdatePoint(sketch, idx); session.Step(sketch);`
  */
 
+/**
+ * ============================================================================
+ * DIAGRAMME DE FLUX ET ARCHITECTURE INTERNE DU SOLVEUR 2D
+ * ============================================================================
+ *
+ * 1. PHASE D'INITIALISATION (MousePress / Chargement)
+ *    -------------------------------------------------------------------------
+ *    [SketchParams] (Primitives & Contraintes de haut niveau dans CAD_Operation)
+ *          │
+          ▼  (Parcours des primitives : Lignes, Cercles)
+ *    [SolverInteractiveSession::Initialize()]
+ *          ├─► Extrait les pointeurs des coordonnées (X, Y, Rayon)
+ *          │   et les stocke dans le vecteur : `variablePointers` (std::vector<double*>)
+ *          │
+ *          ├─► Redimensionne le vecteur d'état numérique : `Vector_X` (Eigen::VectorXd)
+ *          │   et copie les valeurs initiales depuis l'esquisse via `pullFromSketch()`
+ *          │
+ *          └─► Traduit les contraintes géométriques de l'esquisse (Horizontal, Coïncident, etc.)
+ *              en objets de contraintes mathématiques (`IConstraint2D`) injectés
+ *              dans le `Solver2D_Solver` via `addConstraint()`.
+ *
+ *
+ * 2. PHASE INTERACTIVE EN TEMPS RÉEL (MouseMove / Glissement de poignée à 60 FPS)
+ *    -------------------------------------------------------------------------
+ *    [Utilisateur déplace une poignée à la souris]
+ *          │
+            ▼
+*    [SolverInteractiveSession::UpdatePoint(int varIndex)]
+ *          ├─► Reçoit uniquement le `varIndex` (l'indice de la variable manipulée).
+ *          │
+ *          ├─► Utilise ce `varIndex` pour aller piocher directement dans le
+ *          │   vecteur interne des pointeurs :
+ *          │   `variablePointers[varIndex]` (qui pointe vers la variable native
+ *          │   modifiée en amont par la souris dans l'esquisse).
+ *          │
+ *          ├─► Récupère la nouvelle valeur à cette adresse mémoire et la reporte
+ *          │   dans le vecteur d'état numérique `Vector_X` à la même position `varIndex`.
+ *          │
+ *          ▼
+ *    [SolverInteractiveSession::Step()]
+ *          ├─► Appelle `solver.solve(Vector_X)` (Optimisation de Levenberg-Marquardt) :
+ *          │     ├─ Calcule les erreurs résiduelles f(X) pour chaque contrainte.
+ *          │     ├─ Construit la matrice Jacobienne J par dérivations analytiques/numériques.
+ *          │     └─ Résout le système amorti (JT * J + lambda * I) * deltaX = -JT * f(X)
+ *          │
+ *          ├─► Répercute les nouvelles coordonnées calculées de `Vector_X` vers
+ *              les variables de l'esquisse via `pushToSketch()`.
+ *          │
+          └─► Appelle `sketch.recomputeGeometry3D()` pour mettre à jour la
+              représentation graphique 3D (OpenCASCADE / VTK).
+ * ============================================================================
+ */
+
+
+
+
+
+
 #pragma once
 
 #include <External/Eigen/Dense>
@@ -32,7 +90,6 @@ struct SolverOneShot {
      * @param enableDiagnostics [Entrée] Active l'affichage des diagnostics et du bilan DOF (défaut : false).
      * @return bool True si la résolution a réussi, false sinon.
      */
-    // Exécute la résolution globale en une seule passe (ex: PrepareAndSolve historique)
     static bool Solve(SketchParams& sketch, bool enableDiagnostics=false);
 
     /**
@@ -40,7 +97,6 @@ struct SolverOneShot {
      * @param sketch [Entrée/Sortie] Référence vers l'esquisse à analyser.
      * @return bool True si le diagnostic s'est exécuté, false sinon.
      */
-    // Lance les diagnostics globaux
     static bool Diagnostics(SketchParams& sketch);
 };
 
@@ -62,25 +118,22 @@ struct SolverInteractiveSession {
      * @param sketch [Entrée] Référence vers l'esquisse à configurer pour la session.
      * @return void
      */
-    // Initialise la session lourde (à appeler au MousePress)
     void Initialize(SketchParams& sketch);
 
-    // Met à jour une coordonnée mais ne rédoud pas !
-    //void UpdatePoint(SketchParams& sketch, int varIndex, double newValue);
+
     /**
      * @brief Met à jour une coordonnée dans le vecteur d'état à partir de la variable liée.
      * @param sketch [Entrée] Référence vers l'esquisse.
      * @param varIndex [Entrée] Index de la variable à actualiser.
      * @return void
      */
-    void UpdatePoint(SketchParams& sketch, int varIndex);
+    void UpdatePoint(int varIndex);
 
     /**
      * @brief Exécute un pas de résolution (à appeler au MouseMove).
      * @param sketch [Entrée/Sortie] Référence vers l'esquisse dont la géométrie 3D est recalculée.
      * @return bool True si le pas de résolution a réussi, false sinon.
      */
-    // résout (à appeler au MouseMove)
     bool Step(SketchParams& sketch);
 
     /**
@@ -99,7 +152,6 @@ struct SolverInteractiveSession {
      * @param outIndexY [Sortie] Index Y récupéré.
      * @return bool True si trouvé, false sinon.
      */
-    // Récupère les indices X et Y d'une poignée pour le pilotage direct
     static bool GetIndicesForHandle(SketchParams& sketch, int primitiveId, int handleType, int& outIndexX, int& outIndexY);
     /**
      * @brief Récupère l'ensemble des indices d'une arête complète.
@@ -129,9 +181,7 @@ private:
 public:
     Solver2D_Mapper() = default;
 
-    // Méthodes statiques de convenance ou délégation directe si besoin,
-    // mais l'utilisation directe de SolverOneShot::Solve(...) et SolverInteractiveSession
-    // rendra ton code d'appel ultra-explicite.
+
 };
 
 
