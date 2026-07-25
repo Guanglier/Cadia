@@ -349,7 +349,7 @@ bool SolverInteractiveSession::Step(SketchParams& sketch) {
 
     // 2. Lancer le solveur incrémentalement sur l'état existant (peu d'itérations suffisent en live)
     //auto t1 = std::chrono::high_resolution_clock::now();
-    bool success = solver.solve(Vector_X, 50, 1e-1); // 10 itérations max pour être fluide à 60 FPS
+    bool success = solver.solve(Vector_X, 50, 1e-4); // 10 itérations max pour être fluide à 60 FPS
     //auto t2 = std::chrono::high_resolution_clock::now();
 
     // 3. Réinjecter les valeurs calculées dans l'esquisse
