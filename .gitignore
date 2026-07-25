@@ -5,6 +5,21 @@
 # 2. Ne pas ignorer le dossier courant pour parcourir l'arborescence
 !**/
 
+
+# ==========================================
+# 3. EXCLURE LES DOSSIERS DE BUILD (NOUVEAU)
+# ==========================================
+/build/
+build/
+**/build/
+/cmake-build-*/
+**/cmake-build-*/
+
+
+# Ignorer tout dossier ou fichier contenant "sav_"
+*sav_*/
+*sav_*
+
 # ==========================================
 # 3. Exceptions : Fichiers et extensions autorisés
 # ==========================================
