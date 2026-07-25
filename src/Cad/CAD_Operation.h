@@ -55,6 +55,19 @@ struct SketchConstraint : public Identifiable {
     GeometryReference ref2;
     double            value = 0.0;
     bool              isDriven = false;
+
+    bool isEquivalentTo(const SketchConstraint& other) const {
+        // 1. Si les types de contraintes diffèrent, elles ne sont pas équivalentes
+        if (this->type != other.type) {
+            return false;
+        }
+
+        // 2. Comparer les identités des entités ou points ciblés
+        // (selon la façon dont vos contraintes stockent leurs références, ex: IDs de points ou de primitives)
+        // Note : Il faut parfois gérer la symétrie (ex: une contrainte A->B équivaut à B->A pour certaines règles)
+
+        return false;
+    }
 };
 
 // ==========================================
@@ -195,7 +208,8 @@ public:
     const std::vector<SketchConstraint>& getConstraints() const { return m_constraintRegistry.getItems(); }
 
     uint64_t    addPrimitive(SketchPrimitive primitive) { return m_primitiveRegistry.add(std::move(primitive)); }
-    uint64_t    addConstraint(SketchConstraint constraint) { return m_constraintRegistry.add(std::move(constraint)); }
+    //uint64_t    addConstraint(SketchConstraint constraint) { return m_constraintRegistry.add(std::move(constraint)); }
+    uint64_t    addConstraint(SketchConstraint constraint);
     void        loadPrimitive(SketchPrimitive primitive) { m_primitiveRegistry.load(std::move(primitive)); }
     void        loadConstraint(SketchConstraint constraint) { m_constraintRegistry.load(std::move(constraint)); }
 
