@@ -1,3 +1,19 @@
+/**
+ * @file 2DSolver_Constraints.h
+ * @brief Définition des différentes contraintes géométriques 2D.
+ *
+ * Ce fichier implémente l'interface de base `IConstraint2D` ainsi que toutes
+ * les classes dérivées représentant des contraintes géométriques spécifiques
+ * (points fixes, coïncidences, distances, rayons, parallélisme, perpendicularité, tangence).
+ * Chaque contrainte est capable de calculer sa propre erreur par rapport à l'état
+ * actuel et de remplir sa ligne correspondante dans la matrice Jacobienne.
+ *
+ * Utilisation :
+ * - Instancier la contrainte souhaitée en passant les indices des variables du vecteur
+ *   d'état ou les valeurs cibles (ex: `std::make_unique<ConstraintDistancePointPoint>(...)`).
+ * - Intégrer la contrainte dans le solveur via `addConstraint()`.
+ */
+
 #pragma once
 #include <External/Eigen/Dense>
 #include <cmath>
@@ -12,9 +28,20 @@ class IConstraint2D {
 public:
     virtual ~IConstraint2D() = default;
 
+    /**
+     * @brief Renvoie la valeur de l'erreur f(X). Vise 0.0 quand la contrainte est satisfaite.
+     * @param X [Entrée] Vecteur d'état actuel des variables.
+     * @return double Valeur de l'erreur calculée.
+     */
     // Renvoie la valeur de l'erreur f(X). Vise 0.0 quand la contrainte est satisfaite.
     virtual double calcError(const Eigen::VectorXd& X) const = 0;
 
+    /**
+     * @brief Remplissage analytique de la ligne correspondant a cette contrainte dans la Jacobienne.
+     * @param X [Entrée] Vecteur d'état actuel des variables.
+     * @param row [Sortie] Référence vers la ligne de la matrice Jacobienne à remplir.
+     * @return void
+     */
     // Remplissage analytique de la ligne correspondant a cette contrainte dans la Jacobienne
     virtual void fillJacobianRow(const Eigen::VectorXd& X, Eigen::Ref<Eigen::VectorXd> row) const = 0;
 };
@@ -30,13 +57,29 @@ private:
     int m_idxVar;
     double m_targetValue;
 public:
+    /**
+     * @brief Constructeur de la contrainte de valeur fixe.
+     * @param idxVar [Entrée] Index de la variable dans le vecteur d'état.
+     * @param targetValue [Entrée] Valeur cible absolue à respecter.
+     */
     ConstraintFixedValue(int idxVar, double targetValue)
         : m_idxVar(idxVar), m_targetValue(targetValue) {}
 
+    /**
+     * @brief Calcule l'erreur de la valeur fixe.
+     * @param X [Entrée] Vecteur d'état actuel.
+     * @return double Erreur (X[m_idxVar] - m_targetValue).
+     */
     double calcError(const Eigen::VectorXd& X) const override {
         return X[m_idxVar] - m_targetValue;
     }
 
+    /**
+     * @brief Remplit la ligne de la Jacobienne pour la valeur fixe.
+     * @param X [Entrée] Vecteur d'état actuel.
+     * @param row [Sortie] Ligne de la Jacobienne à remplir.
+     * @return void
+     */
     void fillJacobianRow(const Eigen::VectorXd&, Eigen::Ref<Eigen::VectorXd> row) const override {
         row.setZero();
         row[m_idxVar] = 1.0;
@@ -48,12 +91,28 @@ class ConstraintCoincident1D : public IConstraint2D {
 private:
     int m_idxA, m_idxB;
 public:
+    /**
+     * @brief Constructeur de la coïncidence 1D.
+     * @param idxA [Entrée] Index de la première variable.
+     * @param idxB [Entrée] Index de la seconde variable.
+     */
     ConstraintCoincident1D(int idxA, int idxB) : m_idxA(idxA), m_idxB(idxB) {}
 
+    /**
+     * @brief Calcule l'erreur de coïncidence 1D.
+     * @param X [Entrée] Vecteur d'état actuel.
+     * @return double Erreur (X[m_idxA] - X[m_idxB]).
+     */
     double calcError(const Eigen::VectorXd& X) const override {
         return X[m_idxA] - X[m_idxB];
     }
 
+    /**
+     * @brief Remplit la ligne de la Jacobienne pour la coïncidence 1D.
+     * @param X [Entrée] Vecteur d'état actuel.
+     * @param row [Sortie] Ligne de la Jacobienne à remplir.
+     * @return void
+     */
     void fillJacobianRow(const Eigen::VectorXd&, Eigen::Ref<Eigen::VectorXd> row) const override {
         row.setZero();
         row[m_idxA] = 1.0;
@@ -85,9 +144,22 @@ private:
     int m_idxX2, m_idxY2;
     double m_targetDistance;
 public:
+    /**
+     * @brief Constructeur de la contrainte de distance entre deux points.
+     * @param idxX1 [Entrée] Index X du premier point.
+     * @param idxY1 [Entrée] Index Y du premier point.
+     * @param idxX2 [Entrée] Index X du second point.
+     * @param idxY2 [Entrée] Index Y du second point.
+     * @param targetDistance [Entrée] Distance cible à maintenir.
+     */
     ConstraintDistancePointPoint(int idxX1, int idxY1, int idxX2, int idxY2, double targetDistance)
         : m_idxX1(idxX1), m_idxY1(idxY1), m_idxX2(idxX2), m_idxY2(idxY2), m_targetDistance(targetDistance) {}
 
+    /**
+     * @brief Calcule l'erreur de distance point à point.
+     * @param X [Entrée] Vecteur d'état actuel.
+     * @return double Écart entre la distance actuelle et la distance cible.
+     */
     double calcError(const Eigen::VectorXd& X) const override {
         double dx = X[m_idxX2] - X[m_idxX1];
         double dy = X[m_idxY2] - X[m_idxY1];
@@ -96,6 +168,12 @@ public:
         return dist - m_targetDistance;
     }
 
+    /**
+     * @brief Remplit la ligne de la Jacobienne pour la distance point à point.
+     * @param X [Entrée] Vecteur d'état actuel.
+     * @param row [Sortie] Ligne de la Jacobienne à remplir.
+     * @return void
+     */
     void fillJacobianRow(const Eigen::VectorXd& X, Eigen::Ref<Eigen::VectorXd> row) const override {
         row.setZero();
         double dx = X[m_idxX2] - X[m_idxX1];
@@ -121,13 +199,29 @@ private:
     int m_idxR;
     double m_targetRadius;
 public:
+    /**
+     * @brief Constructeur de la contrainte de rayon.
+     * @param idxR [Entrée] Index de la variable de rayon dans le vecteur d'état.
+     * @param targetRadius [Entrée] Valeur cible du rayon.
+     */
     ConstraintRadius(int idxR, double targetRadius)
         : m_idxR(idxR), m_targetRadius(targetRadius) {}
 
+    /**
+     * @brief Calcule l'erreur de rayon.
+     * @param X [Entrée] Vecteur d'état actuel.
+     * @return double Erreur (X[m_idxR] - m_targetRadius).
+     */
     double calcError(const Eigen::VectorXd& X) const override {
         return X[m_idxR] - m_targetRadius;
     }
 
+    /**
+     * @brief Remplit la ligne de la Jacobienne pour le rayon.
+     * @param X [Entrée] Vecteur d'état actuel.
+     * @param row [Sortie] Ligne de la Jacobienne à remplir.
+     * @return void
+     */
     void fillJacobianRow(const Eigen::VectorXd&, Eigen::Ref<Eigen::VectorXd> row) const override {
         row.setZero();
         row[m_idxR] = 1.0;
@@ -146,10 +240,26 @@ private:
     int m_x1, m_y1, m_x2, m_y2; // Segment 1
     int m_x3, m_y3, m_x4, m_y4; // Segment 2
 public:
+    /**
+     * @brief Constructeur de la contrainte de parallélisme.
+     * @param x1 [Entrée] Index X du premier point du segment 1.
+     * @param y1 [Entrée] Index Y du premier point du segment 1.
+     * @param x2 [Entrée] Index X du second point du segment 1.
+     * @param y2 [Entrée] Index Y du second point du segment 1.
+     * @param x3 [Entrée] Index X du premier point du segment 2.
+     * @param y3 [Entrée] Index Y du premier point du segment 2.
+     * @param x4 [Entrée] Index X du second point du segment 2.
+     * @param y4 [Entrée] Index Y du second point du segment 2.
+     */
     ConstraintParallel(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4)
         : m_x1(x1), m_y1(y1), m_x2(x2), m_y2(y2),
         m_x3(x3), m_y3(y3), m_x4(x4), m_y4(y4) {}
 
+    /**
+     * @brief Calcule l'erreur de parallélisme via le produit vectoriel 2D.
+     * @param X [Entrée] Vecteur d'état actuel.
+     * @return double Valeur de l'erreur (dx1 * dy2 - dy1 * dx2).
+     */
     double calcError(const Eigen::VectorXd& X) const override {
         double dx1 = X[m_x2] - X[m_x1];
         double dy1 = X[m_y2] - X[m_y1];
@@ -158,6 +268,12 @@ public:
         return (dx1 * dy2) - (dy1 * dx2);
     }
 
+    /**
+     * @brief Remplit la ligne de la Jacobienne pour le parallélisme.
+     * @param X [Entrée] Vecteur d'état actuel.
+     * @param row [Sortie] Ligne de la Jacobienne à remplir.
+     * @return void
+     */
     void fillJacobianRow(const Eigen::VectorXd& X, Eigen::Ref<Eigen::VectorXd> row) const override {
         row.setZero();
         double dx1 = X[m_x2] - X[m_x1];
@@ -184,10 +300,26 @@ private:
     int m_x1, m_y1, m_x2, m_y2; // Segment 1
     int m_x3, m_y3, m_x4, m_y4; // Segment 2
 public:
+    /**
+     * @brief Constructeur de la contrainte de perpendicularité.
+     * @param x1 [Entrée] Index X du premier point du segment 1.
+     * @param y1 [Entrée] Index Y du premier point du segment 1.
+     * @param x2 [Entrée] Index X du second point du segment 1.
+     * @param y2 [Entrée] Index Y du second point du segment 1.
+     * @param x3 [Entrée] Index X du premier point du segment 2.
+     * @param y3 [Entrée] Index Y du premier point du segment 2.
+     * @param x4 [Entrée] Index X du second point du segment 2.
+     * @param y4 [Entrée] Index Y du second point du segment 2.
+     */
     ConstraintPerpendicular(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4)
         : m_x1(x1), m_y1(y1), m_x2(x2), m_y2(y2),
         m_x3(x3), m_y3(y3), m_x4(x4), m_y4(y4) {}
 
+    /**
+     * @brief Calcule l'erreur de perpendicularité via le produit scalaire.
+     * @param X [Entrée] Vecteur d'état actuel.
+     * @return double Valeur de l'erreur (dx1 * dx2 + dy1 * dy2).
+     */
     double calcError(const Eigen::VectorXd& X) const override {
         double dx1 = X[m_x2] - X[m_x1];
         double dy1 = X[m_y2] - X[m_y1];
@@ -196,6 +328,12 @@ public:
         return (dx1 * dx2) + (dy1 * dy2);
     }
 
+    /**
+     * @brief Remplit la ligne de la Jacobienne pour la perpendicularité.
+     * @param X [Entrée] Vecteur d'état actuel.
+     * @param row [Sortie] Ligne de la Jacobienne à remplir.
+     * @return void
+     */
     void fillJacobianRow(const Eigen::VectorXd& X, Eigen::Ref<Eigen::VectorXd> row) const override {
         row.setZero();
         double dx1 = X[m_x2] - X[m_x1];
@@ -228,9 +366,24 @@ private:
     int m_x1, m_y1, m_x2, m_y2; // Ligne
     int m_cx, m_cy, m_r;        // Cercle
 public:
+    /**
+     * @brief Constructeur de la contrainte de tangence entre une ligne et un cercle.
+     * @param x1 [Entrée] Index X du début de la ligne.
+     * @param y1 [Entrée] Index Y du début de la ligne.
+     * @param x2 [Entrée] Index X de la fin de la ligne.
+     * @param y2 [Entrée] Index Y de la fin de la ligne.
+     * @param cx [Entrée] Index X du centre du cercle.
+     * @param cy [Entrée] Index Y du centre du cercle.
+     * @param r [Entrée] Index du rayon du cercle.
+     */
     ConstraintTangentLineCircle(int x1, int y1, int x2, int y2, int cx, int cy, int r)
         : m_x1(x1), m_y1(y1), m_x2(x2), m_y2(y2), m_cx(cx), m_cy(cy), m_r(r) {}
 
+    /**
+     * @brief Calcule l'erreur de tangence ligne-cercle.
+     * @param X [Entrée] Vecteur d'état actuel.
+     * @return double Écart entre la distance centre-droite et le rayon.
+     */
     double calcError(const Eigen::VectorXd& X) const override {
         double dx = X[m_x2] - X[m_x1];
         double dy = X[m_y2] - X[m_y1];
@@ -243,6 +396,12 @@ public:
         return std::abs(num) / len - X[m_r];
     }
 
+    /**
+     * @brief Remplit la ligne de la Jacobienne pour la tangence par différences finies.
+     * @param X [Entrée] Vecteur d'état actuel.
+     * @param row [Sortie] Ligne de la Jacobienne à remplir.
+     * @return void
+     */
     void fillJacobianRow(const Eigen::VectorXd& X, Eigen::Ref<Eigen::VectorXd> row) const override {
         row.setZero();
         // Pour la Jacobienne de la tangence, l'utilisation de différences finies
@@ -263,7 +422,6 @@ public:
         }
     }
 };
-
 
 
 

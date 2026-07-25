@@ -1,9 +1,24 @@
+/**
+ * @file 2DSolver_Solver.cpp
+ * @brief Implémentation des méthodes de calcul et de résolution de la classe `Solver2D_Solver`.
+ *
+ * Ce fichier implémente l'algorithme d'optimisation non linéaire de Levenberg-Marquardt
+ * utilisé pour converger vers un état géométrique valide. Il gère également le calcul
+ * du rang de la matrice Jacobienne pour évaluer en temps réel les degrés de liberté (DOF)
+ * du système d'esquisse.
+ */
+
 #include "2DSolver_Solver.h"
 #include "Logger.h"
 
 
 
 
+/**
+ * @brief Calcule le nombre de degrés de liberté restants (DOF) du système.
+ * @param X [Entrée] Vecteur d'état actuel des variables.
+ * @return int Nombre de degrés de liberté (Variables totales - Rang de la Jacobienne).
+ */
 int Solver2D_Solver::calculateDegreesOfFreedom(const Eigen::VectorXd& X) const {
     if (m_numVariables == 0) return 0;
     if (m_constraints.empty()) return m_numVariables;
@@ -33,6 +48,13 @@ int Solver2D_Solver::calculateDegreesOfFreedom(const Eigen::VectorXd& X) const {
 //  @param tolerance Seuil de convergence pour l'erreur résiduelle
 //  @return true si le système a convergé, false sinon
 //
+/**
+ * @brief Résout le système d'équations de contraintes sur le vecteur d'état X par Levenberg-Marquardt.
+ * @param X [Entrée/Sortie] Vecteur d'état contenant les variables [x1, y1, x2, y2, ...], mis à jour in-place.
+ * @param maxIterations [Entrée] Nombre maximal d'itérations de Newton autorisées.
+ * @param tolerance [Entrée] Seuil de tolérance de convergence pour l'erreur résiduelle globale.
+ * @return bool True si le système a convergé sous le seuil de tolérance, false sinon.
+ */
 bool Solver2D_Solver::solve(Eigen::VectorXd& X, int maxIterations, double tolerance) {
 
     LOG_DEBUG <<"Solver2D_Solver::solve" << std::endl;
@@ -125,24 +147,13 @@ bool Solver2D_Solver::solve(Eigen::VectorXd& X, int maxIterations, double tolera
 
         if (currentError < tolerance) {
             LOG_DEBUG <<"\tFIN sur erreur acceptable" << std::endl;
-
-            LOG_DEBUG << "[Solver Debug] --- Initialisation de la session ---" << std::endl;
-            LOG_DEBUG << "[Solver Debug] Nombre total de variables dans X : " << m_numVariables << std::endl;
-
             return true;
         }
     }
 
     LOG_DEBUG <<"\tFIN sur iter max" << std::endl;
-
-    LOG_DEBUG << "[Solver Debug] --- Initialisation de la session ---" << std::endl;
     LOG_DEBUG << "[Solver Debug] Nombre total de variables dans X : " << m_numVariables << std::endl;
-
 
     return (currentError < tolerance);
 }
-
-
-
-
 

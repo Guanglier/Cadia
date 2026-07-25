@@ -1,4 +1,15 @@
-
+/**
+ * @file 2DSolver_Mapper.cpp
+ * @brief Implémentation du mapping entre les primitives d'une esquisse et le solveur 2D.
+ *
+ * Ce fichier assure la passerelle entre l'objet esquisse (`SketchParams`), ses primitives
+ * géométriques (lignes, cercles), ses contraintes de haut niveau, et le vecteur d'état
+ * numérique manipulé par le solveur (`Solver2D_Solver`).
+ * Il gère deux modes d'utilisation principaux :
+ * 1. Le mode "OneShot" (résolution globale en une passe avec diagnostics complets).
+ * 2. Le mode "InteractiveSession" (résolution incrémentale en temps réel lors du déplacement
+ *    de poignées de géométrie par la souris à 60 FPS).
+ */
 
 #include "2DSolver_Mapper.h"
 #include "Logger.h"
@@ -24,6 +35,12 @@
 // --------------------------------------------------------------------
 //      Afficher une référence
 // --------------------------------------------------------------------
+/**
+ * @brief Formate une référence géométrique sous forme de chaîne de caractères lisible.
+ * @param sketch [Entrée] Référence vers l'esquisse contenant les primitives.
+ * @param ref [Entrée] Référence géométrique à formater.
+ * @return std::string Représentation textuelle de la référence (ex: "Line #1 (Start)").
+ */
 std::string Solver2D_Mapper::formatRef(const SketchParams& sketch, const GeometryReference& ref) {
     if (ref.primitiveId == 0 && ref.subElement == ConstraintSubElement::Whole) {
         // Au cas où c'est une ref nulle / non assignée
@@ -56,6 +73,12 @@ std::string Solver2D_Mapper::formatRef(const SketchParams& sketch, const Geometr
 // --------------------------------------------------------------------
 // Helper pour récupérer le pointeur sur le gp_Pnt2d ciblé par une GeometryReference
 // --------------------------------------------------------------------
+/**
+ * @brief Récupère un pointeur vers le point 2D OpenCASCADE ciblé par une référence géométrique.
+ * @param sketch [Entrée/Sortie] Référence vers l'esquisse.
+ * @param ref [Entrée] Référence géométrique pointant vers un sous-élément.
+ * @return gp_Pnt2d* Pointeur vers le point 2D, ou nullptr en cas d'erreur.
+ */
 gp_Pnt2d* Solver2D_Mapper::getPointPointerFromRef(SketchParams& sketch, const GeometryReference& ref) {
     //if (ref.primitiveId == 0) return nullptr;
 
@@ -95,6 +118,10 @@ gp_Pnt2d* Solver2D_Mapper::getPointPointerFromRef(SketchParams& sketch, const Ge
 // --------------------------------------------------------------------
 // SYNCHRONISATION : COPIE DE L'ESQUISSE VERS LE VECTEUR X
 // --------------------------------------------------------------------
+/**
+ * @brief Copie les valeurs actuelles des variables de l'esquisse vers le vecteur d'état interne X.
+ * @return void
+ */
 void SolverInteractiveSession::pullFromSketch() {
     for (size_t i = 0; i < variablePointers.size(); ++i) {
         if (variablePointers[i]) {
@@ -106,6 +133,10 @@ void SolverInteractiveSession::pullFromSketch() {
 // --------------------------------------------------------------------
 // SYNCHRONISATION : COPIE DU VECTEUR X VERS L'ESQUISSE
 // --------------------------------------------------------------------
+/**
+ * @brief Copie les valeurs calculées du vecteur d'état X vers les variables de l'esquisse.
+ * @return void
+ */
 void SolverInteractiveSession::pushToSketch() {
     for (size_t i = 0; i < variablePointers.size(); ++i) {
         if (variablePointers[i]) {
@@ -130,6 +161,12 @@ void SolverInteractiveSession::UpdatePoint(SketchParams& sketch, int varIndex, d
     }
 }
 */
+/**
+ * @brief Met à jour une variable spécifique dans le vecteur d'état à partir de sa source dans l'esquisse.
+ * @param sketch [Entrée/Sortie] Référence vers l'esquisse.
+ * @param varIndex [Entrée] Index de la variable à actualiser.
+ * @return void
+ */
 void SolverInteractiveSession::UpdatePoint(SketchParams& sketch, int varIndex) {
     if (!isInitialized) return;
 
@@ -142,6 +179,11 @@ void SolverInteractiveSession::UpdatePoint(SketchParams& sketch, int varIndex) {
     }
 }
 
+/**
+ * @brief Initialise la session interactive lourde (map les variables, remplit X et ajoute les contraintes).
+ * @param sketch [Entrée/Sortie] Référence vers l'esquisse à résoudre interactivement.
+ * @return void
+ */
 void SolverInteractiveSession::Initialize(SketchParams& sketch) {
     // 1. Nettoyage / Réinitialisation des structures internes de la session courante
     variablePointers.clear();
@@ -344,6 +386,11 @@ void SolverInteractiveSession::Initialize(SketchParams& sketch) {
 // --------------------------------------------------------------------
 // Phase légère : Mise à jour d'une coordonnée et résolution instantanée (pour le MouseMove)
 // --------------------------------------------------------------------
+/**
+ * @brief Exécute une étape de résolution incrémentale et met à jour la géométrie 3D de l'esquisse.
+ * @param sketch [Entrée/Sortie] Référence vers l'esquisse.
+ * @return bool True si la résolution a réussi, false sinon.
+ */
 bool SolverInteractiveSession::Step(SketchParams& sketch) {
     if (!isInitialized) return false;
 
@@ -406,6 +453,15 @@ bool ForEachPrimitiveIndex(SketchParams& sketch, F&& callback) {
     return false;
 }
 
+/**
+ * @brief Récupère les indices X et Y d'une poignée de primitive pour le pilotage direct.
+ * @param sketch [Entrée/Sortie] Référence vers l'esquisse.
+ * @param primitiveId [Entrée] Identifiant de la primitive cible.
+ * @param handleType [Entrée] Type de poignée recherchée (1: début, 2: fin, 3: centre).
+ * @param outIndexX [Sortie] Référence pour stocker l'index X trouvé.
+ * @param outIndexY [Sortie] Référence pour stocker l'index Y trouvé.
+ * @return bool True si les indices ont été trouvés, false sinon.
+ */
 bool SolverInteractiveSession::GetIndicesForHandle(SketchParams& sketch, int primitiveId, int handleType, int& outIndexX, int& outIndexY) {
     SketchPrimitive* prim = sketch.GetPrimitiveMutable(primitiveId);
     if (!prim) return false;
@@ -440,6 +496,13 @@ bool SolverInteractiveSession::GetIndicesForHandle(SketchParams& sketch, int pri
     return found;
 }
 
+/**
+ * @brief Récupère l'ensemble des indices associés à une arête/primitive complète.
+ * @param sketch [Entrée/Sortie] Référence vers l'esquisse.
+ * @param primitiveId [Entrée] Identifiant de la primitive cible.
+ * @param outIndices [Sortie] Vecteur contenant la liste de tous les indices de variables de la primitive.
+ * @return bool True si la primitive existe et les indices ont été récupérés, false sinon.
+ */
 bool SolverInteractiveSession::GetIndicesForEntireEdge(SketchParams& sketch, int primitiveId, std::vector<int>& outIndices) {
     outIndices.clear();
     SketchPrimitive* prim = sketch.GetPrimitiveMutable(primitiveId);
@@ -463,7 +526,11 @@ bool SolverInteractiveSession::GetIndicesForEntireEdge(SketchParams& sketch, int
 
 
 
-
+/**
+ * @brief Exécute les diagnostics complets du solveur en mode OneShot.
+ * @param sketch [Entrée/Sortie] Référence vers l'esquisse à diagnostiquer.
+ * @return bool True si l'exécution s'est déroulée correctement, false sinon.
+ */
 bool SolverOneShot::Diagnostics(SketchParams& sketch){
     return Solve( sketch, true);
 }
@@ -471,6 +538,12 @@ bool SolverOneShot::Diagnostics(SketchParams& sketch){
 // --------------------------------------------------------------------
 
 // --------------------------------------------------------------------
+/**
+ * @brief Résout l'ensemble des contraintes d'une esquisse en une seule passe globale (OneShot).
+ * @param sketch [Entrée/Sortie] Référence vers l'esquisse à résoudre.
+ * @param enableDiagnostics [Entrée] Active ou non les logs de diagnostic (défaut : false).
+ * @return bool True si la résolution globale a convergé, false en cas d'échec.
+ */
 bool SolverOneShot::Solve(SketchParams& sketch, bool enableDiagnostics) {
     if (enableDiagnostics) {
         LOG_DEBUG << "\n==================================================" << std::endl;
@@ -717,3 +790,6 @@ bool SolverOneShot::Solve(SketchParams& sketch, bool enableDiagnostics) {
 
     return true;
 }
+
+
+
