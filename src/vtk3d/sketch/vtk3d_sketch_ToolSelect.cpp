@@ -259,9 +259,7 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
                         int edgeId = edgeIdArray->GetValue(originalPointId);
                         int handleType = typeArray->GetValue(originalPointId);
 
-                        //b_IsSomethingSelected = true;
-                        PrimitiveIsSelected = true;
-                        DynamicDrag.m_isDragging = true;
+
                         DynamicDrag.m_mode = DragMode::PointUnique;
                         DynamicDrag.m_activePointIndex = originalPointId;
                         DynamicDrag.m_activePrimitiveId = edgeId;
@@ -281,15 +279,16 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
                             if ( Primm ){
                                 std::visit ([&](auto& ConcretePrim) {
                                     using T = std::decay_t<decltype(ConcretePrim)>;
-                                    if constexpr( std::is_same_v<T,SketchLine>){
-                                        //DynamicDrag.Positions.start_when_clicked_2d = ConcretePrim.start.p2d;
-                                        //DynamicDrag.Positions.stop_when_clicked_2d = ConcretePrim.stop.p2d;
-                                        //DynamicDrag.PrimToMoseVects.line.start = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , ConcretePrim.start.p2d);
-                                        //DynamicDrag.PrimToMoseVects.line.stop = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , ConcretePrim.stop.p2d );
-                                    }else if constexpr( std::is_same_v<T,SketchCircle>){
-                                        //DynamicDrag.m_mode = DragMode::CercleCentre;
-                                        //DynamicDrag.Positions.center_when_clicked_2d = ConcretePrim.center.p2d;
-                                        //DynamicDrag.PrimToMoseVects.circle.center = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , ConcretePrim.center.p2d);
+                                    if constexpr (std::is_same_v<T, SketchLine> || std::is_same_v<T, SketchCircle>)
+                                    {
+                                        PrimitiveIsSelected = true;
+                                        DynamicDrag.m_isDragging = true;
+                                        m_Parent->m_SolverSession.Initialize(*sketchParams);
+                                        SolverInteractiveSession::GetIndicesForHandle(
+                                            *sketchParams, DynamicDrag.m_activePrimitiveId, DynamicDrag.m_activeHandleType,
+                                            m_Parent->m_SolverSession.activeVarIndexX,
+                                            m_Parent->m_SolverSession.activeVarIndexY
+                                            );
                                     }else if constexpr( std::is_same_v<T,SketchArc>){
                                         LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> std::visit ([&](auto& ConcretePrim)  non code " << std::endl;
                                     }else{
@@ -297,14 +296,11 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
                                     }
                                 }, *Primm);
 
-
-                                m_Parent->m_SolverSession.Initialize(*sketchParams);
-                                SolverInteractiveSession::GetIndicesForHandle(
-                                    *sketchParams, DynamicDrag.m_activePrimitiveId, DynamicDrag.m_activeHandleType,
-                                    m_Parent->m_SolverSession.activeVarIndexX,
-                                    m_Parent->m_SolverSession.activeVarIndexY
-                                    );
+                            }else{
+                                LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> if ( Primm ) " << std::endl;
                             }
+                        }else{
+                            LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> if ( sketchParams ) " << std::endl;
                         }
 
                     }
