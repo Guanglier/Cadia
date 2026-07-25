@@ -87,8 +87,8 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
                     }
                 }
                 // On met à jour le solveur avec les nouvelles coordonnées X et Y de la souris
-                m_Parent->m_SolverSession.UpdatePoint(*sketchParams, m_Parent->m_SolverSession.activeVarIndexX, mousePoint2D.X());
-                m_Parent->m_SolverSession.UpdatePoint(*sketchParams, m_Parent->m_SolverSession.activeVarIndexY, mousePoint2D.Y());
+                 m_Parent->m_SolverSession.UpdatePoint(*sketchParams, m_Parent->m_SolverSession.activeVarIndexX );
+                 m_Parent->m_SolverSession.UpdatePoint(*sketchParams, m_Parent->m_SolverSession.activeVarIndexY );
 
                 m_Parent->m_SolverSession.Step(*sketchParams);
                 //m_Parent->rafraichirPoignees(sketchParams);
@@ -117,18 +117,23 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
 
                     // On applique le delta sur tous les indices de la primitive entière
                     for (int idx : m_Parent->m_SolverSession.activeVarIndicesAll) {
-                        double currentVal = m_Parent->m_SolverSession.GetVarValue(idx);
-                        double newVal = currentVal + ((idx % 2 == 0) ? deltaX : deltaY);
-                       // m_Parent->m_SolverSession.UpdatePoint(*sketchParams, idx, newVal);
+                        m_Parent->m_SolverSession.UpdatePoint(*sketchParams, idx );
                     }
 
                 }else if constexpr ( std::is_same_v<T,SketchCircle>){
                     gp_Pnt2d PntCenter = curr_prim.center.p2d;
-                    curr_prim.center.setPoint(
-                        gp_Pnt2d( PntCenter.X() + deltaX, PntCenter.Y() + deltaY ),
-                        &m_Parent->m_sketchPlane);
 
-                    std::cout<<"E ; " << PntCenter.X() + deltaX << " " << std::endl;
+                    std::cout<<"Orig ; " << PntCenter.X() << " " << PntCenter.Y() << " new:" ;
+                    PntCenter.SetX( PntCenter.X() + deltaX );
+                    PntCenter.SetY( PntCenter.Y() + deltaY );
+                    curr_prim.center.setPoint( PntCenter, &m_Parent->m_sketchPlane);
+
+                    // On applique le delta sur tous les indices de la primitive entière
+                    for (int idx : m_Parent->m_SolverSession.activeVarIndicesAll) {
+                        m_Parent->m_SolverSession.UpdatePoint(*sketchParams, idx );
+                    }
+
+                    std::cout<<" -> " << PntCenter.X() << " " << PntCenter.Y() << " " << std::endl;
                 }else{
                     LOG_ERROR << " Tool_Select::gererMouseMove : if constexpr ( std::is_same_v<T,SketchCircle> DEFAULT case" << std::endl;
                 }
@@ -137,7 +142,7 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
                 DynamicDrag.m_lastMousePos2D = mousePoint2D;
 
                 // On lance le solveur pour propoger/maintenir les contraintes si nécessaire, puis on rafraîchit
-                //m_Parent->m_SolverSession.Step(*sketchParams);
+                m_Parent->m_SolverSession.Step(*sketchParams);
 
                 //m_Parent->rafraichirPoignees(sketchParams);
                 //m_Parent->rafraichirAffichageEsquisseInteractif();
@@ -248,7 +253,6 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
             }
         }
 
-        PrimitiveIsSelected = false;
 
         // CAS 1 : On a cliqué sur une POIGNÉE (déplacement d'un point unique)
         if (pickedActor && pickedActor == m_Parent->m_ActorSquareOfPrim) {
@@ -320,44 +324,49 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
             if (polyData && cellId != -1) {
                 auto* edgeIdsArray = vtkIntArray::SafeDownCast(polyData->GetCellData()->GetArray("OpenCascadeEdgeID"));
 
-                if (edgeIdsArray && cellId < edgeIdsArray->GetNumberOfValues()) {
+                if (edgeIdsArray && cellId < edgeIdsArray->GetNumberOfValues())
+                {
                     int primitiveId = edgeIdsArray->GetValue(cellId);
-
-                    //b_IsSomethingSelected = true;
-                    PrimitiveIsSelected = true;
-                    SelectedPrimitiveId = primitiveId;
-
-                    // Mettre en surbrillance l'edge (ton code d'origine)
-                    m_Parent->GetView()->m_Chighlighter->mettreEnSurbrillanceEdgeParId(polyData, primitiveId);
-
-                    // Activer le drag complet de la ligne
-                    DynamicDrag.m_isDragging = true;
-                    DynamicDrag.m_mode = DragMode::LigneComplete; // Ligne entière
-                    DynamicDrag.m_activePrimitiveId = primitiveId;
 
                     gp_Pnt2d startPoint2D;
                     gp_Pnt startPoint3D;
-                    if (m_Parent->calculerIntersectionSourisSurPlan(event->position().x(), event->position().y(), startPoint2D, startPoint3D)) {
+                    if (m_Parent->calculerIntersectionSourisSurPlan(event->position().x(), event->position().y(), startPoint2D, startPoint3D))
+                    {
+                        PrimitiveIsSelected = true;
+                        SelectedPrimitiveId = primitiveId;
+
+                        // Mettre en surbrillance l'edge (ton code d'origine)
+                        m_Parent->GetView()->m_Chighlighter->mettreEnSurbrillanceEdgeParId(polyData, primitiveId);
+
+                        // Activer le drag complet de la ligne
+                        DynamicDrag.m_isDragging = true;
+                        DynamicDrag.m_mode = DragMode::LigneComplete; // Ligne entière
+                        DynamicDrag.m_activePrimitiveId = primitiveId;
+
                         DynamicDrag.m_lastMousePos2D = startPoint2D;
-                    }
 
-                    auto* sketchParams = std::get_if<SketchParams>(&m_Parent->m_Operation->getParamsMutable());
-                    if (sketchParams) {
-                        m_Parent->m_SolverSession.Initialize(*sketchParams);
-                        // Récupérer tous les indices de la ligne d'un coup
-                        SolverInteractiveSession::GetIndicesForEntireEdge(*sketchParams, primitiveId, m_Parent->m_SolverSession.activeVarIndicesAll);
-                    }
+                        auto* sketchParams = std::get_if<SketchParams>(&m_Parent->m_Operation->getParamsMutable());
+                        if (sketchParams) {
+                            m_Parent->m_SolverSession.Initialize(*sketchParams);
+                            // Récupérer tous les indices de la ligne d'un coup
+                            SolverInteractiveSession::GetIndicesForEntireEdge(*sketchParams, DynamicDrag.m_activePrimitiveId, m_Parent->m_SolverSession.activeVarIndicesAll);
+                        }
 
-                    // Remonter l'événement à l'IHM
-                    std::string l_string = "[Sketch Mode] Primitive sélectionnée ! ID unique CAO " + std::to_string(primitiveId);
-                    CadResponseEvent resp;
-                    resp.documentId = 0;
-                    resp.params = CadEvent::Sketch::RespStatus{ l_string };
-                    m_Parent->CADEvent_RemonterEvent(resp);
+                        // Remonter l'événement à l'IHM
+                        std::string l_string = "[Sketch Mode] Primitive sélectionnée ! ID unique CAO " + std::to_string(primitiveId);
+                        CadResponseEvent resp;
+                        resp.documentId = 0;
+                        resp.params = CadEvent::Sketch::RespStatus{ l_string };
+                        m_Parent->CADEvent_RemonterEvent(resp);
+
+                    }else{
+                        LOG_ERROR << " Tool_Select::gererMousePress: calculerIntersectionSourisSurPlan pas d intersection " << std::endl;
+                    }
                 }
             }
         }
         else {
+            LOG_ERROR << " Clic vide " << std::endl;
             // Clic dans le vide : Désélection
             if (true == PrimitiveIsSelected ) {
                 m_Parent->GetView()->m_Chighlighter->masquerSurbrillance();

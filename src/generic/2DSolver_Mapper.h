@@ -35,7 +35,8 @@ struct SolverInteractiveSession {
     void Initialize(SketchParams& sketch);
 
     // Met à jour une coordonnée mais ne rédoud pas !
-    void UpdatePoint(SketchParams& sketch, int varIndex, double newValue);
+    //void UpdatePoint(SketchParams& sketch, int varIndex, double newValue);
+    void UpdatePoint(SketchParams& sketch, int varIndex);
 
     // résout (à appeler au MouseMove)
     bool Step(SketchParams& sketch);

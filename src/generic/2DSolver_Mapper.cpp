@@ -114,6 +114,34 @@ void SolverInteractiveSession::pushToSketch() {
     }
 }
 
+// --------------------------------------------------------------------
+// Phase légère : Mise à jour d'une coordonnée et résolution instantanée (pour le MouseMove)
+// --------------------------------------------------------------------
+/*
+void SolverInteractiveSession::UpdatePoint(SketchParams& sketch, int varIndex, double newValue) {
+    if (!isInitialized) return;
+
+    // 1. Modifier directement la variable pilotée par la souris dans le vecteur d'état X
+    if (varIndex >= 0 && varIndex < Vector_X.size()) {
+        Vector_X[varIndex] = newValue;
+    }else{
+        LOG_ERROR << "[Solver] Tentative de mise à jour d'une variable inexistante ! Index : "
+                         + std::to_string(varIndex) + " (Max: " + std::to_string(Vector_X.size())  + ")";
+    }
+}
+*/
+void SolverInteractiveSession::UpdatePoint(SketchParams& sketch, int varIndex) {
+    if (!isInitialized) return;
+
+    // 1. Modifier directement la variable pilotée par la souris dans le vecteur d'état X
+    if (varIndex >= 0 && varIndex < Vector_X.size() && varIndex < variablePointers.size() ) {
+        Vector_X[varIndex] = *(variablePointers[varIndex]);
+    }else{
+        LOG_ERROR << "[Solver] Tentative de mise à jour d'une variable inexistante ! Index : "
+                         + std::to_string(varIndex) + " (Max: " + std::to_string(Vector_X.size())  + ")";
+    }
+}
+
 void SolverInteractiveSession::Initialize(SketchParams& sketch) {
     // 1. Nettoyage / Réinitialisation des structures internes de la session courante
     variablePointers.clear();
@@ -311,20 +339,6 @@ void SolverInteractiveSession::Initialize(SketchParams& sketch) {
 }
 
 
-// --------------------------------------------------------------------
-// Phase légère : Mise à jour d'une coordonnée et résolution instantanée (pour le MouseMove)
-// --------------------------------------------------------------------
-void SolverInteractiveSession::UpdatePoint(SketchParams& sketch, int varIndex, double newValue) {
-    if (!isInitialized) return;
-
-    // 1. Modifier directement la variable pilotée par la souris dans le vecteur d'état X
-    if (varIndex >= 0 && varIndex < Vector_X.size()) {
-        Vector_X[varIndex] = newValue;
-    }else{
-        LOG_ERROR << "[Solver] Tentative de mise à jour d'une variable inexistante ! Index : "
-                  + std::to_string(varIndex) + " (Max: " + std::to_string(Vector_X.size())  + ")";
-    }
-}
 
 
 // --------------------------------------------------------------------
