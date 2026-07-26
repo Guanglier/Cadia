@@ -404,7 +404,7 @@ void MainWindow::createRibbon()
         CadCommandEvent evt;
         evt.params = CadEvent::Sketch::CmdActivateTool{
             CadEvent::Sketch::CadEvent_SketchToolMode::SetConstraints,
-            0
+            (int)CadEvent::Sketch::CadEvent_SketchConstraints::Set_Horizontal
         };
         m_view3d->CADEvent_TraiterCommande(evt);
     });
@@ -412,11 +412,11 @@ void MainWindow::createRibbon()
     Sketch.Constraints.actConstVertical = barConstraints->addAction(QIcon(":/icons/sketch_constraint_vertical.svg"), tr("Line"));
     Sketch.Constraints.actConstVertical->setToolTip(tr("Vertical constraint"));
     connect(Sketch.Constraints.actConstVertical, &QAction::triggered, this, [this](bool checked) {
-        //CadCommandEvent evt;
-        //evt.params = CadEvent::Sketch::CmdActivateTool{
-        //    CadEvent::Sketch::CadEvent_SketchToolMode::Select
-        //};
-        //m_view3d->CADEvent_TraiterCommande(evt);
+        CadCommandEvent evt;
+        evt.params = CadEvent::Sketch::CmdConstraints{
+            CadEvent::Sketch::CadEvent_SketchConstraints::Set_Vertical
+        };
+        m_view3d->CADEvent_TraiterCommande(evt);
     });
     Sketch.Constraints.actConstPerpendicular = barConstraints->addAction(QIcon(":/icons/sketch_constraint_perpendicular.svg"), tr("Line"));
     Sketch.Constraints.actConstPerpendicular->setToolTip(tr("Perpendicular constraint"));

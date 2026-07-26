@@ -11,6 +11,7 @@
 #include <vtkRenderWindowInteractor.h>
 #include <vtkInteractorStyleImage.h>
 #include "2DSolver_Mapper.h"
+#include "Logger.h"
 
 
 Vtk3d_Sketch::Vtk3d_Sketch(vtk3d_MainView* view, CadOperation* li_ptr_Operation)
@@ -23,24 +24,24 @@ Vtk3d_Sketch::Vtk3d_Sketch(vtk3d_MainView* view, CadOperation* li_ptr_Operation)
 
     gp_Ax3 planXY(origine, normale, axeX);
 
-    m_sketchPlane = planXY;
+
 
 
     gp_Ax1 axeDeRotation(origine, axeX);
     double angleRadians = 45.0 * (M_PI / 180.0);
-    m_sketchPlane = planXY.Rotated(axeDeRotation, angleRadians);
+    DocumentRefs.SetSketchPlane( planXY.Rotated(axeDeRotation, angleRadians) );
 
 
     if (nullptr == li_ptr_Operation) {
-        m_Operation = new CadOperation("Esquisse test", SketchParams());
+        DocumentRefs.SetOperation( new CadOperation("Esquisse test", SketchParams() ) );
     } else {
-        m_Operation = li_ptr_Operation;
+        DocumentRefs.SetOperation( li_ptr_Operation );
     }
 
 
-    auto* variantParams = &(m_Operation->getParamsMutable());
+    auto* variantParams = &(DocumentRefs.GetOperation()->getParamsMutable());
     if ( auto* sketchParams = std::get_if<SketchParams>(variantParams) ){
-        sketchParams->m_sketchPlane = m_sketchPlane;
+        sketchParams->m_sketchPlane = DocumentRefs.GetSketchPlane();
     }else{
         std::cout << "ERROR if ( auto* sketchParams = std::get_if<SketchParams>(variantParams) ) " << std::endl;
         std::cerr << "ERROR if ( auto* sketchParams = std::get_if<SketchParams>(variantParams) ) " << std::endl;
@@ -57,9 +58,9 @@ Vtk3d_Sketch::Vtk3d_Sketch(vtk3d_MainView* view, CadOperation* li_ptr_Operation)
     // FIX INITIALISATION COORDONNÉES 3D
     // On force le calcul des coordonnées 3D du cache avant le premier rendu
     // ====================================================================
-    if (nullptr != m_Operation) {
-        m_Operation->setLocaleTopoChanged(true);
-        if (auto* sketchParams = std::get_if<SketchParams>(&m_Operation->getParamsMutable())) {
+    if (nullptr != DocumentRefs.GetOperation()) {
+        DocumentRefs.GetOperation()->setLocaleTopoChanged(true);
+        if (auto* sketchParams = std::get_if<SketchParams>(&DocumentRefs.GetOperation()->getParamsMutable())) {
             sketchParams->recomputeGeometry3D(); // Remplira les cache_p3d !
         }
     }
@@ -103,9 +104,9 @@ void Vtk3d_Sketch::activer() {
 
 
 
-    gp_Pnt origine = m_sketchPlane.Location();
-    gp_Dir normale = m_sketchPlane.Direction();
-    gp_Dir vueHaut = m_sketchPlane.YDirection();
+    gp_Pnt origine = DocumentRefs.GetSketchPlane().Location();
+    gp_Dir normale = DocumentRefs.GetSketchPlane().Direction();
+    gp_Dir vueHaut = DocumentRefs.GetSketchPlane().YDirection();
 
     //GetDistance renvoie la distance idéale après le resetcamera
     // ensuite on repositionne la camera et on la remet à la bonne distance
@@ -140,9 +141,9 @@ void Vtk3d_Sketch::activer() {
 
     //m_view->getRenderer()->ResetCamera(); //fait le reset de la caméra et donc perd l'angle ..
 
-    if ( nullptr != m_Operation ){
-        m_Operation->setLocaleTopoChanged(true);
-        auto *SketchPara = std::get_if<SketchParams> (&m_Operation->getParamsMutable() );
+    if ( nullptr != DocumentRefs.GetOperation() ){
+        DocumentRefs.GetOperation()->setLocaleTopoChanged(true);
+        auto *SketchPara = std::get_if<SketchParams> (&DocumentRefs.GetOperation()->getParamsMutable() );
         if ( nullptr != SketchPara ){
             SketchPara->recomputeGeometry3D();
         }
@@ -166,12 +167,12 @@ void Vtk3d_Sketch::desactiver() {
         if (m_constraintsDisplayActor) {
             m_constraintsDisplayActor->SetVisibility(false);
         }
-        if ( nullptr != m_Operation ){
-            auto *SketchPara = std::get_if<SketchParams> (&m_Operation->getParamsMutable() );
+        if ( nullptr != DocumentRefs.GetOperation() ){
+            auto *SketchPara = std::get_if<SketchParams> (&DocumentRefs.GetOperation()->getParamsMutable() );
             if ( nullptr != SketchPara ){
                 SketchPara->recomputeGeometry3D();
             }
-            m_Operation->setLocaleTopoChanged(true);
+            DocumentRefs.GetOperation()->setLocaleTopoChanged(true);
         }
     }
 }
@@ -286,9 +287,9 @@ void Vtk3d_Sketch::sketch_ActivateTool(SketchTool_mode li_tool) {
 
 
 void Vtk3d_Sketch::SolveEsquisse() {
-    if (!m_Operation) return;
+    if (!DocumentRefs.GetOperation()) return;
 
-    auto* sketchParams = std::get_if<SketchParams>(&m_Operation->getParamsMutable());
+    auto* sketchParams = std::get_if<SketchParams>(&DocumentRefs.GetOperation()->getParamsMutable());
     if (!sketchParams) return;
 
     // 1. Lancer ton solveur (ex: ta fonction de résolution avec Jacobi/ExprTk)
@@ -314,9 +315,9 @@ void Vtk3d_Sketch::CADEvent_TraiterCommande(const CadCommandEvent& event) {
     if (auto* cmd = std::get_if<CadEvent::Sketch::CmdConstraints>(&event.params)  ) {
         switch ( cmd->cmd ){
             case CadEvent::Sketch::CadEvent_SketchConstraints::Constraint_Resolve:
-                if ( nullptr != m_Operation ){
-                    m_Operation->setLocaleTopoChanged(true);
-                    auto *SketchParam = std::get_if<SketchParams> (&m_Operation->getParamsMutable() );
+                if ( nullptr != DocumentRefs.GetOperation() ){
+                    DocumentRefs.GetOperation()->setLocaleTopoChanged(true);
+                    auto *SketchParam = std::get_if<SketchParams> (&DocumentRefs.GetOperation()->getParamsMutable() );
                     if ( nullptr != SketchParam ){
 
                         //Solver2D_Mapper::PrepareAndSolve(*SketchParam);
@@ -326,7 +327,20 @@ void Vtk3d_Sketch::CADEvent_TraiterCommande(const CadCommandEvent& event) {
 
                 }
                 break;
+
+            case CadEvent::Sketch::CadEvent_SketchConstraints::Set_Vertical:
+                LOG_ERROR << "Vtk3d_Sketch::CADEvent_TraiterCommande : vertical !" << std::endl;
+                if ( nullptr == DocumentRefs.GetOperation() ){
+                    LOG_ERROR << "Vtk3d_Sketch::CADEvent_TraiterCommande :  nullptr == m_Operation " << std::endl;
+                }
+                std::visit([event](auto& activeTool) {
+                    activeTool.CADEvent_TraiterCommande(event);
+                }, m_tool);
+                LOG_ERROR << "fdf" << std::endl;
+                break;
+
             default:
+                LOG_ERROR << "Vtk3d_Sketch::CADEvent_TraiterCommande : default !" << std::endl;
                 break;
         }
         return;

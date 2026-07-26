@@ -56,7 +56,7 @@ private:
 
 
 
-    Vtk3d_Sketch* m_parent = nullptr;
+    Vtk3d_Sketch* m_Parent = nullptr;
     double m_derniereEchelleCarre = 0.0;
 
     std::vector<gp_Pnt2d> m_SnapPointsVisitedList;

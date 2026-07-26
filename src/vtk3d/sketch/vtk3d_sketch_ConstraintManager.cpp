@@ -22,14 +22,14 @@
 #include <type_traits>
 #include <cmath>
 
-SketchConstraintManager::SketchConstraintManager(Vtk3d_Sketch* parent) : m_parent(parent) {}
+SketchConstraintManager::SketchConstraintManager(Vtk3d_Sketch* parent) : m_Parent(parent) {}
 
 SketchConstraintManager::~SketchConstraintManager() {
     cleanUp();
 }
 
 void SketchConstraintManager::init() {
-    if (!m_parent || !m_parent->GetView() || !m_parent->GetView()->getRenderer()){
+    if (!m_Parent || !m_Parent->GetView() || !m_Parent->GetView()->getRenderer()){
         std::cout<<" ERROR !! SketchConstraintManager::init "<< std::endl;
         std::cerr<<" ERROR !! SketchConstraintManager::init "<< std::endl;
         return;
@@ -39,8 +39,8 @@ void SketchConstraintManager::init() {
 }
 
 void SketchConstraintManager::cleanUp() {
-    if (m_parent && m_parent->GetView() && m_parent->GetView()->getRenderer()) {
-        auto renderer = m_parent->GetView()->getRenderer();
+    if (m_Parent && m_Parent->GetView() && m_Parent->GetView()->getRenderer()) {
+        auto renderer = m_Parent->GetView()->getRenderer();
         if (m_ActorSnapPoint) renderer->RemoveActor(m_ActorSnapPoint);
         if (m_ActorSnapLine) renderer->RemoveActor(m_ActorSnapLine);
     }
@@ -62,7 +62,7 @@ void SketchConstraintManager::initSnapPointActor() {
     m_ActorSnapPoint->SetVisibility(false);
     m_ActorSnapPoint->PickableOff();
 
-    m_parent->GetView()->getRenderer()->AddActor(m_ActorSnapPoint);
+    m_Parent->GetView()->getRenderer()->AddActor(m_ActorSnapPoint);
 }
 
 void SketchConstraintManager::initSnapLineActor() {
@@ -107,7 +107,7 @@ void SketchConstraintManager::initSnapLineActor() {
     m_ActorSnapLine->SetVisibility(false);
     m_ActorSnapLine->PickableOff();
 
-    m_parent->GetView()->getRenderer()->AddActor(m_ActorSnapLine);
+    m_Parent->GetView()->getRenderer()->AddActor(m_ActorSnapLine);
 }
 
 void SketchConstraintManager::appliqueContraintes2D(
@@ -125,7 +125,7 @@ void SketchConstraintManager::appliqueContraintes2D(
         alignValide = alignWithExistingPoints(li_P2_2D, li_P2_3D);
 
         if ( true == alignValide ){
-            li_P2_3D = m_parent->convertir2DEn3D(li_P2_2D);
+            li_P2_3D = m_Parent->convertir2DEn3D(li_P2_2D);
         }
     }
     //bool alignValide = false;
@@ -167,8 +167,8 @@ bool SketchConstraintManager::snapPointsVisited_IsPointInTheList (const gp_Pnt2d
 
 
 bool SketchConstraintManager::snapToExistingPoints(gp_Pnt2d& plio_Ptr2D, gp_Pnt& plio_Ptr3D, double li_SeuilCoincidence_mm) {
-    if (!m_parent || !m_parent->m_Operation) return false;
-    auto* sketchParams = std::get_if<SketchParams>(&m_parent->m_Operation->getParamsMutable());
+    if (!m_Parent || !m_Parent->DocumentRefs.GetOperation()) return false;
+    auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
     if (!sketchParams) return false;
 
     const double seuilCoincidenceMm = li_SeuilCoincidence_mm;
@@ -228,8 +228,8 @@ bool SketchConstraintManager::snapToExistingPoints(gp_Pnt2d& plio_Ptr2D, gp_Pnt&
 
 
 bool SketchConstraintManager::alignWithExistingPoints(gp_Pnt2d& lio_Point2D, gp_Pnt& lio_Point3D) {
-    if (!m_parent || !m_parent->m_Operation) return false;
-    auto* sketchParams = std::get_if<SketchParams>(&m_parent->m_Operation->getParamsMutable());
+    if (!m_Parent || !m_Parent->DocumentRefs.GetOperation()) return false;
+    auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
     if (!sketchParams) return false;
 
     const double seuilCoincidenceMm = 0.5;
@@ -331,7 +331,7 @@ void SketchConstraintManager::updateSnapLineActor(bool li_AlignX, bool li_AlignY
 
     const double pasMm = 4.0;
     // 1. Calculer un pas dynamique en fonction du zoom de la caméra
-    auto* camera = m_parent->GetView()->getRenderer()->GetActiveCamera();
+    auto* camera = m_Parent->GetView()->getRenderer()->GetActiveCamera();
     double pasDynamiqueMm = 4.0; // Valeur par défaut de secours
 
     if (camera->GetParallelProjection()) {
@@ -405,8 +405,8 @@ void SketchConstraintManager::aideHV(const gp_Pnt2d& p1, gp_Pnt2d& p2) {
 }
 
 void SketchConstraintManager::ajusterEchelleCarreSnap() {
-    if (!m_ActorSnapPoint || !m_ActorSnapPoint->GetVisibility() || !m_parent->GetView()) return;
-    vtkCamera* camera = m_parent->GetView()->getRenderer()->GetActiveCamera();
+    if (!m_ActorSnapPoint || !m_ActorSnapPoint->GetVisibility() || !m_Parent->GetView()) return;
+    vtkCamera* camera = m_Parent->GetView()->getRenderer()->GetActiveCamera();
     if (!camera) return;
 
     double currentScale = camera->GetParallelScale();

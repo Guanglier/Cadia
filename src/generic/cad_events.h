@@ -12,6 +12,8 @@
 // ============================================================================
 namespace CadEvent::Sketch {
 
+
+
     enum class CadEvent_SketchToolMode{
         Draw_line,
         Draw_Circle,
@@ -26,7 +28,9 @@ namespace CadEvent::Sketch {
         SketchActivated
     };
     enum class CadEvent_SketchConstraints{
-        Constraint_Resolve
+        Constraint_Resolve,
+        Set_Vertical,
+        Set_Horizontal
     };
     struct CmdActivateTool {
         CadEvent_SketchToolMode toolMode;

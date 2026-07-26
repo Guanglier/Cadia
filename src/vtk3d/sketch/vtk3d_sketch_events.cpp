@@ -304,9 +304,9 @@ void Vtk3d_Sketch::keyPressEvent(QKeyEvent* event) {
 
 
     if (event->key() == Qt::Key_M){
-        if ( nullptr != m_Operation ){
-            m_Operation->setLocaleTopoChanged(true);
-            auto *SketchParam = std::get_if<SketchParams> (&m_Operation->getParamsMutable() );
+        if ( nullptr != DocumentRefs.GetOperation() ){
+            DocumentRefs.GetOperation()->setLocaleTopoChanged(true);
+            auto *SketchParam = std::get_if<SketchParams> (&DocumentRefs.GetOperation()->getParamsMutable() );
             if ( nullptr != SketchParam ){
                 //Solver2D_Mapper::Solve(*SketchParam);
                 //Solver2D_Mapper::SolveWithDiagnostics(*SketchParam);

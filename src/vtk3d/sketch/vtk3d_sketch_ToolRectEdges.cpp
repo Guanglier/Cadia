@@ -107,8 +107,8 @@ bool Tool_RectEdgesDraw::gererMouseMove(QMouseEvent* event) {
         m_Cotation1_DistDesc.pntStop = currentPoint3D;
         m_Cotation2_bDescriptorDefined = true;
         m_Cotation1_currentDimensionDescriptor.data = m_Cotation1_DistDesc;
-        DimensionEngine::GeometryResult Cot1_geoResult = DimensionEngine::ComputeGeometry(m_Parent->GetSketchPlane(), m_Cotation1_currentDimensionDescriptor);
-        m_Parent->m_Cotation2->DessinerCotationDepuisResultat(m_Parent->GetSketchPlane(), Cot1_geoResult);
+        DimensionEngine::GeometryResult Cot1_geoResult = DimensionEngine::ComputeGeometry( m_Parent->DocumentRefs.GetSketchPlane(), m_Cotation1_currentDimensionDescriptor);
+        m_Parent->m_Cotation2->DessinerCotationDepuisResultat(m_Parent->DocumentRefs.GetSketchPlane(), Cot1_geoResult);
 
 
         // On reconstruit la boîte 2D projetée sur le plan 3D d'esquisse (z constant ou plan local)
@@ -209,11 +209,11 @@ bool Tool_RectEdgesDraw::gererkeyPressEvent(QKeyEvent* event) {
 //      Ajouter le rectangle à l'opération locale OpenCascade
 //─────────────────────────────────────────────────────────────────────
 void Tool_RectEdgesDraw::AddRectangleToOp(gp_Pnt2d& p1_2D, gp_Pnt2d& p2_2D) {
-    if (!m_Parent->m_Operation) {
+    if (!m_Parent->DocumentRefs.GetOperation()) {
         std::cerr << "[ERROR] AddRectangleToOp: m_Operation est nul !\n";
         return;
     }
-    auto* sketchParams = std::get_if<SketchParams>(&m_Parent->m_Operation->getParamsMutable());
+    auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
 
     if (!sketchParams) {
         std::cerr << "[ERROR] AddRectangleToOp: L'opération cible n'est pas un SketchParams.\n";
@@ -229,14 +229,14 @@ void Tool_RectEdgesDraw::AddRectangleToOp(gp_Pnt2d& p1_2D, gp_Pnt2d& p2_2D) {
     SketchLine   Line_CD(p2_2D, D);
     SketchLine   Line_DA(D, p1_2D);
 
-    Line_AB.start.Update3D( m_Parent->GetSketchPlane() );
-    Line_AB.stop.Update3D( m_Parent->GetSketchPlane() );
-    Line_BC.start.Update3D( m_Parent->GetSketchPlane() );
-    Line_BC.stop.Update3D( m_Parent->GetSketchPlane() );
-    Line_CD.start.Update3D( m_Parent->GetSketchPlane() );
-    Line_CD.stop.Update3D( m_Parent->GetSketchPlane() );
-    Line_DA.start.Update3D( m_Parent->GetSketchPlane() );
-    Line_DA.stop.Update3D( m_Parent->GetSketchPlane() );
+    Line_AB.start.Update3D( m_Parent->DocumentRefs.GetSketchPlane() );
+    Line_AB.stop.Update3D ( m_Parent->DocumentRefs.GetSketchPlane() );
+    Line_BC.start.Update3D( m_Parent->DocumentRefs.GetSketchPlane() );
+    Line_BC.stop.Update3D ( m_Parent->DocumentRefs.GetSketchPlane() );
+    Line_CD.start.Update3D( m_Parent->DocumentRefs.GetSketchPlane() );
+    Line_CD.stop.Update3D ( m_Parent->DocumentRefs.GetSketchPlane() );
+    Line_DA.start.Update3D( m_Parent->DocumentRefs.GetSketchPlane() );
+    Line_DA.stop.Update3D ( m_Parent->DocumentRefs.GetSketchPlane() );
 
 
     // 🚀 Ajout des 4 lignes horizontales et verticales dans l'esquisse

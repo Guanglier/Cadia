@@ -55,7 +55,7 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
         return false;
     }
 
-    auto* sketchParams = std::get_if<SketchParams>(&m_Parent->m_Operation->getParamsMutable());
+    auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
     if (!sketchParams){
         LOG_ERROR << "Tool_Select::gererMouseMove : nullptr == sketchParams" << std::endl;
         return false;
@@ -75,13 +75,13 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
             case DragMode::PointUnique:{
                 if constexpr ( std::is_same_v<T,SketchLine>){
                     if (DynamicDrag.m_activeHandleType == 1) {
-                        curr_prim.start.setPoint ( mousePoint2D, &m_Parent->m_sketchPlane );
+                        curr_prim.start.setPoint ( mousePoint2D, &m_Parent->DocumentRefs.GetSketchPlane() );
                     } else if (DynamicDrag.m_activeHandleType == 2) {
-                        curr_prim.stop.setPoint ( mousePoint2D, &m_Parent->m_sketchPlane );
+                        curr_prim.stop.setPoint ( mousePoint2D, &m_Parent->DocumentRefs.GetSketchPlane() );
                     }
                 }else if constexpr ( std::is_same_v<T,SketchCircle>){
                     if (DynamicDrag.m_activeHandleType == 3) {
-                        curr_prim.center.setPoint(mousePoint2D, &m_Parent->m_sketchPlane);
+                        curr_prim.center.setPoint(mousePoint2D, &m_Parent->DocumentRefs.GetSketchPlane());
                     }else{
                         LOG_ERROR << " Tool_Select::gererMouseMove : if constexpr ( std::is_same_v<T,SketchCircle> DEFAULT case" << std::endl;
                     }
@@ -105,8 +105,8 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
                 if constexpr ( std::is_same_v<T,SketchLine>){
                     gp_Pnt2d PntStart  = mousePoint2D.Translated(DynamicDrag.PrimToMoseVects.line.start );
                     gp_Pnt2d PntStop  = mousePoint2D.Translated(DynamicDrag.PrimToMoseVects.line.stop );
-                    curr_prim.start.setPoint ( PntStart, &m_Parent->m_sketchPlane );
-                    curr_prim.stop.setPoint (PntStop, &m_Parent->m_sketchPlane );
+                    curr_prim.start.setPoint ( PntStart, &m_Parent->DocumentRefs.GetSketchPlane() );
+                    curr_prim.stop.setPoint (PntStop, &m_Parent->DocumentRefs.GetSketchPlane() );
 
                     // On applique le delta sur tous les indices de la primitive entière
                     for (int idx : m_Parent->m_SolverSession.activeVarIndicesAll) {
@@ -115,7 +115,7 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
 
                 }else if constexpr ( std::is_same_v<T,SketchCircle>){
                     gp_Pnt2d PntCenter = mousePoint2D.Translated(DynamicDrag.PrimToMoseVects.circle.center);
-                    curr_prim.center.setPoint(PntCenter, &m_Parent->m_sketchPlane);
+                    curr_prim.center.setPoint(PntCenter, &m_Parent->DocumentRefs.GetSketchPlane());
 
                     // On applique le delta sur tous les indices de la primitive entière
                     for (int idx : m_Parent->m_SolverSession.activeVarIndicesAll) {
@@ -162,7 +162,7 @@ bool Tool_Select::gererMouseRelease(QMouseEvent* event) {
         DynamicDrag.m_activePointIndex = -1;
 
         // Résolution finale de clôture (OneShot propre pour éliminer toute dérive)
-        auto* sketchParams = std::get_if<SketchParams>(&m_Parent->m_Operation->getParamsMutable());
+        auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
         if (sketchParams) {
             SolverOneShot::Solve(*sketchParams, false);
         }
@@ -277,7 +277,7 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
             // 3 = Centre du cercle (CercleCentre)
             DynamicDrag.m_activeHandleType = handleType;
 
-            auto* sketchParams = std::get_if<SketchParams>(&m_Parent->m_Operation->getParamsMutable());
+            auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
             if (!sketchParams) {
                 LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> if ( sketchParams ) " << std::endl;
                 return false;
@@ -346,7 +346,7 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
 
                 DynamicDrag.m_lastMousePos2D = startPoint2D;
 
-                auto* sketchParams = std::get_if<SketchParams>(&m_Parent->m_Operation->getParamsMutable());
+                auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
                 if ( nullptr == sketchParams) {
                     LOG_ERROR << " Tool_Select::gererMousePress: sketchParams = nullptr " << std::endl;
                     return false;
@@ -405,9 +405,6 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
 
 
 
-
-
-
 bool Tool_Select::gererkeyPressEvent(QKeyEvent* event) {
     if (event->key() == Qt::Key_Delete) {
         std::cout << "Tool_Select::gererkeyPressEven -> Touche [Suppr]" << std::endl;
@@ -418,7 +415,7 @@ bool Tool_Select::gererkeyPressEvent(QKeyEvent* event) {
 #endif
             PrimitiveIsSelected = false;
 
-            auto* sketchParams = std::get_if<SketchParams>(&m_Parent->m_Operation->getParamsMutable());
+            auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
             if (!sketchParams) return false;
 
             sketchParams->removePrimitive(SelectedPrimitiveId);
@@ -442,7 +439,35 @@ bool Tool_Select::gererkeyPressEvent(QKeyEvent* event) {
 
 
 void Tool_Select::CADEvent_TraiterCommande(const CadCommandEvent& event){
+    if (auto* cmd = std::get_if<CadEvent::Sketch::CmdConstraints>(&event.params)  ) {
+        switch ( cmd->cmd ){
+        case CadEvent::Sketch::CadEvent_SketchConstraints::Constraint_Resolve:
 
+            break;
+
+        case CadEvent::Sketch::CadEvent_SketchConstraints::Set_Vertical:
+            LOG_ERROR << "Tool_Select::CADEvent_TraiterCommande : vertical !" << std::endl;
+            if ( true == PrimitiveIsSelected ){
+                auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
+                if (!sketchParams) return;
+
+                SketchConstraint vert1;
+                vert1.type = ConstraintType::Vertical;
+                vert1.ref1.operationId = m_Parent->DocumentRefs.GetSketchId();             //TEST BUG ATTENTION mettre la bonne valeur
+                vert1.ref1.primitiveId = SelectedPrimitiveId;
+                vert1.ref1.subElement = ConstraintSubElement::Whole;
+                sketchParams->addConstraint(vert1);
+            }else{
+                LOG_ERROR << "Tool_Select::CADEvent_TraiterCommande : default  !" << std::endl;
+            }
+            break;
+
+        default:
+            LOG_ERROR << "Tool_Select::CADEvent_TraiterCommande : default !" << std::endl;
+            break;
+        }
+        return;
+    }
 }
 
 

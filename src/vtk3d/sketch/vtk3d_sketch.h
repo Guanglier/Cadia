@@ -43,19 +43,10 @@ protected :
 
 
 private:
-    uint64_t m_sketchId;
+
     std::unique_ptr<SketchConstraintManager> m_constraintManager;
     vtkSmartPointer<vtkActor> m_constraintsDisplayActor;
     //vtkSmartPointer<vtkProp3D> m_constraintsDisplayActor;
-
-    gp_Ax3 m_sketchPlane; // Contient l'origine, l'axe X, Y et Z du plan
-
-
-
-
-
-    //void AddLineToOp (gp_Pnt2d StartPoint2D, gp_Pnt2d StopPoint2D);
-    //void contraintes2D_Applique ( const gp_Pnt2d &p1, gp_Pnt2d &p2 );
 
 
     //------------ mode de fonctionnement --------------------
@@ -72,8 +63,21 @@ private:
 
 public:
 
-    gp_Ax3&                         GetSketchPlane_Mutable () { return m_sketchPlane; }
-    const gp_Ax3&                   GetSketchPlane () const { return m_sketchPlane; }
+    struct{
+    private:
+        gp_Ax3 m_sketchPlane; // Contient l'origine, l'axe X, Y et Z du plan
+        CadOperation*    m_Operation;
+        uint64_t m_sketchId;
+    public:
+        void            SetSketchPlane (gp_Ax3 sketchPlane) { m_sketchPlane = sketchPlane; }
+        void            SetOperation (CadOperation* li_op) { m_Operation = li_op; }
+        gp_Ax3&         GetSketchPlane_Mutable () { return m_sketchPlane; }
+        const gp_Ax3&   GetSketchPlane () const { return m_sketchPlane; }
+        CadOperation*   GetOperation () const { return m_Operation; }
+        uint64_t        GetSketchId() const {return m_sketchId;}
+    }DocumentRefs;
+
+
     vtkSmartPointer<vtkActor>       m_ActorSketchDisplay = nullptr;
     vtkSmartPointer<vtkActor>       m_ActorSquareOfPrim = nullptr;    // pour les carrés des lignes
 
@@ -89,7 +93,7 @@ public:
         QPoint m_lastPanPos;
     }MousePan;
 
-    CadOperation*    m_Operation;
+
     void rafraichirAffichageEsquisse();
     void rafraichirAffichageEsquisseInteractif();
 
