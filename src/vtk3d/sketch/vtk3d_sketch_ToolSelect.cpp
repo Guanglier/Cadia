@@ -91,9 +91,9 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
                  m_Parent->m_SolverSession.UpdatePoint( m_Parent->m_SolverSession.activeVarIndexY );
 
                 m_Parent->m_SolverSession.Step(*sketchParams);
-                //m_Parent->rafraichirPoignees(sketchParams);
-                //m_Parent->rafraichirAffichageEsquisseInteractif();
-                m_Parent->rafraichirAffichageEsquisse();      // trop lent remplacé par les deux du dessus
+                m_Parent->rafraichirPoignees(sketchParams);
+                m_Parent->rafraichirAffichageEsquisseInteractif();
+                //m_Parent->rafraichirAffichageEsquisse();      // trop lent remplacé par les deux du dessus
                 break;
             }
 
@@ -133,9 +133,9 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
                 // On lance le solveur pour propoger/maintenir les contraintes si nécessaire, puis on rafraîchit
                 m_Parent->m_SolverSession.Step(*sketchParams);
 
-                //m_Parent->rafraichirPoignees(sketchParams);
-                //m_Parent->rafraichirAffichageEsquisseInteractif();
-                m_Parent->rafraichirAffichageEsquisse();      // trop lent remplacé par les deux du dessus
+                m_Parent->rafraichirPoignees(sketchParams);
+                m_Parent->rafraichirAffichageEsquisseInteractif();
+                //m_Parent->rafraichirAffichageEsquisse();      // trop lent remplacé par les deux du dessus
                 break;
             }
 

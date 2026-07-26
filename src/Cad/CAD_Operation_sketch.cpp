@@ -252,7 +252,7 @@ TopoDS_Shape SketchParams::evaluate(const CAD_Document& doc) const {
  * @param constraint [Entrée] La contrainte à ajouter.
  * @return uint64_t L'identifiant (ID) de la contrainte (existante ou nouvellement créée).
  */
-uint64_t addConstraint(SketchConstraint constraint) {
+uint64_t SketchParams::addConstraint(SketchConstraint constraint) {
     // Vérification des doublons via getItems()
     for (const auto& existingConstraint : m_constraintRegistry.getItems()) {
         if (existingConstraint.isEquivalentTo(constraint)) {
@@ -264,5 +264,4 @@ uint64_t addConstraint(SketchConstraint constraint) {
     // Sinon, ajout normal via le registre
     return m_constraintRegistry.add(std::move(constraint));
 }
-
 

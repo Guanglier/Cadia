@@ -77,13 +77,35 @@ void Vtk3d_Sketch::rafraichirAffichageEsquisseInteractif() {
                 }
             }
             else if constexpr (std::is_same_v<T, SketchCircle>) {
+                /*
                 // Centre du cercle
                 if (ptIndex < pts->GetNumberOfPoints()) {
                     pts->SetPoint(ptIndex++, concretePrim.center.cache_p3d.X(), concretePrim.center.cache_p3d.Y(), concretePrim.center.cache_p3d.Z() );
+                    std::cout<<".";
                 }
+                */
+
+
+
+                for (int i = 0; i <= 64; ++i) {
+                    double angle = 2.0 * M_PI * i / 64;
+
+                    // Calcul en 2D locale autour du centre local
+                    double localU = concretePrim.center.p2d.X() + concretePrim.radius * std::cos(angle);
+                    double localV = concretePrim.center.p2d.Y() + concretePrim.radius * std::sin(angle);
+
+                    // Projection 3D fidèle à l'orientation du plan
+                    gp_Pnt p3d = ElSLib::Value(localU, localV, m_sketchPlane);
+
+                    pts->SetPoint(ptIndex++, p3d.X(), p3d.Y(), p3d.Z() );
+                }
+
+
+
             }
         }, prim);
     }
+    std::cout<< std::endl;
 
     // 💡 Indispensable : notifier VTK que les points ont bougé
     pts->Modified();
