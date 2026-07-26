@@ -86,7 +86,7 @@ void Vtk3d_Sketch::rafraichirAffichageEsquisseInteractif() {
                 */
 
 
-
+                // attention faire une fonction pour ici et plus bas pour avoir exactement le meme code !
                 for (int i = 0; i <= 64; ++i) {
                     double angle = 2.0 * M_PI * i / 64;
 
