@@ -329,6 +329,12 @@ void Tool_RectCenterDraw::AddCenterRectangleToOp(const gp_Pnt2d& li_PA, const gp
     auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
     if (!sketchParams) return;
 
+    sketchParams->addLine(li_PA, li_PB);
+    sketchParams->addLine(li_PB, li_PC);
+    sketchParams->addLine(li_PC, li_PD);
+    sketchParams->addLine(li_PD, li_PA);
+
+    /*
     SketchLine L_AB(li_PA, li_PB);
     L_AB.start.Update3D(m_Parent->DocumentRefs.GetSketchPlane() );
     L_AB.stop.Update3D(m_Parent->DocumentRefs.GetSketchPlane() );
@@ -350,6 +356,7 @@ void Tool_RectCenterDraw::AddCenterRectangleToOp(const gp_Pnt2d& li_PA, const gp
     sketchParams->addPrimitive( L_BC );
     sketchParams->addPrimitive( L_CD );
     sketchParams->addPrimitive( L_DA );
+    */
 }
 
 

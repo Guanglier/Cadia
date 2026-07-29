@@ -67,8 +67,8 @@ void Tool_Dimensions::Cotation_Configure(int li_PrimId, int li_PrimSubElmt) {
                     DimensionEngine::DistanceDescriptor  DistDesc;
                     // On initialise notre descripteur temporaire de l'outil
                     //istDesc. = 0; // Sera assigné par le registre lors du clic final
-                    DistDesc.pntStart = concretePrim.start.cache_p3d;
-                    DistDesc.pntStop = concretePrim.stop.cache_p3d;
+                    DistDesc.pntStart = sketchParams->GetPointById( concretePrim.startPointId).cache_p3d;
+                    DistDesc.pntStop = sketchParams->GetPointById( concretePrim.stopPointId).cache_p3d;
                     DistDesc.targetPrimitiveId1 = concretePrim.id;
                     DistDesc.mode = DimensionEngine::DimMode::PointToPoint;
                     DistDesc.offset = 0.0;
@@ -81,7 +81,7 @@ void Tool_Dimensions::Cotation_Configure(int li_PrimId, int li_PrimSubElmt) {
                 if (concretePrim.id == li_PrimId) {
                     DimensionEngine::RadialDescriptor  DistDescRadial;
                     DistDescRadial.targetPrimitiveId = li_PrimId;
-                    DistDescRadial.center = concretePrim.center.cache_p3d;
+                    DistDescRadial.center = sketchParams->GetPointById( concretePrim.centerPointId).cache_p3d;
                     DistDescRadial.diameter = concretePrim.radius;
                     DistDescRadial.mode = DimensionEngine::RadialMode::Diameter;
                     m_currentDimensionDescriptor.data = DistDescRadial;

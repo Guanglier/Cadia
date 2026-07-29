@@ -63,17 +63,19 @@ void Vtk3d_Sketch::rafraichirAffichageEsquisseInteractif() {
         std::visit([&](auto& concretePrim) {
             using T = std::decay_t<decltype(concretePrim)>;
             if constexpr (std::is_same_v<T, SketchLine>) {
+                SketchPoint pstart = sketchParams->GetPointById( concretePrim.startPointId );
+                SketchPoint pstop = sketchParams->GetPointById( concretePrim.startPointId );
                 // Point de départ
                 if (ptIndex < pts->GetNumberOfPoints()) {
                     pts->SetPoint(ptIndex++,
-                                  concretePrim.start.cache_p3d.X(),
-                                  concretePrim.start.cache_p3d.Y(),
-                                  concretePrim.start.cache_p3d.Z()
+                                  pstart.cache_p3d.X(),
+                                  pstart.cache_p3d.Y(),
+                                  pstart.cache_p3d.Z()
                                   );
                 }
                 // Point d'arrivée
                 if (ptIndex < pts->GetNumberOfPoints()) {
-                    pts->SetPoint(ptIndex++, concretePrim.stop.cache_p3d.X(), concretePrim.stop.cache_p3d.Y(), concretePrim.stop.cache_p3d.Z() );
+                    pts->SetPoint(ptIndex++, pstop.cache_p3d.X(), pstop.cache_p3d.Y(), pstop.cache_p3d.Z() );
                 }
             }
             else if constexpr (std::is_same_v<T, SketchCircle>) {
@@ -218,21 +220,25 @@ void Vtk3d_Sketch::rafraichirPoignees(SketchParams* sketchParams) {
 			
 			// Si la primitive est un segment de ligne (SketchLine)
             if constexpr (std::is_same_v<T, SketchLine>) {
-				
+
+                SketchPoint pstart = sketchParams->GetPointById( concretePrim.startPointId );
+                SketchPoint pstop = sketchParams->GetPointById( concretePrim.startPointId );
+
 				// Point de départ de la ligne
-                pointsHandles->InsertNextPoint(concretePrim.start.cache_p3d.X(), concretePrim.start.cache_p3d.Y(), concretePrim.start.cache_p3d.Z());
+                pointsHandles->InsertNextPoint(pstart.cache_p3d.X(), pstart.cache_p3d.Y(), pstart.cache_p3d.Z());
                 edgeIdsHandles->InsertNextValue(static_cast<int>(concretePrim.id));
                 ArrayTypeHandle->InsertNextValue(static_cast<int>(1));
 
 				// Point d'arrivée de la ligne
-                pointsHandles->InsertNextPoint(concretePrim.stop.cache_p3d.X(), concretePrim.stop.cache_p3d.Y(), concretePrim.stop.cache_p3d.Z());
+                pointsHandles->InsertNextPoint(pstop.cache_p3d.X(), pstop.cache_p3d.Y(), pstop.cache_p3d.Z());
                 edgeIdsHandles->InsertNextValue(static_cast<int>(concretePrim.id));
                 ArrayTypeHandle->InsertNextValue(static_cast<int>(2));
             }
 			
             // pour un cercle
             if constexpr (std::is_same_v<T, SketchCircle>) {
-                pointsHandles->InsertNextPoint(concretePrim.center.cache_p3d.X(), concretePrim.center.cache_p3d.Y(), concretePrim.center.cache_p3d.Z());
+                SketchPoint pcenter = sketchParams->GetPointById( concretePrim.centerPointId );
+                pointsHandles->InsertNextPoint(pcenter.cache_p3d.X(), pcenter.cache_p3d.Y(), pcenter.cache_p3d.Z());
                 edgeIdsHandles->InsertNextValue(static_cast<int>(concretePrim.id));
                 ArrayTypeHandle->InsertNextValue(static_cast<int>(3));
             }
@@ -318,8 +324,10 @@ void Vtk3d_Sketch::rafraichirGeometrie(SketchParams* sketchParams) {
             using T = std::decay_t<decltype(concretePrim)>;
 
             if constexpr (std::is_same_v<T, SketchLine>) {
-                pointsGeom->InsertNextPoint(concretePrim.start.cache_p3d.X(), concretePrim.start.cache_p3d.Y(), concretePrim.start.cache_p3d.Z());
-                pointsGeom->InsertNextPoint(concretePrim.stop.cache_p3d.X(), concretePrim.stop.cache_p3d.Y(), concretePrim.stop.cache_p3d.Z());
+                SketchPoint PntStart = sketchParams->GetPointById(concretePrim.startPointId);
+                SketchPoint PntStop = sketchParams->GetPointById(concretePrim.stopPointId);
+                pointsGeom->InsertNextPoint(PntStart.cache_p3d.X(), PntStart.cache_p3d.Y(), PntStart.cache_p3d.Z());
+                pointsGeom->InsertNextPoint(PntStop.cache_p3d.X(), PntStop.cache_p3d.Y(), PntStop.cache_p3d.Z());
 
                 auto vtkLineObj = vtkSmartPointer<vtkLine>::New();
                 vtkLineObj->GetPointIds()->SetId(0, ptCounterGeom);
@@ -469,9 +477,11 @@ void Vtk3d_Sketch::rafraichirContraintesGeometriques(SketchParams* sketchParams)
 
         if (auto* line = std::get_if<SketchLine>(primitiveVariant)) {
             double glyphPos[3];
-            glyphPos[0] = (line->start.cache_p3d.X() + line->stop.cache_p3d.X()) / 2.0;
-            glyphPos[1] = (line->start.cache_p3d.Y() + line->stop.cache_p3d.Y()) / 2.0;
-            glyphPos[2] = (line->start.cache_p3d.Z() + line->stop.cache_p3d.Z()) / 2.0;
+            SketchPoint Line1pnt_start = sketchParams->GetPointById(line->startPointId);
+            SketchPoint Line1pnt_stop = sketchParams->GetPointById(line->stopPointId);
+            glyphPos[0] = (Line1pnt_start.cache_p3d.X() + Line1pnt_stop.cache_p3d.X()) / 2.0;
+            glyphPos[1] = (Line1pnt_start.cache_p3d.Y() + Line1pnt_stop.cache_p3d.Y()) / 2.0;
+            glyphPos[2] = (Line1pnt_start.cache_p3d.Z() + Line1pnt_stop.cache_p3d.Z()) / 2.0;
 
             if (constraint.type == ConstraintType::Horizontal) {
                 double glyphPosBas[3] = { glyphPos[0], glyphPos[1] - 1.0, glyphPos[2] };
@@ -493,6 +503,8 @@ void Vtk3d_Sketch::rafraichirContraintesGeometriques(SketchParams* sketchParams)
                     if (auto* line2 = std::get_if<SketchLine>(primitiveVariant2)) {
                         double interX = 0, interY = 0, interZ = 0;
                         bool hasIntersection = false;
+                        SketchPoint Line2Pnt_start = sketchParams->GetPointById(line2->startPointId);
+                        SketchPoint Line2Pnt_stop = sketchParams->GetPointById(line2->stopPointId);
 
                         const double eps = 1e-6;
                         auto ptsMatch = [&](const auto& p1, const auto& p2) {
@@ -500,16 +512,16 @@ void Vtk3d_Sketch::rafraichirContraintesGeometriques(SketchParams* sketchParams)
                                    std::abs(p1.cache_p3d.Y() - p2.cache_p3d.Y()) < eps;
                         };
 
-                        if (ptsMatch(line->start, line2->start) || ptsMatch(line->start, line2->stop)) {
-                            interX = line->start.cache_p3d.X();
-                            interY = line->start.cache_p3d.Y();
-                            interZ = line->start.cache_p3d.Z();
+                        if (ptsMatch(Line1pnt_start, Line2Pnt_start) || ptsMatch(Line1pnt_start, Line2Pnt_stop)) {
+                            interX = Line1pnt_start.cache_p3d.X();
+                            interY = Line1pnt_start.cache_p3d.Y();
+                            interZ = Line1pnt_start.cache_p3d.Z();
                             hasIntersection = true;
                         }
-                        else if (ptsMatch(line->stop, line2->start) || ptsMatch(line->stop, line2->stop)) {
-                            interX = line->stop.cache_p3d.X();
-                            interY = line->stop.cache_p3d.Y();
-                            interZ = line->stop.cache_p3d.Z();
+                        else if (ptsMatch(Line1pnt_stop, Line2Pnt_start) || ptsMatch(Line1pnt_stop, Line2Pnt_stop)) {
+                            interX = Line1pnt_stop.cache_p3d.X();
+                            interY = Line1pnt_stop.cache_p3d.Y();
+                            interZ = Line1pnt_stop.cache_p3d.Z();
                             hasIntersection = true;
                         }
 

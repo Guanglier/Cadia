@@ -73,7 +73,8 @@ struct SketchConstraint : public Identifiable {
 // ==========================================
 // 2. PRIMITIVES DE L'ESQUISSE
 // ==========================================
-struct SketchPoint {
+struct SketchPoint : public Identifiable{
+    uint64_t id;
     gp_Pnt2d p2d; // position 2D dans l'esquisse
     mutable gp_Pnt   cache_p3d; // position 3D dans l'espace de la pièce
     SketchPoint(const gp_Pnt2d& point2D) : p2d(point2D), cache_p3d(0, 0, 0) {}
@@ -89,26 +90,39 @@ struct SketchPoint {
 };
 
 struct SketchLine : public Identifiable {
-    SketchPoint start;
-    SketchPoint stop;
-    SketchLine(const gp_Pnt2d& start2D, const gp_Pnt2d& end2D) : start(start2D), stop(end2D) { }
+    uint64_t startPointId = 0; // ID du point de départ dans m_points
+    uint64_t stopPointId = 0;  // ID du point de fin dans m_points
+    SketchLine(const uint64_t startId, const uint64_t endId)
+        : startPointId(startId), stopPointId(endId) {}
+    bool    b_IsRef = false;
 };
 
 struct SketchCircle : public Identifiable {
+    uint64_t centerPointId = 0; // ID du point centre dans m_points
     SketchPoint center;
     double radius;
     SketchCircle(gp_Pnt2d c, double r) : center(c), radius(r) {
     }
+    bool    b_IsRef = false;
 };
 
+
 struct SketchArc : public Identifiable {
+    uint64_t startPointId = 0;
+    uint64_t midPointId = 0;
+    uint64_t endPointId = 0;
     gp_Pnt startPoint;
     gp_Pnt midPoint;
     gp_Pnt endPoint;
     SketchArc(gp_Pnt start, gp_Pnt mid, gp_Pnt end) : startPoint(start), midPoint(mid), endPoint(end) {}
+    bool    b_IsRef = false;
 };
 
+
 using SketchPrimitive = std::variant<SketchLine, SketchCircle, SketchArc>;
+
+//using SketchPrimitive = std::variant<SketchLine, SketchCircle>;
+
 
 // ==========================================
 // 3. LE GESTIONNAIRE D'ID UNIQUE (TEMPLATE)
@@ -140,7 +154,20 @@ public:
         }
         return nullptr; // Non trouvé
     }
-
+    const T* find(uint64_t id) const {
+        for (const auto& item : m_items) {
+            uint64_t itemId = 0;
+            if constexpr (std::is_same_v<T, SketchPrimitive>) {
+                itemId = std::visit([](const auto& arg) { return arg.id; }, item);
+            } else {
+                itemId = item.id;
+            }
+            if (itemId == id) {
+                return &item;
+            }
+        }
+        return nullptr;
+    }
     uint64_t add(T item) {
         uint64_t assignedId = m_nextId++;
         if constexpr (std::is_same_v<T, SketchPrimitive>) {
@@ -191,7 +218,7 @@ struct SketchParams {
 private:
     IdRegistry<SketchPrimitive>     m_primitiveRegistry;
     IdRegistry<SketchConstraint>    m_constraintRegistry;
-
+    IdRegistry<SketchPoint>         m_points;
 
     std::vector<ContoursElement> PrepareEnginePrimitives() const ;
 
@@ -201,17 +228,68 @@ public:
     explicit SketchParams(const gp_Ax3& plane) : m_sketchPlane(plane) {}
 
     uint64_t referenceCoordinateSystemId = 0;
-    //ReferencePlane targetPlane = ReferencePlane::XY;
     gp_Ax3  m_sketchPlane;
 
     const std::vector<SketchPrimitive>& getPrimitives() const { return m_primitiveRegistry.getItems(); }
     const std::vector<SketchConstraint>& getConstraints() const { return m_constraintRegistry.getItems(); }
+    const std::vector<SketchPoint>& getPoints()const { return m_points.getItems(); }
 
     uint64_t    addPrimitive(SketchPrimitive primitive) { return m_primitiveRegistry.add(std::move(primitive)); }
     //uint64_t    addConstraint(SketchConstraint constraint) { return m_constraintRegistry.add(std::move(constraint)); }
     uint64_t    addConstraint(SketchConstraint constraint);
     void        loadPrimitive(SketchPrimitive primitive) { m_primitiveRegistry.load(std::move(primitive)); }
     void        loadConstraint(SketchConstraint constraint) { m_constraintRegistry.load(std::move(constraint)); }
+
+    uint64_t        addLine ( gp_Pnt2d li_PntStart2d, gp_Pnt2d li_PntStop2d ){
+        uint64_t u64_IdStart = addPoint ( li_PntStart2d );
+        uint64_t u64_IdStop = addPoint ( li_PntStop2d );
+        SketchLine  line( u64_IdStart, u64_IdStop );
+        line.b_IsRef = false;
+        return addPrimitive ( line);
+    }
+    uint64_t  addCircle ( gp_Pnt2d li_PntCenter2d, double radius){
+        uint64_t u64_IdCenter = addPoint ( li_PntCenter2d );
+        SketchCircle  circle( li_PntCenter2d, radius );
+        circle.centerPointId = u64_IdCenter;
+        return addPrimitive(circle);
+    }
+
+
+    bool        PointExists ( const gp_Pnt2d& li_Pnt2D, uint64_t &lo_PointId){
+        const auto& items = m_points.getItems();
+
+        double tolerance = 1e-6;
+        auto it = std::find_if(items.begin(), items.end(), [&](const SketchPoint& point) {
+            return li_Pnt2D.IsEqual( point.p2d, tolerance);
+        });
+        if (it != items.end()) {
+            lo_PointId = it->id; // Récupération de l'ID associé
+            return true;         // Point trouvé
+        }
+        return false; // Point non trouvé
+    }
+
+    uint64_t    addPoint (const gp_Pnt2d& li_Pnt2D) {
+        uint64_t lid;
+        if ( false == PointExists(li_Pnt2D,  lid)){
+            SketchPoint l_point(li_Pnt2D);
+            return m_points.add(l_point);
+        }else{
+            return lid;
+        }
+    }
+    bool removePoint( uint64_t li_id){
+        m_points.remove( li_id );
+    }
+
+    SketchPoint& GetPointById ( uint64_t li_id){
+        SketchPoint* pt = m_points.findMutable(li_id);
+        if (pt != nullptr) {
+            return *pt; // On déréférence pour renvoyer une référence SketchPoint&
+        }
+        // 2. Gestion d'erreur si l'ID n'existe pas (par exemple, lancer une exception)
+        throw std::runtime_error("Point ID non trouvé dans le registre !");
+    }
 
     SketchPrimitive* GetPrimitiveMutable(uint64_t id) {    return m_primitiveRegistry.findMutable(id); }
 
@@ -228,6 +306,10 @@ public:
 
     // Fonction de synchronisation 2D -> 3D
     void recomputeGeometry3D() const {
+        for (const auto& point : getPoints()) {
+            point.Update3D(m_sketchPlane);
+        }
+        /*
         // On parcourt le registre des primitives
         for (const auto& primitive : getPrimitives()) {
             // Utilisation de std::visit pour modifier les caches 3D des primitives mutables
@@ -244,6 +326,7 @@ public:
                 }
             }, const_cast<SketchPrimitive&>(primitive)); // Le const_cast permet de mettre à jour le cache interne d'affichage
         }
+        */
     }
 
     void removeConstraint(uint64_t id) { m_constraintRegistry.remove(id); }
@@ -279,11 +362,6 @@ struct ExtrudeParams {
 struct CoordinateSystem {
     gp_Ax2 AxisSystem;
     TopoDS_Shape evaluate(const CAD_Document& doc) const;
-    /*
-    TopoDS_Shape evaluate(const CAD_Document& doc) const {
-        return TopoDS_Shape();
-    }
-    */
 };
 
 using OperationParams = std::variant<SketchParams, ExtrudeParams, CoordinateSystem, BooleanParams>;

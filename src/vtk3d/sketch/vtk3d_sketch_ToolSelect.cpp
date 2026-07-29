@@ -75,22 +75,25 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
             case DragMode::PointUnique:{
                 if constexpr ( std::is_same_v<T,SketchLine>){
                     if (DynamicDrag.m_activeHandleType == 1) {
-                        curr_prim.start.setPoint ( mousePoint2D, &m_Parent->DocumentRefs.GetSketchPlane() );
+                        SketchPoint&  sp = sketchParams->GetPointById(curr_prim.startPointId);
+                        sp.setPoint  ( mousePoint2D, &m_Parent->DocumentRefs.GetSketchPlane() );
                     } else if (DynamicDrag.m_activeHandleType == 2) {
-                        curr_prim.stop.setPoint ( mousePoint2D, &m_Parent->DocumentRefs.GetSketchPlane() );
+                        SketchPoint&  sp = sketchParams->GetPointById(curr_prim.stopPointId);
+                        sp.setPoint  ( mousePoint2D, &m_Parent->DocumentRefs.GetSketchPlane() );
                     }
                 }else if constexpr ( std::is_same_v<T,SketchCircle>){
                     if (DynamicDrag.m_activeHandleType == 3) {
-                        curr_prim.center.setPoint(mousePoint2D, &m_Parent->DocumentRefs.GetSketchPlane());
+                        SketchPoint&  sp = sketchParams->GetPointById(curr_prim.centerPointId);
+                        sp.setPoint  ( mousePoint2D, &m_Parent->DocumentRefs.GetSketchPlane() );
                     }else{
                         LOG_ERROR << " Tool_Select::gererMouseMove : if constexpr ( std::is_same_v<T,SketchCircle> DEFAULT case" << std::endl;
                     }
                 }
                 // On met à jour le solveur avec les nouvelles coordonnées X et Y de la souris
-                 m_Parent->m_SolverSession.UpdatePoint( m_Parent->m_SolverSession.activeVarIndexX );
-                 m_Parent->m_SolverSession.UpdatePoint( m_Parent->m_SolverSession.activeVarIndexY );
+                //m_Parent->m_SolverSession.UpdatePoint( m_Parent->m_SolverSession.activeVarIndexX );
+                //m_Parent->m_SolverSession.UpdatePoint( m_Parent->m_SolverSession.activeVarIndexY );
 
-                m_Parent->m_SolverSession.Step(*sketchParams);
+                //m_Parent->m_SolverSession.Step(*sketchParams);
                 m_Parent->rafraichirPoignees(sketchParams);
                 m_Parent->rafraichirAffichageEsquisseInteractif();
                 //m_Parent->rafraichirAffichageEsquisse();      // trop lent remplacé par les deux du dessus
@@ -105,12 +108,14 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
                 if constexpr ( std::is_same_v<T,SketchLine>){
                     gp_Pnt2d PntStart  = mousePoint2D.Translated(DynamicDrag.PrimToMoseVects.line.start );
                     gp_Pnt2d PntStop  = mousePoint2D.Translated(DynamicDrag.PrimToMoseVects.line.stop );
-                    curr_prim.start.setPoint ( PntStart, &m_Parent->DocumentRefs.GetSketchPlane() );
-                    curr_prim.stop.setPoint (PntStop, &m_Parent->DocumentRefs.GetSketchPlane() );
+                    SketchPoint&  sp_start = sketchParams->GetPointById(curr_prim.startPointId);
+                    SketchPoint&  sp_stop = sketchParams->GetPointById(curr_prim.stopPointId);
+                    sp_start.setPoint ( PntStart, &m_Parent->DocumentRefs.GetSketchPlane() );
+                    sp_stop.setPoint (PntStop, &m_Parent->DocumentRefs.GetSketchPlane() );
 
                     // On applique le delta sur tous les indices de la primitive entière
                     for (int idx : m_Parent->m_SolverSession.activeVarIndicesAll) {
-                        m_Parent->m_SolverSession.UpdatePoint( idx );
+                        //m_Parent->m_SolverSession.UpdatePoint( idx );
                     }
 
                 }else if constexpr ( std::is_same_v<T,SketchCircle>){
@@ -119,7 +124,7 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
 
                     // On applique le delta sur tous les indices de la primitive entière
                     for (int idx : m_Parent->m_SolverSession.activeVarIndicesAll) {
-                        m_Parent->m_SolverSession.UpdatePoint( idx );
+                        //m_Parent->m_SolverSession.UpdatePoint( idx );
                     }
 
                     //std::cout<<" -> " << PntCenter.X() << " " << PntCenter.Y() << " " << std::endl;
@@ -131,7 +136,7 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
                 DynamicDrag.m_lastMousePos2D = mousePoint2D;
 
                 // On lance le solveur pour propoger/maintenir les contraintes si nécessaire, puis on rafraîchit
-                m_Parent->m_SolverSession.Step(*sketchParams);
+                //m_Parent->m_SolverSession.Step(*sketchParams);
 
                 m_Parent->rafraichirPoignees(sketchParams);
                 m_Parent->rafraichirAffichageEsquisseInteractif();
@@ -370,13 +375,15 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
                     return false;
                 }
 
+
                 std::visit ([&](auto& ConcretePrim) {
                     using T = std::decay_t<decltype(ConcretePrim)>;
                     if constexpr( std::is_same_v<T,SketchLine>){
-                        DynamicDrag.PrimToMoseVects.line.start = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , ConcretePrim.start.p2d);
-                        DynamicDrag.PrimToMoseVects.line.stop = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , ConcretePrim.stop.p2d );
+
+                        DynamicDrag.PrimToMoseVects.line.start = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , sketchParams->GetPointById( ConcretePrim.startPointId).p2d );
+                        DynamicDrag.PrimToMoseVects.line.stop = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , sketchParams->GetPointById( ConcretePrim.stopPointId).p2d );
                     }else if constexpr( std::is_same_v<T,SketchCircle>){
-                        DynamicDrag.PrimToMoseVects.circle.center = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , ConcretePrim.center.p2d);
+                        DynamicDrag.PrimToMoseVects.circle.center = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , sketchParams->GetPointById( ConcretePrim.centerPointId).p2d );
                     }else if constexpr( std::is_same_v<T,SketchArc>){
                         LOG_ERROR << "456 " << std::endl;
                     }else{

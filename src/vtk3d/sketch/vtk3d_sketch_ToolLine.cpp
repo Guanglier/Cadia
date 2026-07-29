@@ -236,10 +236,11 @@ void Tool_LineDraw::AddLineToOp (gp_Pnt2d& StartPoint2D, gp_Pnt2d& StopPoint2D){
         std::cerr << "[ERROR] AddLineToOp: L'opération cible n'est pas un SketchParams.\n";
         return;
     }
-    SketchLine  Line(StartPoint2D, StopPoint2D);
-    Line.start.Update3D( m_Parent->DocumentRefs.GetSketchPlane() );
-    Line.stop.Update3D( m_Parent->DocumentRefs.GetSketchPlane() );
-    uint64_t l1_id = sketchParams->addPrimitive( Line );
+    sketchParams->addLine(StartPoint2D, StopPoint2D);
+    //SketchLine  Line(StartPoint2D, StopPoint2D);
+    //Line.start.Update3D( m_Parent->DocumentRefs.GetSketchPlane() );
+    //Line.stop.Update3D( m_Parent->DocumentRefs.GetSketchPlane() );
+    //uint64_t l1_id = sketchParams->addPrimitive( Line );
 }
 
 

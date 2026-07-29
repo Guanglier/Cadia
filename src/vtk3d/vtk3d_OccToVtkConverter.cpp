@@ -131,7 +131,7 @@ void Vtk3d_Converter::extraireAretesOccVersVtk(const TopoDS_Shape& shape, vtkPoi
     }
 }
 
-
+/*
 void Vtk3d_Converter::convertirSketchPrimitivesVersVtk(const std::vector<SketchPrimitive>& primitives,
                                                        vtkPoints* vtkPoints,
                                                        vtkCellArray* vtkLines,
@@ -141,6 +141,10 @@ void Vtk3d_Converter::convertirSketchPrimitivesVersVtk(const std::vector<SketchP
         [&](const SketchLine& line) {
             vtkIdType p1 = vtkPoints->InsertNextPoint(line.start.cache_p3d.X(), line.start.cache_p3d.Y(), line.start.cache_p3d.Z());
             vtkIdType p2 = vtkPoints->InsertNextPoint(line.stop.cache_p3d.X(), line.stop.cache_p3d.Y(), line.stop.cache_p3d.Z());
+
+            SketchPoint pntstart = GetPointById ( line.startPointId );
+            SketchPoint pntstop = GetPointById ( line.stopPointId );
+
 
             vtkLines->InsertNextCell(2);
             vtkLines->InsertCellPoint(p1);
@@ -160,7 +164,7 @@ void Vtk3d_Converter::convertirSketchPrimitivesVersVtk(const std::vector<SketchP
         std::visit(visitor, prim);
     }
 }
-
+*/
 
 vtkSmartPointer<vtkPolyData> Vtk3d_Converter::creerWireframePolyData(const TopoDS_Shape& shape) {
     auto points = vtkSmartPointer<vtkPoints>::New();

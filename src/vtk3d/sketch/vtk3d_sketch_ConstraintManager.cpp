@@ -131,7 +131,9 @@ void SketchConstraintManager::appliqueContraintes2D(
     //bool alignValide = false;
     //std::cout<<"SketchConstraintManager::appliqueContraintes2D " << li_P1_2D.x << "," << li_P1_2D.y <<" " << std::endl;
 
-    // 3. Gestion logique des aides de tracé
+    // 3. Gestion logique des aides de tracé{
+    li_P2_3D = m_Parent->convertir2DEn3D(li_P2_2D);
+
     if (snapPointValide || alignValide) {
         m_ActorSnapPoint->SetPosition(li_P2_3D.X(), li_P2_3D.Y(), li_P2_3D.Z());
         ajusterEchelleCarreSnap();
@@ -183,33 +185,36 @@ bool SketchConstraintManager::snapToExistingPoints(gp_Pnt2d& plio_Ptr2D, gp_Pnt&
             using T = std::decay_t<decltype(concretePrim)>;
             if constexpr (std::is_same_v<T, SketchLine>) {
 
+                SketchPoint& cstart = sketchParams->GetPointById(concretePrim.startPointId);
+                SketchPoint& cstop = sketchParams->GetPointById(concretePrim.stopPointId);
+
                 // TO DO : supprimer les std::hypot qui consomment du temps de calcul pour prendre une formule plus simple
-                double distStart = std::hypot(plio_Ptr2D.X() - concretePrim.start.p2d.X(), plio_Ptr2D.Y() - concretePrim.start.p2d.Y());
+                double distStart = std::hypot(plio_Ptr2D.X() - cstart.p2d.X(), plio_Ptr2D.Y() - cstart.p2d.Y());
                 if (distStart < plusProcheDistance) {
                     plusProcheDistance = distStart;
                     aAimante = true;
-                    v2d_SnappedPoint2D = concretePrim.start.p2d;
-                    v2d_SnappedPoint3D = concretePrim.start.cache_p3d;
+                    v2d_SnappedPoint2D = cstart.p2d;
+                    v2d_SnappedPoint3D = cstart.cache_p3d;
                 }
-                double distStop = std::hypot(plio_Ptr2D.X() - concretePrim.stop.p2d.X(), plio_Ptr2D.Y() - concretePrim.stop.p2d.Y());
+                double distStop = std::hypot(plio_Ptr2D.X() - cstop.p2d.X(), plio_Ptr2D.Y() - cstop.p2d.Y());
                 if (distStop < plusProcheDistance) {
                     plusProcheDistance = distStop;
                     aAimante = true;
-                    v2d_SnappedPoint2D = concretePrim.stop.p2d;
-                    v2d_SnappedPoint3D = concretePrim.stop.cache_p3d;
+                    v2d_SnappedPoint2D = cstop.p2d;
+                    v2d_SnappedPoint3D = cstop.cache_p3d;
                 }
 
                 double distMidle = std::hypot(
-                    plio_Ptr2D.X() - ((concretePrim.stop.p2d.X()+concretePrim.start.p2d.X() )/2) ,
-                    plio_Ptr2D.Y() - ((concretePrim.stop.p2d.Y()+concretePrim.start.p2d.Y() )/2 ) );
+                    plio_Ptr2D.X() - ((cstop.p2d.X()+cstart.p2d.X() )/2) ,
+                    plio_Ptr2D.Y() - ((cstop.p2d.Y()+cstart.p2d.Y() )/2 ) );
                 if (distMidle < plusProcheDistance) {
                     plusProcheDistance = distMidle;
-                    v2d_SnappedPoint2D.SetX ( ((concretePrim.stop.p2d.X()+concretePrim.start.p2d.X() )/2 ) );
-                    v2d_SnappedPoint2D.SetY ( ((concretePrim.stop.p2d.Y()+concretePrim.start.p2d.Y() )/2 ) );
+                    v2d_SnappedPoint2D.SetX ( ((cstop.p2d.X()+cstart.p2d.X() )/2 ) );
+                    v2d_SnappedPoint2D.SetY ( ((cstop.p2d.Y()+cstart.p2d.Y() )/2 ) );
 
-                    v2d_SnappedPoint3D.SetX ( ((concretePrim.stop.cache_p3d.X()+concretePrim.start.cache_p3d.X() )/2 ) );
-                    v2d_SnappedPoint3D.SetY ( ((concretePrim.stop.cache_p3d.Y()+concretePrim.start.cache_p3d.Y() )/2 ) );
-                    v2d_SnappedPoint3D.SetZ ( ((concretePrim.stop.cache_p3d.Z()+concretePrim.start.cache_p3d.Z() )/2 ) );
+                    v2d_SnappedPoint3D.SetX ( ((cstop.cache_p3d.X()+cstart.cache_p3d.X() )/2 ) );
+                    v2d_SnappedPoint3D.SetY ( ((cstop.cache_p3d.Y()+cstart.cache_p3d.Y() )/2 ) );
+                    v2d_SnappedPoint3D.SetZ ( ((cstop.cache_p3d.Z()+cstart.cache_p3d.Z() )/2 ) );
                     aAimante = true;
                 }
                 // TO DO : gérer le cas ou on voit le point milieu
@@ -279,15 +284,17 @@ bool SketchConstraintManager::alignWithExistingPoints(gp_Pnt2d& lio_Point2D, gp_
             using T = std::decay_t<decltype(concretePrim)>;
             if constexpr (std::is_same_v<T, SketchLine>)
             {
-                evaluerPoint( concretePrim.start.p2d, concretePrim.start.cache_p3d );
-                evaluerPoint( concretePrim.stop.p2d , concretePrim.stop.cache_p3d );
-                PtnConcreteMidle2D.SetX(   (concretePrim.start.p2d.X() + concretePrim.stop.p2d.X()) / 2.0 );
-                PtnConcreteMidle2D.SetY(   (concretePrim.start.p2d.Y() + concretePrim.stop.p2d.Y()) / 2.0 );
+                SketchPoint& cstart = sketchParams->GetPointById(concretePrim.startPointId);
+                SketchPoint& cstop = sketchParams->GetPointById(concretePrim.stopPointId);
+                evaluerPoint( cstart.p2d, cstart.cache_p3d );
+                evaluerPoint( cstop.p2d , cstop.cache_p3d );
+                PtnConcreteMidle2D.SetX(   (cstart.p2d.X() + cstop.p2d.X()) / 2.0 );
+                PtnConcreteMidle2D.SetY(   (cstart.p2d.Y() + cstop.p2d.Y()) / 2.0 );
 
-                PtnConcreteMidle3D.SetX(  (concretePrim.start.cache_p3d.X() + concretePrim.stop.cache_p3d.X() ) / 2.0 ) ;
-                PtnConcreteMidle3D.SetY(  (concretePrim.start.cache_p3d.Y() + concretePrim.stop.cache_p3d.Y()) / 2.0 ) ;
-                PtnConcreteMidle3D.SetZ(  (concretePrim.start.cache_p3d.Z() + concretePrim.stop.cache_p3d.Z()) / 2.0 ) ;
-                //std::cout<< " x="<< concretePrim.start.p2d.X() << " y="<< concretePrim.start.p2d.Y() << "  ";
+                PtnConcreteMidle3D.SetX(  (cstart.cache_p3d.X() + cstop.cache_p3d.X() ) / 2.0 ) ;
+                PtnConcreteMidle3D.SetY(  (cstart.cache_p3d.Y() + cstop.cache_p3d.Y()) / 2.0 ) ;
+                PtnConcreteMidle3D.SetZ(  (cstart.cache_p3d.Z() + cstop.cache_p3d.Z()) / 2.0 ) ;
+                //std::cout<< " x="<< cstart.p2d.X() << " y="<< cstart.p2d.Y() << "  ";
                 evaluerPoint( PtnConcreteMidle2D , PtnConcreteMidle3D );
             }
         }, primitive);

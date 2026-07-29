@@ -89,7 +89,7 @@ gp_Pnt2d* Solver2D_Mapper::getPointPointerFromRef(SketchParams& sketch, const Ge
     }
 
     gp_Pnt2d* targetPnt = nullptr;
-
+/*
     std::visit([&](auto& concretePrim) {
         using T = std::decay_t<decltype(concretePrim)>;
 
@@ -110,7 +110,7 @@ gp_Pnt2d* Solver2D_Mapper::getPointPointerFromRef(SketchParams& sketch, const Ge
             LOG_ERROR << "ERROR else if constexpr (std::is_same_v<T, SketchCircle>) VIDE " << std::endl;
         }
     }, *prim);
-
+*/
     return targetPnt;
 }
 
@@ -177,7 +177,7 @@ void SolverInteractiveSession::Initialize(SketchParams& sketch) {
     variablePointers.clear();
     std::unordered_map<void*, int> pointToXIndex;
     std::unordered_map<void*, int> circleToRIndex;
-
+/*
     // --- Remplissage des variables ---
     for (const auto& primConst : sketch.getPrimitives()) {
         SketchPrimitive& prim = const_cast<SketchPrimitive&>(primConst);
@@ -364,7 +364,7 @@ void SolverInteractiveSession::Initialize(SketchParams& sketch) {
         default: break;
         }
     }
-
+*/
     isInitialized = true;
 }
 
@@ -540,7 +540,7 @@ bool SolverOneShot::Solve(SketchParams& sketch, bool enableDiagnostics) {
     } else {
         LOG_DEBUG << "Solver2D_Mapper::PrepareAndSolve(SketchParams& sketch)" << std::endl;
     }
-
+/*
     std::vector<double*> variablePointers;
     std::unordered_map<void*, int> pointToXIndex;
     std::unordered_map<void*, int> circleToRIndex;
@@ -775,7 +775,7 @@ bool SolverOneShot::Solve(SketchParams& sketch, bool enableDiagnostics) {
 
     LOG_INFO << "\tFIN fonction SolverOneShot::Solve" << std::endl;
     sketch.recomputeGeometry3D();
-
+*/
     return true;
 }
 

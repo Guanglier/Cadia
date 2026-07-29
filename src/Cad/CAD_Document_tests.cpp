@@ -94,10 +94,12 @@ void CAD_Document::tst_dump_tree(std::ostream& flux_out ) const {
                             if constexpr (std::is_same_v<PType, SketchLine>) {
                                 //flux_out << subPrefix << "|   " << pBranch << "Ligne [ID: " << prim.id << "]" << std::endl;
                                 flux_out << subPrefix << "|   " << pBranch << "Ligne [ID: " << prim.id << "]" ;
-                                flux_out << " 2D ["<<prim.start.p2d.X() <<";" << prim.start.p2d.Y() << "] -> [" <<prim.stop.p2d.X() <<";" << prim.stop.p2d.Y() << "] ";
-                                flux_out << " 3D : ";
-                                flux_out << " [" << prim.start.cache_p3d.X() << ";" << prim.start.cache_p3d.Y() << ";" << prim.start.cache_p3d.Z() << "] -> " ;
-                                flux_out << " [" << prim.stop.cache_p3d.X() << ";" << prim.stop.cache_p3d.Y() << ";" << prim.stop.cache_p3d.Z() << "] " << std::endl;
+                                //flux_out << " 2D ["<<prim.start.p2d.X() <<";" << prim.start.p2d.Y() << "] -> [" <<prim.stop.p2d.X() <<";" << prim.stop.p2d.Y() << "] ";
+                                //flux_out << " 3D : ";
+                                //flux_out << " [" << prim.start.cache_p3d.X() << ";" << prim.start.cache_p3d.Y() << ";" << prim.start.cache_p3d.Z() << "] -> " ;
+                                //flux_out << " [" << prim.stop.cache_p3d.X() << ";" << prim.stop.cache_p3d.Y() << ";" << prim.stop.cache_p3d.Z() << "] " << std::endl;
+                                flux_out << " Ref strart:" << prim.startPointId << " ref stop=" << prim.stopPointId << std::endl;
+                                //params
                             }
                             else if constexpr (std::is_same_v<PType, SketchCircle>) {
                                 flux_out << subPrefix << "|   " << pBranch << "Cercle [ID: " << prim.id << ", R: " << prim.radius << "]" << std::endl;
@@ -219,20 +221,7 @@ void CAD_Document::tst_add_op_sketch_rect() {
 
 
     sketch.referenceCoordinateSystemId = 0;
-    //sketch.targetPlane = ReferencePlane::XY;
-    //this->reconstruirePlanEsquisse(sketch);
 
-    // 4. On crée nos points géométriques
-    // gp_Pnt p1(-25,-10, 0);
-    // gp_Pnt p2(25,-10, 0);
-    // gp_Pnt p3(25,10, 0);
-    // gp_Pnt p4(-25,10, 0);
-
-
-    //gp_Pnt2d p1 (-25, -10);
-    //gp_Pnt2d p2 (25, -10);
-    //gp_Pnt2d p3 (25, 10);
-    //gp_Pnt2d p4 (-25, 10);
 
     gp_Pnt2d p1 (-25, -12);
     gp_Pnt2d p2 (-30, 14);
@@ -241,26 +230,14 @@ void CAD_Document::tst_add_op_sketch_rect() {
 
 
     // 5. On ajoute les primitives directement dans l'esquisse du document
-    // Les ID (1, 2, 3, 4) sont générés à la volée sur place
-    uint64_t l1_id = sketch.addPrimitive(SketchLine(p1, p2));       //horizontale
-    uint64_t l2_id = sketch.addPrimitive(SketchLine(p2, p3));       //verticale
-    uint64_t l3_id = sketch.addPrimitive(SketchLine(p3, p4));       // horizontale droite vers gauche
-    uint64_t l4_id = sketch.addPrimitive(SketchLine(p4, p1));       // verticale haut vers bas
-
-
-    gp_Pnt2d p21 (-2.5, -1.0);
-    gp_Pnt2d p22 (2.5, -1.0);
-    gp_Pnt2d p23 (2.5, 1.0);
-    gp_Pnt2d p24 (-2.5, 1.0);
-    sketch.addPrimitive(SketchLine(p21, p22));       //horizontale
-    sketch.addPrimitive(SketchLine(p22, p23));       //verticale
-    sketch.addPrimitive(SketchLine(p23, p24));       // horizontale droite vers gauche
-    sketch.addPrimitive(SketchLine(p24, p21));
+    uint64_t l1_id = sketch.addLine( p1, p2 );  //horizontale
+    uint64_t l2_id = sketch.addLine( p2, p3 );  //verticale
+    uint64_t l3_id = sketch.addLine( p3, p4 );  // horizontale droite vers gauche
+    uint64_t l4_id = sketch.addLine( p4, p1 );  // verticale haut vers bas
 
 
 
-
-
+/*
 
     // 6. On configure et on ajoute la contrainte
     SketchConstraint c1;
@@ -304,7 +281,7 @@ void CAD_Document::tst_add_op_sketch_rect() {
     c4.ref2.primitiveId = l1_id;
     c4.ref2.subElement = ConstraintSubElement::StartPoint;
     sketch.addConstraint(c4);
-
+*/
 
 /*
     SketchConstraint dist1;
@@ -354,6 +331,7 @@ void CAD_Document::tst_add_op_sketch_rect() {
     sketch.addConstraint(dist4);
 */
 
+    /*
     SketchConstraint perp1;
     perp1.type = ConstraintType::Perpendicular;
     perp1.ref1.operationId = opId;
@@ -379,7 +357,7 @@ void CAD_Document::tst_add_op_sketch_rect() {
     hor2.ref1.primitiveId = l4_id;
     hor2.ref1.subElement = ConstraintSubElement::Whole;
     sketch.addConstraint(hor2);
-
+*/
     /*
     SketchConstraint para1;
     para1.type = ConstraintType::Parallel;
@@ -469,7 +447,7 @@ void CAD_Document::tst_add_op_extrude() {
 }
 
 void CAD_Document::tst_add_op_sketch_circle() {
-
+/*
     uint64_t u64_id_repere = 0;
 
     //------------ construction de la sketch -------------------------------
@@ -498,9 +476,11 @@ void CAD_Document::tst_add_op_sketch_circle() {
     // Forcer le calcul géométrique du Wire OpenCASCADE de la Sketch
     this->revaluerOperation(*opDansDoc);
     //sauvegarderOperationEnBrep(opId, "_Sketch_2_local.brep", true);
+    */
 }
 
 void CAD_Document::tst_add_op_extrude_2() {
+    /*
     CadOperation cad_op("Extrusion 02", ExtrudeParams());
     uint64_t opId = this->add_operation(cad_op);
 
@@ -517,10 +497,11 @@ void CAD_Document::tst_add_op_extrude_2() {
 
     revaluerOperation(*opDansDoc);
     //sauvegarderOperationEnBrep(opId, "_Extrude_2_local.brep", true);
+    */
 }
 
 void CAD_Document::tst_add_op_step_2 (){
-
+/*
     //------------ construction de la sketch -------------------------------
     CadOperation cad_op_sketch("Esquisse 03", SketchParams());
     uint64_t opId_sketch_3 = this->add_operation(cad_op_sketch);
@@ -571,6 +552,7 @@ void CAD_Document::tst_add_op_step_2 (){
 
     opDansDoc3->setOpacity(1);
     revaluerOperation(*opDansDoc3);
+    */
 }
 
 

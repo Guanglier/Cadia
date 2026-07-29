@@ -224,6 +224,12 @@ void Tool_RectEdgesDraw::AddRectangleToOp(gp_Pnt2d& p1_2D, gp_Pnt2d& p2_2D) {
     gp_Pnt2d B(p2_2D.X(), p1_2D.Y()); // Coin Supérieur Droit
     gp_Pnt2d D(p1_2D.X(), p2_2D.Y()); // Coin Inférieur Gauche
 
+    sketchParams->addLine(p1_2D, B);
+    sketchParams->addLine(B, p2_2D);
+    sketchParams->addLine(p2_2D, D);
+    sketchParams->addLine(D, p1_2D);
+
+/*
     SketchLine   Line_AB(p1_2D, B);
     SketchLine   Line_BC(B, p2_2D);
     SketchLine   Line_CD(p2_2D, D);
@@ -244,6 +250,7 @@ void Tool_RectEdgesDraw::AddRectangleToOp(gp_Pnt2d& p1_2D, gp_Pnt2d& p2_2D) {
     sketchParams->addPrimitive(  Line_BC );
     sketchParams->addPrimitive(  Line_CD );
     sketchParams->addPrimitive(  Line_DA );
+    */
 }
 
 

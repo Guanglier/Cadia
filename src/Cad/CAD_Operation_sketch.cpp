@@ -49,28 +49,40 @@
 std::vector<ContoursElement> SketchParams::PrepareEnginePrimitives() const {
     std::vector<ContoursElement> enginePrimitives;
 
-    // On parcourt les primitives graphiques stockées dans le Sketch (getPrimitives())
+
+
+    // On parcourt les primitives graphiques stockées dans le Sketch
     for (const auto& primitive : getPrimitives()) {
-        std::visit([&enginePrimitives](auto&& arg) {
+        std::visit([&](auto&& arg) {
             using T = std::decay_t<decltype(arg)>;
 
             if constexpr (std::is_same_v<T, SketchLine>) {
-                ContoursElement elmt;
-                elmt.primitiveId = arg.id;
-                elmt.StartCpy2D = arg.start.p2d;
-                elmt.StopCpy2D = arg.stop.p2d;
-                elmt.type = ContoursPrimitiveType::Line;
-                enginePrimitives.push_back(elmt);
+                // On va chercher les points réels dans le registre m_points via leurs IDs
+                const auto* startPt = m_points.find(arg.startPointId); // ou méthode find constante si elle existe
+                const auto* stopPt  = m_points.find(arg.stopPointId);
+
+                if (startPt && stopPt) {
+                    ContoursElement elmt;
+                    elmt.primitiveId = arg.id;
+                    elmt.StartCpy2D = startPt->p2d; // On récupère la position 2D du point maître
+                    elmt.StopCpy2D  = stopPt->p2d;  // Idem pour la fin
+                    elmt.type = ContoursPrimitiveType::Line;
+                    enginePrimitives.push_back(elmt);
+                }
             }
             else if constexpr (std::is_same_v<T, SketchCircle>) {
-                ContoursElement elmt;
-                elmt.primitiveId = arg.id;
-                elmt.CenterCpy2D = arg.center.p2d;
-                elmt.Radius = arg.radius;
-                elmt.type = ContoursPrimitiveType::Circle;
-                enginePrimitives.push_back(elmt);
+                const auto* centerPt = m_points.find(arg.centerPointId);
+
+                if (centerPt) {
+                    ContoursElement elmt;
+                    elmt.primitiveId = arg.id;
+                    elmt.CenterCpy2D = centerPt->p2d; // Position 2D du centre maître
+                    elmt.Radius = arg.radius;
+                    elmt.type = ContoursPrimitiveType::Circle;
+                    enginePrimitives.push_back(elmt);
+                }
             }
-            // Ajoute ici d'autres types (ex: SketchArc) si nécessaire
+            // Idem pour les arcs si nécessaire...
 
         }, primitive);
     }
