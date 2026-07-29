@@ -44,14 +44,14 @@ void Tool_CircleDraw::activate() {
 
 void Tool_CircleDraw::desactivate() {
     if (m_circleActor) m_Parent->GetView()->getRenderer()->RemoveActor(m_circleActor);
-    m_Parent->getConstraintManager()->masquerFeedback();
+    m_Parent->getSnapperManager()->masquerFeedback();
 }
 
 void Tool_CircleDraw::EndDrawCircle() {
     if (m_isDrawingCircle) {
         m_isDrawingCircle = false;
         m_circleActor->SetVisibility(false);
-        auto* manager = m_Parent->getConstraintManager();
+        auto* manager = m_Parent->getSnapperManager();
         manager->masquerFeedback();
         m_Parent->GetView()->renderWindow()->Render();
     }
@@ -79,7 +79,7 @@ bool Tool_CircleDraw::gererMouseMove(QMouseEvent* event) {
         return false;
     }
 
-    auto* manager = m_Parent->getConstraintManager();
+    auto* manager = m_Parent->getSnapperManager();
 
     if (!m_isDrawingCircle) {
         // 🟩 CAS 1 : Aimantation libre avant le clic sur le centre
@@ -111,7 +111,7 @@ bool Tool_CircleDraw::gererMousePress(QMouseEvent* event) {
 
     if (event->button() != Qt::LeftButton) return false;
 
-    auto* manager = m_Parent->getConstraintManager();
+    auto* manager = m_Parent->getSnapperManager();
 
     if (!m_isDrawingCircle) {
         // 🟩 PREMIER CLIC : Définition du centre du cercle

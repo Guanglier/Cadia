@@ -273,6 +273,7 @@ public:
         uint64_t lid;
         if ( false == PointExists(li_Pnt2D,  lid)){
             SketchPoint l_point(li_Pnt2D);
+            l_point.Update3D( m_sketchPlane);
             return m_points.add(l_point);
         }else{
             return lid;

@@ -58,7 +58,7 @@ void Tool_LineDraw::activate () {
 void Tool_LineDraw::desactivate () {
     if (m_lineActor) m_Parent->GetView()->getRenderer()->RemoveActor(m_lineActor);
     // On demande au manager de nettoyer l'écran pour l'outil suivant
-    m_Parent->getConstraintManager()->masquerFeedback();
+    m_Parent->getSnapperManager()->masquerFeedback();
 }
 
 
@@ -66,7 +66,7 @@ void Tool_LineDraw::EndDrawLine (){
     if ( m_isDrawingLigne ){
         m_isDrawingLigne = false;
         m_lineActor->SetVisibility(false);
-        auto* manager = m_Parent->getConstraintManager();
+        auto* manager = m_Parent->getSnapperManager();
         manager->masquerFeedback();
         m_Parent->GetView()->renderWindow()->Render();
     }
@@ -102,7 +102,7 @@ bool Tool_LineDraw::gererMouseMove(QMouseEvent* event){
         return false;
     }
 
-    auto* manager = m_Parent->getConstraintManager();
+    auto* manager = m_Parent->getSnapperManager();
 
     if (!m_isDrawingLigne) {
         // CAS 1 : Recherche d'aimantation avant le premier clic
@@ -165,7 +165,7 @@ bool Tool_LineDraw::gererMousePress(QMouseEvent* event){
 
     if (event->button() != Qt::LeftButton) return false;
 
-    auto* manager = m_Parent->getConstraintManager();
+    auto* manager = m_Parent->getSnapperManager();
 
     if (!m_isDrawingLigne) {
         // PREMIER CLIC
@@ -201,9 +201,11 @@ bool Tool_LineDraw::gererMousePress(QMouseEvent* event){
             manager->appliqueContraintes2D ( m_startPoint2D, m_startPoint3D, m_Point2_2D, m_endPoint3D, true, true);
 
             AddLineToOp(m_Point1_2D, m_Point2_2D  );
+
+
             m_Parent->rafraichirAffichageEsquisse();
         }
-        m_Parent->m_constraintManager->snapPointsVisited_Clean();
+        m_Parent->m_SnapperManager->snapPointsVisited_Clean();
         EndDrawLine();
         m_Parent->m_Cotation->masquerEtVider();
         m_Parent->Signaler_ChangementEsquisseIHM ();
@@ -237,10 +239,7 @@ void Tool_LineDraw::AddLineToOp (gp_Pnt2d& StartPoint2D, gp_Pnt2d& StopPoint2D){
         return;
     }
     sketchParams->addLine(StartPoint2D, StopPoint2D);
-    //SketchLine  Line(StartPoint2D, StopPoint2D);
-    //Line.start.Update3D( m_Parent->DocumentRefs.GetSketchPlane() );
-    //Line.stop.Update3D( m_Parent->DocumentRefs.GetSketchPlane() );
-    //uint64_t l1_id = sketchParams->addPrimitive( Line );
+    //sketchParams->recomputeGeometry3D();
 }
 
 

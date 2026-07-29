@@ -64,7 +64,7 @@ void Vtk3d_Sketch::rafraichirAffichageEsquisseInteractif() {
             using T = std::decay_t<decltype(concretePrim)>;
             if constexpr (std::is_same_v<T, SketchLine>) {
                 SketchPoint pstart = sketchParams->GetPointById( concretePrim.startPointId );
-                SketchPoint pstop = sketchParams->GetPointById( concretePrim.startPointId );
+                SketchPoint pstop = sketchParams->GetPointById( concretePrim.stopPointId );
                 // Point de départ
                 if (ptIndex < pts->GetNumberOfPoints()) {
                     pts->SetPoint(ptIndex++,

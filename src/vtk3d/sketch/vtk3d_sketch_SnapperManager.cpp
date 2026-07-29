@@ -1,6 +1,6 @@
 
 
-#include "vtk3d_sketch_ConstraintManager.h"
+#include "vtk3d_sketch_SnapperManager.h"
 #include "vtk3d_sketch.h"
 #include "vtk3d_MainView.h"
 
@@ -22,23 +22,23 @@
 #include <type_traits>
 #include <cmath>
 
-SketchConstraintManager::SketchConstraintManager(Vtk3d_Sketch* parent) : m_Parent(parent) {}
+SketchSnapperManager::SketchSnapperManager(Vtk3d_Sketch* parent) : m_Parent(parent) {}
 
-SketchConstraintManager::~SketchConstraintManager() {
+SketchSnapperManager::~SketchSnapperManager() {
     cleanUp();
 }
 
-void SketchConstraintManager::init() {
+void SketchSnapperManager::init() {
     if (!m_Parent || !m_Parent->GetView() || !m_Parent->GetView()->getRenderer()){
-        std::cout<<" ERROR !! SketchConstraintManager::init "<< std::endl;
-        std::cerr<<" ERROR !! SketchConstraintManager::init "<< std::endl;
+        std::cout<<" ERROR !! SketchSnapperManager::init "<< std::endl;
+        std::cerr<<" ERROR !! SketchSnapperManager::init "<< std::endl;
         return;
     }
     initSnapPointActor();
     initSnapLineActor();
 }
 
-void SketchConstraintManager::cleanUp() {
+void SketchSnapperManager::cleanUp() {
     if (m_Parent && m_Parent->GetView() && m_Parent->GetView()->getRenderer()) {
         auto renderer = m_Parent->GetView()->getRenderer();
         if (m_ActorSnapPoint) renderer->RemoveActor(m_ActorSnapPoint);
@@ -46,7 +46,7 @@ void SketchConstraintManager::cleanUp() {
     }
 }
 
-void SketchConstraintManager::initSnapPointActor() {
+void SketchSnapperManager::initSnapPointActor() {
     auto squareSource = vtkSmartPointer<vtkRegularPolygonSource>::New();
     squareSource->SetNumberOfSides(4);
     squareSource->SetRadius(0.4);
@@ -65,7 +65,7 @@ void SketchConstraintManager::initSnapPointActor() {
     m_Parent->GetView()->getRenderer()->AddActor(m_ActorSnapPoint);
 }
 
-void SketchConstraintManager::initSnapLineActor() {
+void SketchSnapperManager::initSnapLineActor() {
     m_snapLinePoints   = vtkSmartPointer<vtkPoints>::New();
     m_snapLineCellsArray    = vtkSmartPointer<vtkCellArray>::New();
     m_snapLineTCoords  = vtkSmartPointer<vtkFloatArray>::New();
@@ -110,7 +110,7 @@ void SketchConstraintManager::initSnapLineActor() {
     m_Parent->GetView()->getRenderer()->AddActor(m_ActorSnapLine);
 }
 
-void SketchConstraintManager::appliqueContraintes2D(
+void SketchSnapperManager::appliqueContraintes2D(
     gp_Pnt2d& li_P1_2D, gp_Pnt& li_P1_3D,
     gp_Pnt2d& li_P2_2D, gp_Pnt& li_P2_3D,
     bool activeAideHV, bool enCoursDeDessin)
@@ -129,7 +129,7 @@ void SketchConstraintManager::appliqueContraintes2D(
         }
     }
     //bool alignValide = false;
-    //std::cout<<"SketchConstraintManager::appliqueContraintes2D " << li_P1_2D.x << "," << li_P1_2D.y <<" " << std::endl;
+    //std::cout<<"SketchSnapperManager::appliqueContraintes2D " << li_P1_2D.x << "," << li_P1_2D.y <<" " << std::endl;
 
     // 3. Gestion logique des aides de tracé{
     li_P2_3D = m_Parent->convertir2DEn3D(li_P2_2D);
@@ -151,24 +151,24 @@ void SketchConstraintManager::appliqueContraintes2D(
 }
 
 
-void SketchConstraintManager::snapPointsVisited_Clean (){
+void SketchSnapperManager::snapPointsVisited_Clean (){
     m_SnapPointsVisitedList.clear();
-    //std::cout<< "SketchConstraintManager::snapPointsVisited_Clean" << std::endl;
+    //std::cout<< "SketchSnapperManager::snapPointsVisited_Clean" << std::endl;
 }
-void SketchConstraintManager::snapPointsVisited_AddPoint (gp_Pnt2d& vect){
+void SketchSnapperManager::snapPointsVisited_AddPoint (gp_Pnt2d& vect){
     if ( false == snapPointsVisited_IsPointInTheList ( vect) ){
         m_SnapPointsVisitedList.emplace_back(vect);
-        //std::cout<< "SketchConstraintManager::snapPointsVisited_AddPoint" << std::endl;
+        //std::cout<< "SketchSnapperManager::snapPointsVisited_AddPoint" << std::endl;
     }
 }
-bool SketchConstraintManager::snapPointsVisited_IsPointInTheList (const gp_Pnt2d& vect){
+bool SketchSnapperManager::snapPointsVisited_IsPointInTheList (const gp_Pnt2d& vect){
     return std::any_of(m_SnapPointsVisitedList.begin(), m_SnapPointsVisitedList.end(), [&vect](const auto& v) {
         return (v.X() == vect.X() && v.Y() == vect.Y());
     });
 }
 
 
-bool SketchConstraintManager::snapToExistingPoints(gp_Pnt2d& plio_Ptr2D, gp_Pnt& plio_Ptr3D, double li_SeuilCoincidence_mm) {
+bool SketchSnapperManager::snapToExistingPoints(gp_Pnt2d& plio_Ptr2D, gp_Pnt& plio_Ptr3D, double li_SeuilCoincidence_mm) {
     if (!m_Parent || !m_Parent->DocumentRefs.GetOperation()) return false;
     auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
     if (!sketchParams) return false;
@@ -232,7 +232,7 @@ bool SketchConstraintManager::snapToExistingPoints(gp_Pnt2d& plio_Ptr2D, gp_Pnt&
 }
 
 
-bool SketchConstraintManager::alignWithExistingPoints(gp_Pnt2d& lio_Point2D, gp_Pnt& lio_Point3D) {
+bool SketchSnapperManager::alignWithExistingPoints(gp_Pnt2d& lio_Point2D, gp_Pnt& lio_Point3D) {
     if (!m_Parent || !m_Parent->DocumentRefs.GetOperation()) return false;
     auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
     if (!sketchParams) return false;
@@ -251,7 +251,7 @@ bool SketchConstraintManager::alignWithExistingPoints(gp_Pnt2d& lio_Point2D, gp_
     gp_Pnt2d PtnConcreteMidle2D;
     gp_Pnt  PtnConcreteMidle3D;
 
-    //std::cout<< "SketchConstraintManager::alignWithExistingPoints -> ";
+    //std::cout<< "SketchSnapperManager::alignWithExistingPoints -> ";
 
     // --- LA LAMBDA DE FACTORISATION ---
     // Elle capture par référence [&] les variables de suivi pour pouvoir les mettre à jour.
@@ -312,7 +312,7 @@ bool SketchConstraintManager::alignWithExistingPoints(gp_Pnt2d& lio_Point2D, gp_
     }
 
     //std::cout<< std::endl;
-    //std::cout<< " SketchConstraintManager::alignWithExistingPoints  " <<lio_Point2D.X() <<"," << lio_Point2D.Y() << std::endl;
+    //std::cout<< " SketchSnapperManager::alignWithExistingPoints  " <<lio_Point2D.X() <<"," << lio_Point2D.Y() << std::endl;
 
     updateSnapLineActor(AlignX, AlignY, pointCibleExactVert3D, pointCibleExactHor3D, lio_Point3D);
 
@@ -323,7 +323,7 @@ bool SketchConstraintManager::alignWithExistingPoints(gp_Pnt2d& lio_Point2D, gp_
 
 
 
-void SketchConstraintManager::updateSnapLineActor(bool li_AlignX, bool li_AlignY,
+void SketchSnapperManager::updateSnapLineActor(bool li_AlignX, bool li_AlignY,
                                                   const gp_Pnt& pointCibleVert3D,
                                                   const gp_Pnt& pointCibleHor3D,
                                                   const gp_Pnt& mousePoint3D) {
@@ -380,7 +380,7 @@ void SketchConstraintManager::updateSnapLineActor(bool li_AlignX, bool li_AlignY
     m_ActorSnapLine->SetVisibility(true);
 }
 
-void SketchConstraintManager::aideHV(const gp_Pnt& p1, gp_Pnt& p2) {
+void SketchSnapperManager::aideHV(const gp_Pnt& p1, gp_Pnt& p2) {
     const double seuilAimantation = 1.8;
     const double zoneMorte = 5.0;
 
@@ -395,7 +395,7 @@ void SketchConstraintManager::aideHV(const gp_Pnt& p1, gp_Pnt& p2) {
         p2.SetX( p1.X() );
     }
 }
-void SketchConstraintManager::aideHV(const gp_Pnt2d& p1, gp_Pnt2d& p2) {
+void SketchSnapperManager::aideHV(const gp_Pnt2d& p1, gp_Pnt2d& p2) {
     const double seuilAimantation = 1.8;
     const double zoneMorte = 5.0;
 
@@ -411,7 +411,7 @@ void SketchConstraintManager::aideHV(const gp_Pnt2d& p1, gp_Pnt2d& p2) {
     }
 }
 
-void SketchConstraintManager::ajusterEchelleCarreSnap() {
+void SketchSnapperManager::ajusterEchelleCarreSnap() {
     if (!m_ActorSnapPoint || !m_ActorSnapPoint->GetVisibility() || !m_Parent->GetView()) return;
     vtkCamera* camera = m_Parent->GetView()->getRenderer()->GetActiveCamera();
     if (!camera) return;
@@ -424,7 +424,7 @@ void SketchConstraintManager::ajusterEchelleCarreSnap() {
     m_ActorSnapPoint->SetScale(facteurEchelle, facteurEchelle, facteurEchelle);
 }
 
-void SketchConstraintManager::masquerFeedback() {
+void SketchSnapperManager::masquerFeedback() {
     if (m_ActorSnapPoint) m_ActorSnapPoint->SetVisibility(false);
     if (m_ActorSnapLine) m_ActorSnapLine->SetVisibility(false);
 }

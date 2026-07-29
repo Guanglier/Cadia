@@ -11,10 +11,10 @@ class vtkCellArray;
 class vtkFloatArray;
 class vtkPolyData;
 
-class SketchConstraintManager {
+class SketchSnapperManager {
 public:
-    explicit SketchConstraintManager(Vtk3d_Sketch* parent);
-    ~SketchConstraintManager();
+    explicit SketchSnapperManager(Vtk3d_Sketch* parent);
+    ~SketchSnapperManager();
 
     // Initialisation globale (création des acteurs VTK de feedback)
     void init();

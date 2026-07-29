@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Vtk3d_abstractviewmode.h"
-#include "vtk3d_sketch_ConstraintManager.h"
+#include "vtk3d_sketch_SnapperManager.h"
 #include "CAD_Operation.h"
 #include "vtk3d_sketch_Tools.h"
 
@@ -44,7 +44,7 @@ protected :
 
 private:
 
-    std::unique_ptr<SketchConstraintManager> m_constraintManager;
+    std::unique_ptr<SketchSnapperManager> m_SnapperManager;
     vtkSmartPointer<vtkActor> m_constraintsDisplayActor;
     //vtkSmartPointer<vtkProp3D> m_constraintsDisplayActor;
 
@@ -84,8 +84,8 @@ public:
     vtk3d_Sketch_Render_Cotations*       m_Cotation;
     vtk3d_Sketch_Render_Cotations*       m_Cotation2;
 
-    SketchConstraintManager* getConstraintManager() const {
-        return m_constraintManager.get();
+    SketchSnapperManager* getSnapperManager() const {
+        return m_SnapperManager.get();
     }
 
     struct {

@@ -51,14 +51,14 @@ void Tool_RectEdgesDraw::activate() {
 
 void Tool_RectEdgesDraw::desactivate() {
     if (m_rectActor) m_Parent->GetView()->getRenderer()->RemoveActor(m_rectActor);
-    m_Parent->getConstraintManager()->masquerFeedback();
+    m_Parent->getSnapperManager()->masquerFeedback();
 }
 
 void Tool_RectEdgesDraw::EndDrawRectangle() {
     if (m_isDrawingRect) {
         m_isDrawingRect = false;
         m_rectActor->SetVisibility(false);
-        auto* manager = m_Parent->getConstraintManager();
+        auto* manager = m_Parent->getSnapperManager();
         manager->masquerFeedback();
         m_Parent->GetView()->renderWindow()->Render();
     }
@@ -89,7 +89,7 @@ bool Tool_RectEdgesDraw::gererMouseMove(QMouseEvent* event) {
         return false;
     }
 
-    auto* manager = m_Parent->getConstraintManager();
+    auto* manager = m_Parent->getSnapperManager();
 
     if (!m_isDrawingRect) {
         // 🟩 CAS 1 : Aimantation libre sur la grille avant le premier coin
@@ -154,7 +154,7 @@ bool Tool_RectEdgesDraw::gererMousePress(QMouseEvent* event) {
 
     if (event->button() != Qt::LeftButton) return false;
 
-    auto* manager = m_Parent->getConstraintManager();
+    auto* manager = m_Parent->getSnapperManager();
 
     if (!m_isDrawingRect) {
         // 🟩 PREMIER CLIC : Premier coin de la boîte

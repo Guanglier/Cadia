@@ -51,14 +51,14 @@ void Tool_RectCenterDraw::activate() {
 
 void Tool_RectCenterDraw::desactivate() {
     if (m_rectActor) m_Parent->GetView()->getRenderer()->RemoveActor(m_rectActor);
-    m_Parent->getConstraintManager()->masquerFeedback();
+    m_Parent->getSnapperManager()->masquerFeedback();
 }
 
 void Tool_RectCenterDraw::EndDrawRectangle() {
     if (m_drawStep > 0) {
         m_drawStep = 0;
         m_rectActor->SetVisibility(false);
-        auto* manager = m_Parent->getConstraintManager();
+        auto* manager = m_Parent->getSnapperManager();
         manager->masquerFeedback();
         m_Parent->GetView()->renderWindow()->Render();
     }
@@ -88,7 +88,7 @@ bool Tool_RectCenterDraw::gererMouseMove(QMouseEvent* event) {
         return false;
     }
 
-    auto* manager = m_Parent->getConstraintManager();
+    auto* manager = m_Parent->getSnapperManager();
 
     if (m_drawStep == 0) {
         // 🟩 RECHERCHE DU CENTRE
@@ -236,7 +236,7 @@ bool Tool_RectCenterDraw::gererMousePress(QMouseEvent* event) {
 
     if (event->button() != Qt::LeftButton) return false;
 
-    auto* manager = m_Parent->getConstraintManager();
+    auto* manager = m_Parent->getSnapperManager();
     gp_Pnt clickedPoint3D;
 
     if (!m_Parent->calculerIntersectionSourisSurPlan(event->x(), event->y(), clickedPoint2D, clickedPoint3D)) {

@@ -50,8 +50,8 @@ Vtk3d_Sketch::Vtk3d_Sketch(vtk3d_MainView* view, CadOperation* li_ptr_Operation)
 
     m_view = view;
 
-    m_constraintManager = std::make_unique<SketchConstraintManager>(this);
-    m_constraintManager->init();
+    m_SnapperManager = std::make_unique<SketchSnapperManager>(this);
+    m_SnapperManager->init();
 
 
     // ====================================================================
@@ -263,7 +263,7 @@ void Vtk3d_Sketch::sketch_ActivateTool(SketchTool_mode li_tool) {
                 break;
         }
 
-        m_constraintManager->snapPointsVisited_Clean();
+        m_SnapperManager->snapPointsVisited_Clean();
 
         l_string = SketchToolMode_To_String ( li_tool );
         CadResponseEvent resp;
