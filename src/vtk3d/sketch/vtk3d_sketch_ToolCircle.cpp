@@ -167,7 +167,7 @@ void Tool_CircleDraw::AddCircleToOp(gp_Pnt2d centerPoint2D, double radius) {
         std::cerr << "[ERROR] AddCircleToOp: m_Operation est nul !\n";
         return;
     }
-    auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
+    auto* sketchParams = m_Parent->DocumentRefs.GetParams();
     if (!sketchParams) {
         std::cerr << "[ERROR] AddCircleToOp: L'opération cible n'est pas un SketchParams.\n";
         return;

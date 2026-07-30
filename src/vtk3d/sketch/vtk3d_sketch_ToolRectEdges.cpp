@@ -213,7 +213,7 @@ void Tool_RectEdgesDraw::AddRectangleToOp(gp_Pnt2d& p1_2D, gp_Pnt2d& p2_2D) {
         std::cerr << "[ERROR] AddRectangleToOp: m_Operation est nul !\n";
         return;
     }
-    auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
+    auto* sketchParams = m_Parent->DocumentRefs.GetParams();
 
     if (!sketchParams) {
         std::cerr << "[ERROR] AddRectangleToOp: L'opération cible n'est pas un SketchParams.\n";

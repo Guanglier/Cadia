@@ -65,9 +65,9 @@ public:
 
     struct{
     private:
-        gp_Ax3 m_sketchPlane; // Contient l'origine, l'axe X, Y et Z du plan
-        CadOperation*    m_Operation;
-        uint64_t m_sketchId;
+        gp_Ax3          m_sketchPlane;  // Contient l'origine, l'axe X, Y et Z du plan
+        CadOperation*   m_Operation;
+        uint64_t        m_sketchId;
     public:
         void            SetSketchPlane (gp_Ax3 sketchPlane) { m_sketchPlane = sketchPlane; }
         void            SetOperation (CadOperation* li_op) { m_Operation = li_op; }
@@ -75,6 +75,7 @@ public:
         const gp_Ax3&   GetSketchPlane () const { return m_sketchPlane; }
         CadOperation*   GetOperation () const { return m_Operation; }
         uint64_t        GetSketchId() const {return m_sketchId;}
+        auto*           GetParams () { return std::get_if<SketchParams>(&GetOperation()->getParamsMutable()); }
     }DocumentRefs;
 
 

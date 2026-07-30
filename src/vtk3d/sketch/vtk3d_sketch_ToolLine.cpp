@@ -232,7 +232,7 @@ void Tool_LineDraw::AddLineToOp (gp_Pnt2d& StartPoint2D, gp_Pnt2d& StopPoint2D){
         std::cerr << "[ERROR] AddLineToOp: m_Operation est nul !\n";
         return;
     }
-    auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
+    auto* sketchParams = m_Parent->DocumentRefs.GetParams();
 
     if (!sketchParams) {
         std::cerr << "[ERROR] AddLineToOp: L'opération cible n'est pas un SketchParams.\n";

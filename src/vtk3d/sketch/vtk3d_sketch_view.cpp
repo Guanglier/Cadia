@@ -24,6 +24,8 @@
 #include <ElSLib.hxx>
 #include <gp_Pln.hxx>
 #include <cmath>
+#include "Logger.h"
+
 
 void Vtk3d_Sketch::rafraichirAffichageEsquisse() {
     if (!DocumentRefs.GetOperation() || !m_view) return;
@@ -213,6 +215,8 @@ void Vtk3d_Sketch::rafraichirPoignees(SketchParams* sketchParams) {
     auto ArrayTypeHandle = vtkSmartPointer<vtkIntArray>::New();
     ArrayTypeHandle->SetName("ArrayTypeHandle");
 
+    LOG_ERROR << "Vtk3d_Sketch::rafraichirPoignees" << std::endl;
+
     // 2. 💡 En supposant que SketchPoint possède un champ .id ou que vous itérez sur le vecteur
     for (const auto& l_sketchPoint : sketchParams->getPoints()) {
         pointsHandles->InsertNextPoint(
@@ -224,6 +228,9 @@ void Vtk3d_Sketch::rafraichirPoignees(SketchParams* sketchParams) {
         // Si SketchPoint possède son propre ID :
         edgeIdsHandles->InsertNextValue(static_cast<int>(l_sketchPoint.id)); // Remplacez .id par le nom du champ d'ID dans SketchPoint si besoin
         ArrayTypeHandle->InsertNextValue(1);
+
+        LOG_ERROR << "\tl_sketchPoint id=" << l_sketchPoint.id << std::endl;
+
     }
 
 

@@ -170,7 +170,7 @@ bool SketchSnapperManager::snapPointsVisited_IsPointInTheList (const gp_Pnt2d& v
 
 bool SketchSnapperManager::snapToExistingPoints(gp_Pnt2d& plio_Ptr2D, gp_Pnt& plio_Ptr3D, double li_SeuilCoincidence_mm) {
     if (!m_Parent || !m_Parent->DocumentRefs.GetOperation()) return false;
-    auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
+    auto* sketchParams = m_Parent->DocumentRefs.GetParams();
     if (!sketchParams) return false;
 
     const double seuilCoincidenceMm = li_SeuilCoincidence_mm;
@@ -234,7 +234,7 @@ bool SketchSnapperManager::snapToExistingPoints(gp_Pnt2d& plio_Ptr2D, gp_Pnt& pl
 
 bool SketchSnapperManager::alignWithExistingPoints(gp_Pnt2d& lio_Point2D, gp_Pnt& lio_Point3D) {
     if (!m_Parent || !m_Parent->DocumentRefs.GetOperation()) return false;
-    auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
+    auto* sketchParams = m_Parent->DocumentRefs.GetParams();
     if (!sketchParams) return false;
 
     const double seuilCoincidenceMm = 0.5;

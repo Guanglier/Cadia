@@ -366,7 +366,7 @@ bool Tool_Dimensions::gererkeyPressEvent(QKeyEvent* event) {
 #endif
             PrimitiveIsSelected = false;
 
-            auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
+            auto* sketchParams = m_Parent->DocumentRefs.GetParams();
             if (!sketchParams) return false;
 
             sketchParams->removePrimitive(SelectedPrimitiveId);

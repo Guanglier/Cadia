@@ -326,7 +326,7 @@ bool Tool_RectCenterDraw::gererkeyPressEvent(QKeyEvent* event) {
 //─────────────────────────────────────────────────────────────────────
 void Tool_RectCenterDraw::AddCenterRectangleToOp(const gp_Pnt2d& li_PA, const gp_Pnt2d& li_PB, const gp_Pnt2d& li_PC, const gp_Pnt2d& li_PD) {
     if (!m_Parent->DocumentRefs.GetOperation()) return;
-    auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
+    auto* sketchParams = m_Parent->DocumentRefs.GetParams();
     if (!sketchParams) return;
 
     sketchParams->addLine(li_PA, li_PB);
