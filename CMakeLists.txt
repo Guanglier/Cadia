@@ -136,8 +136,8 @@ qt_add_executable(Cad_IA
     src/vtk3d/sketch/vtk3d_sketch_ToolSetConstraints.h
     src/vtk3d/sketch/vtk3d_Sketch_Render_Cotations.h
     src/vtk3d/sketch/vtk3d_Sketch_Render_Cotations.cpp
-    src/vtk3d/sketch/vtk3d_sketch_ConstraintManager.h
-    src/vtk3d/sketch/vtk3d_sketch_ConstraintManager.cpp
+    src/vtk3d/sketch/vtk3d_sketch_SnapperManager.h
+    src/vtk3d/sketch/vtk3d_sketch_SnapperManager.cpp
     src/Cad/CAD_Document.cpp
     src/Cad/CAD_Document_tests.cpp
     src/Cad/CAD_Document.h
