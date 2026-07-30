@@ -265,24 +265,14 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
             }
 
             auto edgeIdArray = vtkIntArray::SafeDownCast(polyData->GetPointData()->GetArray("OpenCascadeEdgeID"));
-            //auto typeArray   = vtkIntArray::SafeDownCast(polyData->GetPointData()->GetArray("ArrayTypeHandle"));
-            //if (!edgeIdArray || !typeArray) {
-            //    LOG_ERROR << "Tool_Select::gererMousePress -> edgeIdArray ou typeArray est nullptr" << std::endl;
-            //    return false;
-            //}
+
 
             int edgeId = edgeIdArray->GetValue(VtkPointId);
-            //int handleType = typeArray->GetValue(VtkPointId);
 
             DynamicDrag.m_mode = DragMode::PointUnique;
-            //DynamicDrag.m_activePointVtkIndex = VtkPointId;
             DynamicDrag.m_activePrimitiveId = edgeId;
 
-            // voir rafraichirPoignees donne le départ etc
-            // 1 = Point de départ de la ligne (StartPoint)
-            // 2 = Point d'arrivée de la ligne (EndPoint)
-            // 3 = Centre du cercle (CercleCentre)
-            //DynamicDrag.m_activeHandleType = handleType;
+
 
             auto* sketchParams = m_Parent->DocumentRefs.GetParams();
             if (!sketchParams) {
@@ -291,8 +281,9 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
             }
 
             SketchPoint& sp = sketchParams->GetPointById(DynamicDrag.m_activePrimitiveId);
-            LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> point trouve  Id=" << DynamicDrag.m_activePrimitiveId << std::endl;
+            LOG_INFO << "Tool_Select::gererMousePress(QMouseEvent* event) -> point trouve  Id=" << DynamicDrag.m_activePrimitiveId << std::endl;
 
+            sp.p2d.SetX(  sp.p2d.X() + 1 );
             /*
             SketchPrimitive *Primm = sketchParams->GetPrimitiveMutable(DynamicDrag.m_activePrimitiveId);
             if (!Primm) {
@@ -403,7 +394,7 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
             }
         }
         else {
-            LOG_ERROR << " Clic vide " << std::endl;
+            LOG_INFO << " Clic vide " << std::endl;
             // Clic dans le vide : Désélection
             if (true == PrimitiveIsSelected ) {
                 m_Parent->GetView()->m_Chighlighter->masquerSurbrillance();

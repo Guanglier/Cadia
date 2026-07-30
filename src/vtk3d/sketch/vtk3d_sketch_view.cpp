@@ -215,7 +215,7 @@ void Vtk3d_Sketch::rafraichirPoignees(SketchParams* sketchParams) {
     //auto ArrayTypeHandle = vtkSmartPointer<vtkIntArray>::New();
     //ArrayTypeHandle->SetName("ArrayTypeHandle");
 
-    LOG_ERROR << "Vtk3d_Sketch::rafraichirPoignees" << std::endl;
+    LOG_INFO << "Vtk3d_Sketch::rafraichirPoignees" << std::endl;
 
     // 2. 💡 En supposant que SketchPoint possède un champ .id ou que vous itérez sur le vecteur
     for (const auto& l_sketchPoint : sketchParams->getPoints()) {
@@ -229,7 +229,7 @@ void Vtk3d_Sketch::rafraichirPoignees(SketchParams* sketchParams) {
         edgeIdsHandles->InsertNextValue(static_cast<int>(l_sketchPoint.id)); // Remplacez .id par le nom du champ d'ID dans SketchPoint si besoin
         //ArrayTypeHandle->InsertNextValue(1);
 
-        LOG_ERROR << "\tl_sketchPoint id=" << l_sketchPoint.id << std::endl;
+        LOG_INFO << "\tl_sketchPoint id=" << l_sketchPoint.id << std::endl;
 
     }
 
