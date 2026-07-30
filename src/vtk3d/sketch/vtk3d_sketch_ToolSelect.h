@@ -34,6 +34,8 @@
 #include <vtkCallbackCommand.h>
 #include "cad_events.h"
 
+#include "CAD_Operation.h"
+
 class Vtk3d_Sketch;
 
 struct Tool_Select  {
@@ -79,9 +81,13 @@ struct Tool_Select  {
         DragMode m_mode = DragMode::None;
         gp_Pnt2d m_lastMousePos2D;
 
+        SketchPoint* PtrSelectedPoint = nullptr;
+
 
         int m_activePrimitiveId = -1; // Remplace l'ancien edgeId pour être générique (Ligne ou Cercle)
         //int m_activeHandleType = -1;
+
+
 
         struct{
             gp_Pnt2d mouse_when_clicked_2d;

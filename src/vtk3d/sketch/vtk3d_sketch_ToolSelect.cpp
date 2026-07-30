@@ -48,7 +48,6 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
         PrimitiveIsSelected = false;
     }
 
-
     // 1. Calculer la nouvelle position de la souris sur le plan d'esquisse
     gp_Pnt2d mousePoint2D;
     gp_Pnt mousePoint3D;
@@ -61,50 +60,42 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
         LOG_ERROR << "Tool_Select::gererMouseMove : nullptr == sketchParams" << std::endl;
         return false;
     }
-    SketchPrimitive* prim = sketchParams->GetPrimitiveMutable( DynamicDrag.m_activePrimitiveId );
-    if ( nullptr == prim ){
-        LOG_ERROR << "Tool_Select::gererMouseMove : nullptr == prim" << std::endl;
-        return false;
-    }
 
-    std::visit ([&](auto& curr_prim)
+    switch( DynamicDrag.m_mode )
     {
-        using T = std::decay_t<decltype(curr_prim)>;
-        switch( DynamicDrag.m_mode )
-        {
-            case DragMode::CercleCentre:
-            case DragMode::PointUnique:{
-                // if constexpr ( std::is_same_v<T,SketchLine>){
-                //     if (DynamicDrag.m_activeHandleType == 1) {
-                //         SketchPoint&  sp = sketchParams->GetPointById(curr_prim.startPointId);
-                //         sp.setPoint  ( mousePoint2D, &m_Parent->DocumentRefs.GetSketchPlane() );
-                //     } else if (DynamicDrag.m_activeHandleType == 2) {
-                //         SketchPoint&  sp = sketchParams->GetPointById(curr_prim.stopPointId);
-                //         sp.setPoint  ( mousePoint2D, &m_Parent->DocumentRefs.GetSketchPlane() );
-                //     }
-                // }else if constexpr ( std::is_same_v<T,SketchCircle>){
-                //     if (DynamicDrag.m_activeHandleType == 3) {
-                //         SketchPoint&  //  = sketchParams->GetPointById(curr_prim.centerPointId);
-                //         sp.setPoint  ( mousePoint2D, &m_Parent->DocumentRefs.GetSketchPlane() );
-                //     }else{
-                //         LOG_ERROR << " Tool_Select::gererMouseMove : if constexpr ( std::is_same_v<T,SketchCircle> DEFAULT case" << std::endl;
-                //     }
-                // }
-                // On met à jour le solveur avec les nouvelles coordonnées X et Y de la souris
-                //m_Parent->m_SolverSession.UpdatePoint( m_Parent->m_SolverSession.activeVarIndexX );
-                //m_Parent->m_SolverSession.UpdatePoint( m_Parent->m_SolverSession.activeVarIndexY );
+        case DragMode::CercleCentre:
+        case DragMode::PointUnique:{
 
-                //m_Parent->m_SolverSession.Step(*sketchParams);
-                m_Parent->rafraichirPoignees(sketchParams);
-                m_Parent->rafraichirAffichageEsquisseInteractif();
-                //m_Parent->rafraichirAffichageEsquisse();      // trop lent remplacé par les deux du dessus
-                break;
+            // On met à jour le solveur avec les nouvelles coordonnées X et Y de la souris
+            //m_Parent->m_SolverSession.UpdatePoint( m_Parent->m_SolverSession.activeVarIndexX );
+            //m_Parent->m_SolverSession.UpdatePoint( m_Parent->m_SolverSession.activeVarIndexY );
+            if (nullptr != DynamicDrag.PtrSelectedPoint ){
+                DynamicDrag.PtrSelectedPoint->p2d.SetX( mousePoint2D.X() );
+                DynamicDrag.PtrSelectedPoint->p2d.SetY( mousePoint2D.Y() );
+                DynamicDrag.PtrSelectedPoint->Update3D( m_Parent->DocumentRefs.GetSketchPlane());
             }
 
-            case DragMode::LigneComplete:{
-                double deltaX = mousePoint2D.X() - DynamicDrag.m_lastMousePos2D.X();
-                double deltaY = mousePoint2D.Y() - DynamicDrag.m_lastMousePos2D.Y();
+            //m_Parent->m_SolverSession.Step(*sketchParams);
+            m_Parent->rafraichirPoignees(sketchParams);
+            m_Parent->rafraichirAffichageEsquisseInteractif();
+            //m_Parent->rafraichirAffichageEsquisse();      // trop lent remplacé par les deux du dessus
+            }
+            break;
 
+
+        case DragMode::LigneComplete:{
+            //double deltaX = mousePoint2D.X() - DynamicDrag.m_lastMousePos2D.X();
+            //double deltaY = mousePoint2D.Y() - DynamicDrag.m_lastMousePos2D.Y();
+
+            SketchPrimitive* prim = sketchParams->GetPrimitiveMutable( DynamicDrag.m_activePrimitiveId );
+            if ( nullptr == prim ){
+                LOG_ERROR << "Tool_Select::gererMouseMove : nullptr == prim" << std::endl;
+                return false;
+            }
+
+            std::visit ([&](auto& curr_prim)
+            {
+                using T = std::decay_t<decltype(curr_prim)>;
 
                 if constexpr ( std::is_same_v<T,SketchLine>){
                     gp_Pnt2d PntStart  = mousePoint2D.Translated(DynamicDrag.PrimToMoseVects.line.start );
@@ -133,30 +124,31 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
                     LOG_ERROR << " Tool_Select::gererMouseMove : if constexpr ( std::is_same_v<T,SketchCircle> DEFAULT case" << std::endl;
                 }
 
-                // On met à jour la position de référence pour le prochain tick de souris
-                DynamicDrag.m_lastMousePos2D = mousePoint2D;
+            }, *prim);
 
-                // On lance le solveur pour propoger/maintenir les contraintes si nécessaire, puis on rafraîchit
-                //m_Parent->m_SolverSession.Step(*sketchParams);
+            // On met à jour la position de référence pour le prochain tick de souris
+            DynamicDrag.m_lastMousePos2D = mousePoint2D;
 
-                m_Parent->rafraichirPoignees(sketchParams);
-                m_Parent->rafraichirAffichageEsquisseInteractif();
-                //m_Parent->rafraichirAffichageEsquisse();      // trop lent remplacé par les deux du dessus
-                break;
+            // On lance le solveur pour propoger/maintenir les contraintes si nécessaire, puis on rafraîchit
+            //m_Parent->m_SolverSession.Step(*sketchParams);
+
+            m_Parent->rafraichirPoignees(sketchParams);
+            m_Parent->rafraichirAffichageEsquisseInteractif();
+            //m_Parent->rafraichirAffichageEsquisse();      // trop lent remplacé par les deux du dessus
+            return true;
             }
-
-            default:
-                LOG_ERROR << "Tool_Select::gererMouseMove default !" << std::endl;
-                break;
+            break;
 
 
-        }; // fin swtich
+        default:
+            LOG_ERROR << "Tool_Select::gererMouseMove default !" << std::endl;
+            break;
 
+    }; // fin swtich
 
-    }, *prim);
-
-    return true;
 }
+
+
 
 
 
@@ -198,9 +190,7 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
         // Au tout début de gererMousePress, avant de tester les picks :
         DynamicDrag.m_isDragging = false;
         DynamicDrag.m_mode = DragMode::None;
-        //DynamicDrag.m_activePointVtkIndex = -1;
         DynamicDrag.m_activePrimitiveId = -1;
-        //DynamicDrag.m_activeHandleType = -1;
 
         // On remet aussi à zéro les variables du solveur de la session interactive
         m_Parent->m_SolverSession.activeVarIndexX = -1;
@@ -268,9 +258,8 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
 
 
             int edgeId = edgeIdArray->GetValue(VtkPointId);
-
-            DynamicDrag.m_mode = DragMode::PointUnique;
             DynamicDrag.m_activePrimitiveId = edgeId;
+
 
 
 
@@ -281,35 +270,21 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
             }
 
             SketchPoint& sp = sketchParams->GetPointById(DynamicDrag.m_activePrimitiveId);
+            DynamicDrag.PtrSelectedPoint = &sp;
             LOG_INFO << "Tool_Select::gererMousePress(QMouseEvent* event) -> point trouve  Id=" << DynamicDrag.m_activePrimitiveId << std::endl;
+            DynamicDrag.m_mode = DragMode::PointUnique;
+            PrimitiveIsSelected = true;
+            DynamicDrag.m_isDragging = true;
 
-            sp.p2d.SetX(  sp.p2d.X() + 1 );
-            /*
-            SketchPrimitive *Primm = sketchParams->GetPrimitiveMutable(DynamicDrag.m_activePrimitiveId);
-            if (!Primm) {
-                LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> if ( Primm )  DynamicDrag.m_activePrimitiveId=" << DynamicDrag.m_activePrimitiveId << std::endl;
-                return false;
-            }
+            // m_Parent->m_SolverSession.Initialize(*sketchParams);
+            // SolverInteractiveSession::GetIndicesForHandle(
+            //     *sketchParams, DynamicDrag.m_activePrimitiveId, DynamicDrag.m_activeHandleType,
+            //     m_Parent->m_SolverSession.activeVarIndexX,
+            //     m_Parent->m_SolverSession.activeVarIndexY
+            //     );
 
-            std::visit ([&](auto& ConcretePrim) {
-                using T = std::decay_t<decltype(ConcretePrim)>;
-                if constexpr (std::is_same_v<T, SketchLine> || std::is_same_v<T, SketchCircle>)
-                {
-                    PrimitiveIsSelected = true;
-                    DynamicDrag.m_isDragging = true;
-                    m_Parent->m_SolverSession.Initialize(*sketchParams);
-                    SolverInteractiveSession::GetIndicesForHandle(
-                        *sketchParams, DynamicDrag.m_activePrimitiveId, DynamicDrag.m_activeHandleType,
-                        m_Parent->m_SolverSession.activeVarIndexX,
-                        m_Parent->m_SolverSession.activeVarIndexY
-                        );
-                }else if constexpr( std::is_same_v<T,SketchArc>){
-                    LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> std::visit ([&](auto& ConcretePrim)  non code " << std::endl;
-                }else{
-                    LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> std::visit ([&](auto& ConcretePrim)  non traité " << std::endl;
-                }
-            }, *Primm);
-            */
+            //sp.p2d.SetX(  sp.p2d.X() + 1 );
+
         }
 
 
@@ -395,6 +370,7 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
         }
         else {
             LOG_INFO << " Clic vide " << std::endl;
+            DynamicDrag.PtrSelectedPoint = nullptr;
             // Clic dans le vide : Désélection
             if (true == PrimitiveIsSelected ) {
                 m_Parent->GetView()->m_Chighlighter->masquerSurbrillance();
