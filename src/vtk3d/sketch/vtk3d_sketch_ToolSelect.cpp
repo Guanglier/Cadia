@@ -74,22 +74,22 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
         {
             case DragMode::CercleCentre:
             case DragMode::PointUnique:{
-                if constexpr ( std::is_same_v<T,SketchLine>){
-                    if (DynamicDrag.m_activeHandleType == 1) {
-                        SketchPoint&  sp = sketchParams->GetPointById(curr_prim.startPointId);
-                        sp.setPoint  ( mousePoint2D, &m_Parent->DocumentRefs.GetSketchPlane() );
-                    } else if (DynamicDrag.m_activeHandleType == 2) {
-                        SketchPoint&  sp = sketchParams->GetPointById(curr_prim.stopPointId);
-                        sp.setPoint  ( mousePoint2D, &m_Parent->DocumentRefs.GetSketchPlane() );
-                    }
-                }else if constexpr ( std::is_same_v<T,SketchCircle>){
-                    if (DynamicDrag.m_activeHandleType == 3) {
-                        SketchPoint&  sp = sketchParams->GetPointById(curr_prim.centerPointId);
-                        sp.setPoint  ( mousePoint2D, &m_Parent->DocumentRefs.GetSketchPlane() );
-                    }else{
-                        LOG_ERROR << " Tool_Select::gererMouseMove : if constexpr ( std::is_same_v<T,SketchCircle> DEFAULT case" << std::endl;
-                    }
-                }
+                // if constexpr ( std::is_same_v<T,SketchLine>){
+                //     if (DynamicDrag.m_activeHandleType == 1) {
+                //         SketchPoint&  sp = sketchParams->GetPointById(curr_prim.startPointId);
+                //         sp.setPoint  ( mousePoint2D, &m_Parent->DocumentRefs.GetSketchPlane() );
+                //     } else if (DynamicDrag.m_activeHandleType == 2) {
+                //         SketchPoint&  sp = sketchParams->GetPointById(curr_prim.stopPointId);
+                //         sp.setPoint  ( mousePoint2D, &m_Parent->DocumentRefs.GetSketchPlane() );
+                //     }
+                // }else if constexpr ( std::is_same_v<T,SketchCircle>){
+                //     if (DynamicDrag.m_activeHandleType == 3) {
+                //         SketchPoint&  //  = sketchParams->GetPointById(curr_prim.centerPointId);
+                //         sp.setPoint  ( mousePoint2D, &m_Parent->DocumentRefs.GetSketchPlane() );
+                //     }else{
+                //         LOG_ERROR << " Tool_Select::gererMouseMove : if constexpr ( std::is_same_v<T,SketchCircle> DEFAULT case" << std::endl;
+                //     }
+                // }
                 // On met à jour le solveur avec les nouvelles coordonnées X et Y de la souris
                 //m_Parent->m_SolverSession.UpdatePoint( m_Parent->m_SolverSession.activeVarIndexX );
                 //m_Parent->m_SolverSession.UpdatePoint( m_Parent->m_SolverSession.activeVarIndexY );
@@ -165,7 +165,7 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
 bool Tool_Select::gererMouseRelease(QMouseEvent* event) {
     if (DynamicDrag.m_isDragging) {
         DynamicDrag.m_isDragging = false;
-        DynamicDrag.m_activePointIndex = -1;
+        //DynamicDrag.m_activePointIndex = -1;
 
         // Résolution finale de clôture (OneShot propre pour éliminer toute dérive)
         auto* sketchParams = m_Parent->DocumentRefs.GetParams();
@@ -198,9 +198,9 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
         // Au tout début de gererMousePress, avant de tester les picks :
         DynamicDrag.m_isDragging = false;
         DynamicDrag.m_mode = DragMode::None;
-        DynamicDrag.m_activePointIndex = -1;
+        //DynamicDrag.m_activePointVtkIndex = -1;
         DynamicDrag.m_activePrimitiveId = -1;
-        DynamicDrag.m_activeHandleType = -1;
+        //DynamicDrag.m_activeHandleType = -1;
 
         // On remet aussi à zéro les variables du solveur de la session interactive
         m_Parent->m_SolverSession.activeVarIndexX = -1;
@@ -252,8 +252,8 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
 
         // CAS 1 : On a cliqué sur une POIGNÉE (déplacement d'un point unique)
         if (pickedActor && pickedActor == m_Parent->m_ActorSquareOfPrim) {
-            vtkIdType originalPointId = cellPicker->GetPointId();
-            if (originalPointId == -1) {
+            vtkIdType VtkPointId = cellPicker->GetPointId();
+            if (VtkPointId == -1) {
                 return false;
             }
 
@@ -265,24 +265,24 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
             }
 
             auto edgeIdArray = vtkIntArray::SafeDownCast(polyData->GetPointData()->GetArray("OpenCascadeEdgeID"));
-            auto typeArray   = vtkIntArray::SafeDownCast(polyData->GetPointData()->GetArray("ArrayTypeHandle"));
-            if (!edgeIdArray || !typeArray) {
-                LOG_ERROR << "Tool_Select::gererMousePress -> edgeIdArray ou typeArray est nullptr" << std::endl;
-                return false;
-            }
+            //auto typeArray   = vtkIntArray::SafeDownCast(polyData->GetPointData()->GetArray("ArrayTypeHandle"));
+            //if (!edgeIdArray || !typeArray) {
+            //    LOG_ERROR << "Tool_Select::gererMousePress -> edgeIdArray ou typeArray est nullptr" << std::endl;
+            //    return false;
+            //}
 
-            int edgeId = edgeIdArray->GetValue(originalPointId);
-            int handleType = typeArray->GetValue(originalPointId);
+            int edgeId = edgeIdArray->GetValue(VtkPointId);
+            //int handleType = typeArray->GetValue(VtkPointId);
 
             DynamicDrag.m_mode = DragMode::PointUnique;
-            DynamicDrag.m_activePointIndex = originalPointId;
+            //DynamicDrag.m_activePointVtkIndex = VtkPointId;
             DynamicDrag.m_activePrimitiveId = edgeId;
 
             // voir rafraichirPoignees donne le départ etc
             // 1 = Point de départ de la ligne (StartPoint)
             // 2 = Point d'arrivée de la ligne (EndPoint)
             // 3 = Centre du cercle (CercleCentre)
-            DynamicDrag.m_activeHandleType = handleType;
+            //DynamicDrag.m_activeHandleType = handleType;
 
             auto* sketchParams = m_Parent->DocumentRefs.GetParams();
             if (!sketchParams) {
@@ -290,6 +290,10 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
                 return false;
             }
 
+            SketchPoint& sp = sketchParams->GetPointById(DynamicDrag.m_activePrimitiveId);
+            LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> point trouve  Id=" << DynamicDrag.m_activePrimitiveId << std::endl;
+
+            /*
             SketchPrimitive *Primm = sketchParams->GetPrimitiveMutable(DynamicDrag.m_activePrimitiveId);
             if (!Primm) {
                 LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> if ( Primm )  DynamicDrag.m_activePrimitiveId=" << DynamicDrag.m_activePrimitiveId << std::endl;
@@ -314,6 +318,7 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
                     LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> std::visit ([&](auto& ConcretePrim)  non traité " << std::endl;
                 }
             }, *Primm);
+            */
         }
 
 

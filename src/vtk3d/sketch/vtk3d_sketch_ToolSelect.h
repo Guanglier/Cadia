@@ -79,22 +79,10 @@ struct Tool_Select  {
         DragMode m_mode = DragMode::None;
         gp_Pnt2d m_lastMousePos2D;
 
-        vtkIdType m_activePointIndex = -1;
+
         int m_activePrimitiveId = -1; // Remplace l'ancien edgeId pour être générique (Ligne ou Cercle)
-        int m_activeHandleType = -1;
-        //struct {
-            /*
-            gp_Pnt2d    start_when_clicked_2d;
-            gp_Pnt2d    stop_when_clicked_2d;
-            gp_Pnt2d    center_when_clicked_2d;
-            gp_Pnt2d    mouse_when_clicked_2d;
-            struct{
-                double x_diff;
-                double y_diff;
-            }circle_MouseToCenter;
-            */
-            //gp_Vec2d    CircleToMouseVect;
-        //}Positions;
+        //int m_activeHandleType = -1;
+
         struct{
             gp_Pnt2d mouse_when_clicked_2d;
             struct{

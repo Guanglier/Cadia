@@ -212,8 +212,8 @@ void Vtk3d_Sketch::rafraichirPoignees(SketchParams* sketchParams) {
     auto edgeIdsHandles = vtkSmartPointer<vtkIntArray>::New();
     edgeIdsHandles->SetName("OpenCascadeEdgeID");
 
-    auto ArrayTypeHandle = vtkSmartPointer<vtkIntArray>::New();
-    ArrayTypeHandle->SetName("ArrayTypeHandle");
+    //auto ArrayTypeHandle = vtkSmartPointer<vtkIntArray>::New();
+    //ArrayTypeHandle->SetName("ArrayTypeHandle");
 
     LOG_ERROR << "Vtk3d_Sketch::rafraichirPoignees" << std::endl;
 
@@ -227,7 +227,7 @@ void Vtk3d_Sketch::rafraichirPoignees(SketchParams* sketchParams) {
 
         // Si SketchPoint possède son propre ID :
         edgeIdsHandles->InsertNextValue(static_cast<int>(l_sketchPoint.id)); // Remplacez .id par le nom du champ d'ID dans SketchPoint si besoin
-        ArrayTypeHandle->InsertNextValue(1);
+        //ArrayTypeHandle->InsertNextValue(1);
 
         LOG_ERROR << "\tl_sketchPoint id=" << l_sketchPoint.id << std::endl;
 
@@ -250,7 +250,7 @@ void Vtk3d_Sketch::rafraichirPoignees(SketchParams* sketchParams) {
     auto polyDataHandles = vtkSmartPointer<vtkPolyData>::New();
     polyDataHandles->SetPoints(pointsHandles);
     polyDataHandles->GetPointData()->AddArray(edgeIdsHandles);
-    polyDataHandles->GetPointData()->AddArray(ArrayTypeHandle);
+    //polyDataHandles->GetPointData()->AddArray(ArrayTypeHandle);
 
     // 5. Calcul de la distance à la caméra pour une taille constante à l'écran
     auto distFilter = vtkSmartPointer<vtkDistanceToCamera>::New();

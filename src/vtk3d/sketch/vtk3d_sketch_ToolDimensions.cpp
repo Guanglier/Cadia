@@ -300,14 +300,16 @@ bool Tool_Dimensions::gererMousePress(QMouseEvent* event) {
 
                 if (polyData) {
                     auto edgeIdArray = vtkIntArray::SafeDownCast(polyData->GetPointData()->GetArray("OpenCascadeEdgeID"));
-                    auto typeArray   = vtkIntArray::SafeDownCast(polyData->GetPointData()->GetArray("ArrayTypeHandle"));
+                    //auto typeArray   = vtkIntArray::SafeDownCast(polyData->GetPointData()->GetArray("ArrayTypeHandle"));
 
-                    if (edgeIdArray && typeArray) {
+                    //if (edgeIdArray && typeArray) {
+                    if (edgeIdArray ) {
                         int edgeId = edgeIdArray->GetValue(originalPointId);
-                        int handleType = typeArray->GetValue(originalPointId);
+                        //int handleType = typeArray->GetValue(originalPointId);
 
                         // Reçu 5/5 ! Tu sais sur quelle ligne et quelle extrémité tu as cliqué.
-                        std::cout << "Primitive ID: " << edgeId << ", Type: " << handleType << std::endl;
+                        //std::cout << "Primitive ID: " << edgeId << ", Type: " << handleType << std::endl;
+                        std::cout << "Primitive ID: " << edgeId  << std::endl;
                         b_IsSomethingSelected = true;
 
                         //m_Parent->GetView()->m_Chighlighter->mettreEnSurbrillanceEdgeParId(polyData, cellId);
