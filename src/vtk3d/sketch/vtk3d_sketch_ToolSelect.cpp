@@ -248,6 +248,7 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
         }
 
 
+
         // CAS 1 : On a cliqué sur une POIGNÉE (déplacement d'un point unique)
         if (pickedActor && pickedActor == m_Parent->m_ActorSquareOfPrim) {
             vtkIdType originalPointId = cellPicker->GetPointId();

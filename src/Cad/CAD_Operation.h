@@ -310,24 +310,6 @@ public:
         for (const auto& point : getPoints()) {
             point.Update3D(m_sketchPlane);
         }
-        /*
-        // On parcourt le registre des primitives
-        for (const auto& primitive : getPrimitives()) {
-            // Utilisation de std::visit pour modifier les caches 3D des primitives mutables
-            std::visit([&](auto& concretePrim) {
-                using T = std::decay_t<decltype(concretePrim)>;
-
-                if constexpr (std::is_same_v<T, SketchLine>) {
-                    // Utilisation de ElSLib::Value pour projeter la 2D locale en 3D absolue
-                    concretePrim.start.Update3D (m_sketchPlane);
-                    concretePrim.stop.Update3D (m_sketchPlane);
-                }
-                else if constexpr (std::is_same_v<T, SketchCircle>) {
-                    concretePrim.center.Update3D (m_sketchPlane);       // Pour le cercle, on projette uniquement son centre 2D en 3D
-                }
-            }, const_cast<SketchPrimitive&>(primitive)); // Le const_cast permet de mettre à jour le cache interne d'affichage
-        }
-        */
     }
 
     void removeConstraint(uint64_t id) { m_constraintRegistry.remove(id); }

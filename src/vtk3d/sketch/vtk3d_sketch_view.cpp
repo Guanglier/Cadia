@@ -203,6 +203,84 @@ bool Vtk3d_Sketch::calculerIntersectionSourisSurPlan(int mouseX, int mouseY, gp_
     return true;
 }
 
+
+void Vtk3d_Sketch::rafraichirPoignees(SketchParams* sketchParams) {
+    // 1. Initialisation des conteneurs VTK
+    auto pointsHandles = vtkSmartPointer<vtkPoints>::New();
+    auto edgeIdsHandles = vtkSmartPointer<vtkIntArray>::New();
+    edgeIdsHandles->SetName("OpenCascadeEdgeID");
+
+    auto ArrayTypeHandle = vtkSmartPointer<vtkIntArray>::New();
+    ArrayTypeHandle->SetName("ArrayTypeHandle");
+
+    // 2. 💡 En supposant que SketchPoint possède un champ .id ou que vous itérez sur le vecteur
+    for (const auto& l_sketchPoint : sketchParams->getPoints()) {
+        pointsHandles->InsertNextPoint(
+            l_sketchPoint.cache_p3d.X(),
+            l_sketchPoint.cache_p3d.Y(),
+            l_sketchPoint.cache_p3d.Z()
+            );
+
+        // Si SketchPoint possède son propre ID :
+        edgeIdsHandles->InsertNextValue(static_cast<int>(l_sketchPoint.id)); // Remplacez .id par le nom du champ d'ID dans SketchPoint si besoin
+        ArrayTypeHandle->InsertNextValue(1);
+    }
+
+
+    // 3. Gestion du cas où aucune poignée n'est à afficher
+    if (pointsHandles->GetNumberOfPoints() == 0) {
+        if (m_ActorSquareOfPrim) m_ActorSquareOfPrim->VisibilityOff();
+        return;
+    }
+
+    // 4. Définition du motif visuel de la poignée (carré plan de 1x1 centré)
+    auto handleSource = vtkSmartPointer<vtkPlaneSource>::New();
+    handleSource->SetOrigin(-0.5, -0.5, 0.0);
+    handleSource->SetPoint1( 0.5, -0.5, 0.0);
+    handleSource->SetPoint2(-0.5,  0.5, 0.0);
+
+    // Assemblage des points et de leurs attributs dans un PolyData
+    auto polyDataHandles = vtkSmartPointer<vtkPolyData>::New();
+    polyDataHandles->SetPoints(pointsHandles);
+    polyDataHandles->GetPointData()->AddArray(edgeIdsHandles);
+    polyDataHandles->GetPointData()->AddArray(ArrayTypeHandle);
+
+    // 5. Calcul de la distance à la caméra pour une taille constante à l'écran
+    auto distFilter = vtkSmartPointer<vtkDistanceToCamera>::New();
+    distFilter->SetInputData(polyDataHandles);
+    distFilter->SetRenderer(m_view->getRenderer());
+    distFilter->SetScreenSize(8.0);
+
+    // 6. Application du "Glyphing"
+    auto glyphFilter = vtkSmartPointer<vtkGlyph3D>::New();
+    glyphFilter->SetInputConnection(distFilter->GetOutputPort());
+    glyphFilter->SetSourceConnection(handleSource->GetOutputPort());
+    glyphFilter->SetScaleModeToScaleByScalar();
+    glyphFilter->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, "DistanceToCamera");
+    glyphFilter->SetColorModeToColorByScalar();
+
+    if (!m_ActorSquareOfPrim) {
+        m_ActorSquareOfPrim = vtkSmartPointer<vtkActor>::New();
+        auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+        mapper->ScalarVisibilityOff();
+        m_ActorSquareOfPrim->SetPickable(true);
+        m_ActorSquareOfPrim->SetMapper(mapper);
+        m_ActorSquareOfPrim->GetProperty()->SetColor(1.0, 50.0 / 255.0, 50.0 / 255.0);
+        m_view->getRenderer()->AddActor(m_ActorSquareOfPrim);
+    }
+
+    // 7. Mise à jour du Mapper
+    if (auto mapper = vtkPolyDataMapper::SafeDownCast(m_ActorSquareOfPrim->GetMapper())) {
+        mapper->SetInputConnection(glyphFilter->GetOutputPort());
+        mapper->ScalarVisibilityOff();
+        mapper->Modified();
+    }
+
+    if (m_ActorSquareOfPrim) {
+        m_ActorSquareOfPrim->VisibilityOn();
+    }
+}
+/*
 void Vtk3d_Sketch::rafraichirPoignees(SketchParams* sketchParams) {
 	// 1. Initialisation des conteneurs VTK pour stocker les positions et les métadonnées
     auto pointsHandles = vtkSmartPointer<vtkPoints>::New();
@@ -222,7 +300,7 @@ void Vtk3d_Sketch::rafraichirPoignees(SketchParams* sketchParams) {
             if constexpr (std::is_same_v<T, SketchLine>) {
 
                 SketchPoint pstart = sketchParams->GetPointById( concretePrim.startPointId );
-                SketchPoint pstop = sketchParams->GetPointById( concretePrim.startPointId );
+                SketchPoint pstop = sketchParams->GetPointById( concretePrim.stopPointId );
 
 				// Point de départ de la ligne
                 pointsHandles->InsertNextPoint(pstart.cache_p3d.X(), pstart.cache_p3d.Y(), pstart.cache_p3d.Z());
@@ -303,6 +381,8 @@ void Vtk3d_Sketch::rafraichirPoignees(SketchParams* sketchParams) {
 	}
 
 }
+*/
+
 
 void Vtk3d_Sketch::rafraichirGeometrie(SketchParams* sketchParams) {
     auto pointsGeom = vtkSmartPointer<vtkPoints>::New();
