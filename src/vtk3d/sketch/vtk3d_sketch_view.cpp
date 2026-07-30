@@ -91,12 +91,14 @@ void Vtk3d_Sketch::rafraichirAffichageEsquisseInteractif() {
 
 
                 // attention faire une fonction pour ici et plus bas pour avoir exactement le meme code !
+                SketchPoint&  sp_center = sketchParams->GetPointById(concretePrim.centerPointId);
+
                 for (int i = 0; i <= 64; ++i) {
                     double angle = 2.0 * M_PI * i / 64;
 
                     // Calcul en 2D locale autour du centre local
-                    double localU = concretePrim.center.p2d.X() + concretePrim.radius * std::cos(angle);
-                    double localV = concretePrim.center.p2d.Y() + concretePrim.radius * std::sin(angle);
+                    double localU = sp_center.p2d.X() + concretePrim.radius * std::cos(angle);
+                    double localV = sp_center.p2d.Y() + concretePrim.radius * std::sin(angle);
 
                     // Projection 3D fidèle à l'orientation du plan
                     gp_Pnt p3d = ElSLib::Value(localU, localV, DocumentRefs.GetSketchPlane() );
@@ -432,7 +434,9 @@ void Vtk3d_Sketch::rafraichirGeometrie(SketchParams* sketchParams) {
 
                 // Trouver les coordonnées U,V locales du centre 3D actuel sur le plan
                 double centerU = 0.0, centerV = 0.0;
-                ElSLib::Parameters(gp_Pln(DocumentRefs.GetSketchPlane()), concretePrim.center.cache_p3d, centerU, centerV);
+
+                SketchPoint&  sp_center = sketchParams->GetPointById(concretePrim.centerPointId);
+                ElSLib::Parameters(gp_Pln(DocumentRefs.GetSketchPlane()), sp_center.cache_p3d, centerU, centerV);
 
                 for (int i = 0; i <= numSegments; ++i) {
                     double angle = 2.0 * M_PI * i / numSegments;

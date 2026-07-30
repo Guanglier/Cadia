@@ -172,9 +172,10 @@ void Tool_CircleDraw::AddCircleToOp(gp_Pnt2d centerPoint2D, double radius) {
         std::cerr << "[ERROR] AddCircleToOp: L'opération cible n'est pas un SketchParams.\n";
         return;
     }
-    SketchCircle    cercle(centerPoint2D, radius);
-    cercle.center.Update3D( sketchParams->m_sketchPlane );
-    uint64_t l_id = sketchParams->addPrimitive( cercle );
+    sketchParams->addCircle( centerPoint2D, radius);
+    //SketchCircle    cercle(centerPoint2D, radius);
+    //cercle.center.Update3D( sketchParams->m_sketchPlane );
+    //uint64_t l_id = //->addPrimitive( cercle );
 }
 
 

@@ -112,7 +112,9 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
 
                 }else if constexpr ( std::is_same_v<T,SketchCircle>){
                     gp_Pnt2d PntCenter = mousePoint2D.Translated(DynamicDrag.PrimToMoseVects.circle.center);
-                    curr_prim.center.setPoint(PntCenter, &m_Parent->DocumentRefs.GetSketchPlane());
+                    //curr_prim.center.setPoint(PntCenter, &m_Parent->DocumentRefs.GetSketchPlane());
+                    SketchPoint&  sp_center = sketchParams->GetPointById(curr_prim.centerPointId);
+                    sp_center.setPoint(PntCenter, &m_Parent->DocumentRefs.GetSketchPlane() );
 
                     // On applique le delta sur tous les indices de la primitive entière
                     for (int idx : m_Parent->m_SolverSession.activeVarIndicesAll) {

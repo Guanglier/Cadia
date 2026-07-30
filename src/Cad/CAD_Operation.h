@@ -99,9 +99,8 @@ struct SketchLine : public Identifiable {
 
 struct SketchCircle : public Identifiable {
     uint64_t centerPointId = 0; // ID du point centre dans m_points
-    SketchPoint center;
     double radius;
-    SketchCircle(gp_Pnt2d c, double r) : center(c), radius(r) {
+    SketchCircle(const uint64_t centerId, double r) : centerPointId(centerId), radius(r) {
     }
     bool    b_IsRef = false;
 };
@@ -249,8 +248,7 @@ public:
     }
     uint64_t  addCircle ( gp_Pnt2d li_PntCenter2d, double radius){
         uint64_t u64_IdCenter = addPoint ( li_PntCenter2d );
-        SketchCircle  circle( li_PntCenter2d, radius );
-        circle.centerPointId = u64_IdCenter;
+        SketchCircle  circle( u64_IdCenter, radius );
         return addPrimitive(circle);
     }
 
