@@ -18,6 +18,7 @@
 constexpr int TOLERANCE_CLIC = 10;
 
 
+//#define LOCAL_LOG_LEVEL LogLevel::Debug
 
 void Tool_Select::activate() {
     // TODO: Implémenter l'activation de l'outil

@@ -17,8 +17,12 @@ int TeeBuf::sync() {
 }
 
 
+LogLevel Logger::GetGlobalLevel() const {
+    return globalLevel_;
+}
+
 // --- Logger Implementation ---
-Logger::Logger() : currentLevel_(LogLevel::Debug) {
+Logger::Logger() : globalLevel_(LogLevel::Debug) {
     // Flux par défaut : uniquement la console (std::cout)
     logStream_ = std::make_unique<std::ostream>(std::cout.rdbuf());
     
@@ -35,7 +39,7 @@ Logger& Logger::GetInstance() {
 
 void Logger::SetLevel(LogLevel level) {
     std::lock_guard<std::mutex> lock(mutex_);
-    currentLevel_ = level;
+    globalLevel_ = level;
 }
 
 bool Logger::EnableFile(const std::string& filename) {
@@ -57,14 +61,18 @@ bool Logger::EnableFile(const std::string& filename) {
     return true;
 }
 
-std::ostream& Logger::GetStream(LogLevel level, const char* prefix) {
-    if (level < currentLevel_) {
+
+
+std::ostream& Logger::GetStream(LogLevel messageLevel, LogLevel fileLevel, const char* prefix) {
+    // On détermine le niveau effectif : le plus restrictif entre le global et le niveau local du fichier
+    LogLevel effectiveLevel = (static_cast<int>(fileLevel) > static_cast<int>(globalLevel_))
+                                  ? fileLevel
+                                  : globalLevel_;
+
+    if (messageLevel < effectiveLevel) {
         return *nullStream_; // Retourne un flux mort si le niveau est trop bas
     }
 
-    // On injecte le préfixe au début de la ligne
-    // Note: Pour être parfaitement thread-safe sur des lignes entières avec des << multiples, 
-    // tu peux aussi protéger par un verrou, mais pour un usage classique, le flux suffit.
     *logStream_ << prefix << " ";
     return *logStream_;
 }
