@@ -55,8 +55,61 @@ void DiagnostiquerForme(const TopoDS_Shape& shape) {
 }
 */
 
+SketchPoint& SketchParams::GetPointById ( uint64_t li_id){
+    SketchPoint* pt = m_points.findMutable(li_id);
+    if (pt != nullptr) {
+        return *pt; // On déréférence pour renvoyer une référence SketchPoint&
+    }
+    // 2. Gestion d'erreur si l'ID n'existe pas (par exemple, lancer une exception)
+    throw std::runtime_error("Point ID non trouvé dans le registre !");
+}
+void SketchParams::removePrimitive(uint64_t idASupprimer) {
+    m_primitiveRegistry.remove(idASupprimer);
+    auto& constraints = m_constraintRegistry.getItemsMutable();
+    constraints.erase(
+        std::remove_if(constraints.begin(), constraints.end(), [idASupprimer](const SketchConstraint& c) {
+            return c.ref1.primitiveId == idASupprimer || c.ref2.primitiveId == idASupprimer;
+        }),
+        constraints.end()
+        );
+}
 
 
+uint64_t SketchParams::addPoint (const gp_Pnt2d& li_Pnt2D) {
+    uint64_t lid;
+    if ( false == PointExists(li_Pnt2D,  lid)){
+        SketchPoint l_point(li_Pnt2D);
+        l_point.Update3D( m_sketchPlane);
+        return m_points.add(l_point);
+    }else{
+        return lid;
+    }
+}
+uint64_t SketchParams::addLine ( gp_Pnt2d li_PntStart2d, gp_Pnt2d li_PntStop2d ){
+    uint64_t u64_IdStart = addPoint ( li_PntStart2d );
+    uint64_t u64_IdStop = addPoint ( li_PntStop2d );
+    SketchLine  line( u64_IdStart, u64_IdStop );
+    line.b_IsRef = false;
+    return addPrimitive ( line);
+}
+uint64_t SketchParams::addCircle ( gp_Pnt2d li_PntCenter2d, double radius){
+    uint64_t u64_IdCenter = addPoint ( li_PntCenter2d );
+    SketchCircle  circle( u64_IdCenter, radius );
+    return addPrimitive(circle);
+}
+bool SketchParams::PointExists ( const gp_Pnt2d& li_Pnt2D, uint64_t &lo_PointId){
+    const auto& items = m_points.getItems();
+
+    double tolerance = 1e-6;
+    auto it = std::find_if(items.begin(), items.end(), [&](const SketchPoint& point) {
+        return li_Pnt2D.IsEqual( point.p2d, tolerance);
+    });
+    if (it != items.end()) {
+        lo_PointId = it->id; // Récupération de l'ID associé
+        return true;         // Point trouvé
+    }
+    return false; // Point non trouvé
+}
 
 
 

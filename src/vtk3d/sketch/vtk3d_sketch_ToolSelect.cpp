@@ -73,9 +73,21 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
                 DynamicDrag.PtrSelectedPoint->p2d.SetX( mousePoint2D.X() );
                 DynamicDrag.PtrSelectedPoint->p2d.SetY( mousePoint2D.Y() );
                 DynamicDrag.PtrSelectedPoint->Update3D( m_Parent->DocumentRefs.GetSketchPlane());
+
+                uint64_t ptId = DynamicDrag.PtrSelectedPoint->id;
+
+                for (int idx : m_Parent->m_SolverSession.activeVarIndicesAll) {
+                    m_Parent->m_SolverSession.UpdatePoint( idx );
+                }
+
+                // Si vous avez stocké une map ou une fonction pour retrouver l'index X à partir de l'ID :
+                // (Ou utilisez vos variables actives stockées dans m_Parent->m_SolverSession si elles sont correctement assignées)
+                //m_Parent->m_SolverSession.UpdatePoint( m_Parent->m_SolverSession.activeVarIndexX );
+                //m_Parent->m_SolverSession.UpdatePoint( m_Parent->m_SolverSession.activeVarIndexY );
+
             }
 
-            //m_Parent->m_SolverSession.Step(*sketchParams);
+            m_Parent->m_SolverSession.Step(*sketchParams);
             m_Parent->rafraichirPoignees(sketchParams);
             m_Parent->rafraichirAffichageEsquisseInteractif();
             //m_Parent->rafraichirAffichageEsquisse();      // trop lent remplacé par les deux du dessus
@@ -107,7 +119,7 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
 
                     // On applique le delta sur tous les indices de la primitive entière
                     for (int idx : m_Parent->m_SolverSession.activeVarIndicesAll) {
-                        //m_Parent->m_SolverSession.UpdatePoint( idx );
+                        m_Parent->m_SolverSession.UpdatePoint( idx );
                     }
 
                 }else if constexpr ( std::is_same_v<T,SketchCircle>){
@@ -118,7 +130,7 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
 
                     // On applique le delta sur tous les indices de la primitive entière
                     for (int idx : m_Parent->m_SolverSession.activeVarIndicesAll) {
-                        //m_Parent->m_SolverSession.UpdatePoint( idx );
+                        m_Parent->m_SolverSession.UpdatePoint( idx );
                     }
 
                     //std::cout<<" -> " << PntCenter.X() << " " << PntCenter.Y() << " " << std::endl;
@@ -132,7 +144,7 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
             DynamicDrag.m_lastMousePos2D = mousePoint2D;
 
             // On lance le solveur pour propoger/maintenir les contraintes si nécessaire, puis on rafraîchit
-            //m_Parent->m_SolverSession.Step(*sketchParams);
+            m_Parent->m_SolverSession.Step(*sketchParams);
 
             m_Parent->rafraichirPoignees(sketchParams);
             m_Parent->rafraichirAffichageEsquisseInteractif();
@@ -278,12 +290,16 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
             PrimitiveIsSelected = true;
             DynamicDrag.m_isDragging = true;
 
-            // m_Parent->m_SolverSession.Initialize(*sketchParams);
-            // SolverInteractiveSession::GetIndicesForHandle(
-            //     *sketchParams, DynamicDrag.m_activePrimitiveId, DynamicDrag.m_activeHandleType,
-            //     m_Parent->m_SolverSession.activeVarIndexX,
-            //     m_Parent->m_SolverSession.activeVarIndexY
-            //     );
+            m_Parent->m_SolverSession.Initialize(*sketchParams);
+
+            SolverInteractiveSession::GetIndicesForEntireEdge(*sketchParams, DynamicDrag.m_activePrimitiveId, m_Parent->m_SolverSession.activeVarIndicesAll);
+
+
+            //SolverInteractiveSession::GetIndicesForHandle(
+            //    *sketchParams, DynamicDrag.m_activePrimitiveId, DynamicDrag.m_activeHandleType,
+            //    m_Parent->m_SolverSession.activeVarIndexX,
+            //    m_Parent->m_SolverSession.activeVarIndexY
+            //    );
 
             //sp.p2d.SetX(  sp.p2d.X() + 1 );
 

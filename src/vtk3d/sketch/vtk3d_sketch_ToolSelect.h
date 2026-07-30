@@ -85,7 +85,7 @@ struct Tool_Select  {
 
 
         int m_activePrimitiveId = -1; // Remplace l'ancien edgeId pour être générique (Ligne ou Cercle)
-        //int m_activeHandleType = -1;
+
 
 
 

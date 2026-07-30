@@ -29,7 +29,7 @@
 #include <variant>
 #include "Logger.h"
 
-
+#define LOCAL_LOG_LEVEL ::LogLevel::Info
 
 
 // --------------------------------------------------------------------
@@ -175,80 +175,71 @@ void SolverInteractiveSession::UpdatePoint(int varIndex) {
 void SolverInteractiveSession::Initialize(SketchParams& sketch) {
     // 1. Nettoyage / Réinitialisation des structures internes de la session courante
     variablePointers.clear();
-    std::unordered_map<void*, int> pointToXIndex;
-    std::unordered_map<void*, int> circleToRIndex;
-/*
-    // --- Remplissage des variables ---
+    std::unordered_map<uint64_t, int> pointIdToXIndex;
+    std::unordered_map<uint64_t, int> circleToRIndex;
+
+    LOG_INFO << "SolverInteractiveSession::Initialize -> entree " << std::endl;
+
+    // --- Étape A : Mapper tous les points de la liste globale de l'esquisse ---
+    for (const auto& pt : sketch.getPoints()) {
+        uint64_t ptId = pt.id;
+        int idxX = static_cast<int>(variablePointers.size());
+
+        pointIdToXIndex[ptId] = idxX;
+
+        // On ajoute l'adresse du X et du Y du gp_Pnt2d
+        // (En supposant l'accès aux coordonnées modifiables de OpenCASCADE)
+        variablePointers.push_back(&(const_cast<gp_Pnt2d&>(pt.p2d).ChangeCoord().ChangeCoord(1))); // X
+        variablePointers.push_back(&(const_cast<gp_Pnt2d&>(pt.p2d).ChangeCoord().ChangeCoord(2))); // Y
+    }
+
+    // --- Étape B : Mapper les rayons des cercles ---
     for (const auto& primConst : sketch.getPrimitives()) {
-        SketchPrimitive& prim = const_cast<SketchPrimitive&>(primConst);
-        std::visit([&](auto& concretePrim) {
+        // Utilisation de std::visit pour identifier le type de primitive
+        std::visit([&](const auto& concretePrim) {
             using T = std::decay_t<decltype(concretePrim)>;
-            if constexpr (std::is_same_v<T, SketchLine>) {
-                pointToXIndex[&concretePrim.start.p2d] = static_cast<int>(variablePointers.size());
-                variablePointers.push_back(&(concretePrim.start.p2d.ChangeCoord().ChangeCoord(1)));
-                variablePointers.push_back(&(concretePrim.start.p2d.ChangeCoord().ChangeCoord(2)));
-
-                pointToXIndex[&concretePrim.stop.p2d] = static_cast<int>(variablePointers.size());
-                variablePointers.push_back(&(concretePrim.stop.p2d.ChangeCoord().ChangeCoord(1)));
-                variablePointers.push_back(&(concretePrim.stop.p2d.ChangeCoord().ChangeCoord(2)));
+            if constexpr (std::is_same_v<T, SketchCircle>) {
+                int idxR = static_cast<int>(variablePointers.size());
+                circleToRIndex[concretePrim.id] = idxR;
+                // Pointeur vers le rayon du cercle
+                variablePointers.push_back(&(const_cast<double&>(concretePrim.radius)));
             }
-            else if constexpr (std::is_same_v<T, SketchCircle>) {
-                pointToXIndex[&concretePrim.center.p2d] = static_cast<int>(variablePointers.size());
-                variablePointers.push_back(&(concretePrim.center.p2d.ChangeCoord().ChangeCoord(1)));
-                variablePointers.push_back(&(concretePrim.center.p2d.ChangeCoord().ChangeCoord(2)));
-
-                circleToRIndex[&concretePrim] = static_cast<int>(variablePointers.size());
-                variablePointers.push_back(&(concretePrim.radius));
-            }else{
-                LOG_ERROR << " SolverInteractiveSession::Initialize : default ! " << std::endl;
-            }
-        }, prim);
+        }, primConst);
     }
 
     int numVariables = static_cast<int>(variablePointers.size());
-    this->variablePointers = variablePointers;
     Vector_X.resize(numVariables);
-
-    // Remplir X avec les valeurs actuelles de l'esquisse
     pullFromSketch();
-
     solver.setNumVariables(numVariables);
-
-
-
-    // Fonction utilitaire locale pour récupérer l'index de manière sécurisée
-    auto getIndexOrError = [&](gp_Pnt2d* ptr, const std::string& constraintName) -> int {
-        if (!ptr) {
-            LOG_ERROR << "[Solver] " << constraintName << " : Pointeur de point nul." << std::endl;
-            return -1;
-        }
-        auto it = pointToXIndex.find(ptr);
-        if (it == pointToXIndex.end()) {
-            LOG_ERROR << "[Solver] " << constraintName << " : Tentative d'utiliser un point qui n'existe plus ou introuvable dans la map !" << std::endl;
-            return -1;
-        }
-        return it->second;
-    };
-    // Lambda utilitaire pour sécuriser la recherche d'index de rayon de cercle
-    auto getRadiusIndexOrError = [&](SketchCircle* circlePtr, const std::string& constraintName) -> int {
-        if (!circlePtr) {
-            LOG_ERROR << "[Solver] " << constraintName << " : Pointeur de cercle nul." << std::endl;
-            return -1;
-        }
-        auto it = circleToRIndex.find(circlePtr);
-        if (it == circleToRIndex.end()) {
-            LOG_ERROR << "[Solver] " << constraintName << " : Rayon de cercle introuvable dans la map !" << std::endl;
-            return -1;
-        }
-        return it->second;
-    };
 
     // --- Ajout des contraintes une seule fois ---
     solver.clearConstraints();
+
+
     for (const auto& c : sketch.getConstraints()) {
         if (c.isDriven) continue;
 
         switch (c.type) {
+
+            case ConstraintType::Horizontal: {
+                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
+                if (p1 && std::holds_alternative<SketchLine>(*p1)) {
+                    auto& line = std::get<SketchLine>(*p1);
+
+                    // On récupère les indices X et Y via les IDs de points de la ligne
+                    int idxStart = pointIdToXIndex[line.startPointId];
+                    int idxStop  = pointIdToXIndex[line.stopPointId];
+
+                    // Pour une contrainte horizontale, on s'assure que Y_start == Y_stop
+                    // (donc l'index Y correspond à l'index X + 1)
+                    solver.addConstraint(std::make_unique<ConstraintHorizontal>(
+                        idxStart + 1, // Y1
+                        idxStop + 1   // Y2
+                        ));
+                }
+                break;
+            }
+            /*
         case ConstraintType::Horizontal: {
             SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
             if (p1 && std::holds_alternative<SketchLine>(*p1)) {
@@ -360,11 +351,15 @@ void SolverInteractiveSession::Initialize(SketchParams& sketch) {
                 LOG_ERROR << "[Solver] Perpendicular : Une ou plusieurs primitives sont introuvables ou ne sont pas des lignes !" << std::endl;
             }
             break;
+
         }
-        default: break;
+        */
+        default:
+            LOG_WARN << "SolverInteractiveSession::Initialize -> default dans switch (c.type) " << std::endl;
+            break;
         }
     }
-*/
+
     isInitialized = true;
 }
 
@@ -407,32 +402,39 @@ bool SolverInteractiveSession::Step(SketchParams& sketch) {
 // Fonction utilitaire interne pour éviter de dupliquer la boucle d'indexation
 template<typename F>
 bool ForEachPrimitiveIndex(SketchParams& sketch, F&& callback) {
-    int currentIndex = 0;
+    // On reconstruit dynamiquement la map des points (ID -> Index dans variablePointers)
+    // exactement de la même manière que dans Initialize()
+    std::unordered_map<uint64_t, int> pointIdToXIndex;
+    int currentVarIndex = 0;
+
+    for (const auto& pt : sketch.getPoints()) {
+        pointIdToXIndex[pt.id] = currentVarIndex;
+        currentVarIndex += 2; // X et Y pour chaque point
+    }
+
+    // On parcourt les primitives et on extrait les exacts indices de leurs points
     for (const auto& p : sketch.getPrimitives()) {
         bool stop = false;
         std::visit([&](auto& concretePrim) {
             using T = std::decay_t<decltype(concretePrim)>;
 
             if constexpr (std::is_same_v<T, SketchLine>) {
-                int startX = currentIndex;
-                int startY = currentIndex + 1;
-                currentIndex += 2;
+                if (pointIdToXIndex.count(concretePrim.startPointId) && pointIdToXIndex.count(concretePrim.stopPointId)) {
+                    int startX = pointIdToXIndex[concretePrim.startPointId];
+                    int startY = startX + 1;
+                    int stopX = pointIdToXIndex[concretePrim.stopPointId];
+                    int stopY = stopX + 1;
 
-                int stopX = currentIndex;
-                int stopY = currentIndex + 1;
-                currentIndex += 2;
-
-                stop = callback(concretePrim.id, std::vector<int>{startX, startY, stopX, stopY});
+                    stop = callback(concretePrim.id, std::vector<int>{startX, startY, stopX, stopY});
+                }
             }
             else if constexpr (std::is_same_v<T, SketchCircle>) {
-                int centerX = currentIndex;
-                int centerY = currentIndex + 1;
-                currentIndex += 2;
+                if (pointIdToXIndex.count(concretePrim.centerPointId)) {
+                    int centerX = pointIdToXIndex[concretePrim.centerPointId];
+                    int centerY = centerX + 1;
 
-                int radiusIdx = currentIndex;
-                currentIndex += 1;
-
-                stop = callback(concretePrim.id, std::vector<int>{centerX, centerY}); // + radiusIdx si besoin un jour
+                    stop = callback(concretePrim.id, std::vector<int>{centerX, centerY});
+                }
             }
         }, p);
 
@@ -483,6 +485,26 @@ bool SolverInteractiveSession::GetIndicesForHandle(SketchParams& sketch, int pri
 
     return found;
 }
+bool SolverInteractiveSession::GetIndicesForHandle(SketchParams& sketch, uint64_t targetPointId, int& outIndexX, int& outIndexY) {
+    // On reconstruit la map des points (ID -> Index) exactement comme dans ForEachPrimitiveIndex
+    std::unordered_map<uint64_t, int> pointIdToXIndex;
+    int currentVarIndex = 0;
+
+    for (const auto& pt : sketch.getPoints()) {
+        pointIdToXIndex[pt.id] = currentVarIndex;
+        currentVarIndex += 2;
+    }
+
+    // On cherche directement si le point recherché existe dans la map
+    auto it = pointIdToXIndex.find(targetPointId);
+    if (it != pointIdToXIndex.end()) {
+        outIndexX = it->second;
+        outIndexY = it->second + 1;
+        return true;
+    }
+
+    return false;
+}
 
 /**
  * @brief Récupère l'ensemble des indices associés à une arête/primitive complète.
@@ -495,7 +517,7 @@ bool SolverInteractiveSession::GetIndicesForEntireEdge(SketchParams& sketch, int
     outIndices.clear();
     SketchPrimitive* prim = sketch.GetPrimitiveMutable(primitiveId);
     if (!prim){
-        LOG_ERROR << "[Solver] Impossible de récupérer les indices : la primitive ID "  + std::to_string(primitiveId) + " n'existe plus dans l'esquisse !";
+        LOG_ERROR << "[Solver] : SolverInteractiveSession::GetIndicesForEntireEdge: Impossible de récupérer les indices : la primitive ID "  + std::to_string(primitiveId) + " n'existe plus dans l'esquisse !" << std::endl;
         return false;
     }
 
@@ -508,6 +530,9 @@ bool SolverInteractiveSession::GetIndicesForEntireEdge(SketchParams& sketch, int
         }
         return false;
     });
+    if ( false == found ){
+        LOG_ERROR << "[Solver] : SolverInteractiveSession::GetIndicesForEntireEdge : not found ID "  << std::to_string(primitiveId) << std::endl ;
+    }
 
     return found;
 }
@@ -540,7 +565,192 @@ bool SolverOneShot::Solve(SketchParams& sketch, bool enableDiagnostics) {
     } else {
         LOG_DEBUG << "Solver2D_Mapper::PrepareAndSolve(SketchParams& sketch)" << std::endl;
     }
+
+    std::vector<double*> variablePointers;
+    std::unordered_map<uint64_t, int> pointIdToXIndex;
+    std::unordered_map<uint64_t, int> circleToRIndex;
+
+    // --- 1. MAPPING DES VARIABLES DE L'ESQUISSE ---
+    if (enableDiagnostics) LOG_DEBUG << "\n--- 1. VARIABLES MAPPÉES (DANS VECTEUR X) ---" << std::endl;
+
+    // A. Mapping de tous les points globaux de l'esquisse
+    for (const auto& pt : sketch.getPoints()) {
+        uint64_t ptId = pt.id;
+        int idxX = static_cast<int>(variablePointers.size());
+
+        pointIdToXIndex[ptId] = idxX;
+
+        // Pointeurs vers X et Y du SketchPoint (via const_cast pour accéder aux modificateurs OCC)
+        variablePointers.push_back(&(const_cast<gp_Pnt2d&>(pt.p2d).ChangeCoord().ChangeCoord(1))); // X
+        variablePointers.push_back(&(const_cast<gp_Pnt2d&>(pt.p2d).ChangeCoord().ChangeCoord(2))); // Y
+
+        if (enableDiagnostics) {
+            LOG_DEBUG << " [Point ID " << ptId << "]\n"
+                      << "    -> Coords (X" << idxX << ", Y" << idxX+1 << ") = ("
+                      << pt.p2d.X() << ", " << pt.p2d.Y() << ")\n";
+        }
+    }
+
+    // B. Mapping des rayons des cercles et autres paramètres spécifiques
+    for (const auto& primConst : sketch.getPrimitives()) {
+        std::visit([&](const auto& concretePrim) {
+            using T = std::decay_t<decltype(concretePrim)>;
+            if constexpr (std::is_same_v<T, SketchCircle>) {
+                int idxR = static_cast<int>(variablePointers.size());
+                circleToRIndex[concretePrim.id] = idxR;
+                variablePointers.push_back(&(const_cast<double&>(concretePrim.radius)));
+
+                if (enableDiagnostics) {
+                    LOG_DEBUG << " [Circle ID " << concretePrim.id << "]\n"
+                              << "    -> Radius (R" << idxR << ") = " << concretePrim.radius << "\n";
+                }
+            }
+        }, primConst);
+    }
+
+    int numVariables = static_cast<int>(variablePointers.size());
+    if (enableDiagnostics) LOG_INFO << " Total variables (Cols de la Jacobienne) : " << numVariables << std::endl;
+    if (numVariables == 0) return true;
+
+    // Construction du vecteur d'état initial X
+    Eigen::VectorXd X(numVariables);
+    for (int i = 0; i < numVariables; ++i) {
+        X[i] = *(variablePointers[i]);
+    }
+
+    // --- 2. TRADUCTION DES CONTRAINTES ---
+    if (enableDiagnostics) LOG_DEBUG << "\n--- 2. EVALUATION DES CONTRAINTES ---" << std::endl;
+    std::vector<std::unique_ptr<IConstraint2D>> constraints;
+
+    for (const auto& c : sketch.getConstraints()) {
+        if (c.isDriven) {
+            if (enableDiagnostics) LOG_DEBUG << " [Constraint ID " << c.id << "] -> IGNOREE (Pilotee/Driven)\n";
+            continue;
+        }
+
+        std::string cTypeStr = "";
+        switch (c.type) {
+        case ConstraintType::Horizontal: {
+            cTypeStr = "Horizontal";
+            SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
+            if (p1 && std::holds_alternative<SketchLine>(*p1)) {
+                auto& line = std::get<SketchLine>(*p1);
+                constraints.push_back(std::make_unique<ConstraintHorizontal>(
+                    pointIdToXIndex[line.startPointId] + 1,
+                    pointIdToXIndex[line.stopPointId] + 1
+                    ));
+            } else {
+                LOG_ERROR << "ERROR: Horizontal attend une ligne valide." << std::endl;
+            }
+            break;
+        }
+        case ConstraintType::Vertical: {
+            cTypeStr = "Vertical";
+            SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
+            if (p1 && std::holds_alternative<SketchLine>(*p1)) {
+                auto& line = std::get<SketchLine>(*p1);
+                constraints.push_back(std::make_unique<ConstraintVertical>(
+                    pointIdToXIndex[line.startPointId],
+                    pointIdToXIndex[line.stopPointId]
+                    ));
+            } else {
+                LOG_ERROR << "ERROR: Vertical attend une ligne valide." << std::endl;
+            }
+            break;
+        }
+            /*
+        case ConstraintType::Coincident: {
+            cTypeStr = "Coincident (2 eq.)";
+            gp_Pnt2d* p1 = Solver2D_Mapper::getPointPointerFromRef(sketch, c.ref1);
+            gp_Pnt2d* p2 = Solver2D_Mapper::getPointPointerFromRef(sketch, c.ref2);
+            // Récupération des IDs associés via les pointeurs ou adaptation de la logique de référence
+            // (Si getPointPointerFromRef retourne un pointeur, on peut retrouver l'index, ou utiliser les helpers d'ID)
+            // Alternative propre basée sur les IDs si vos helpers le supportent :
+            uint64_t id1 = sketch.findPointIdFromRef(c.ref1); // Assurez-vous d'avoir une méthode équivalente ou utilisez la map inverse
+            uint64_t id2 = sketch.findPointIdFromRef(c.ref2);
+            if (pointIdToXIndex.count(id1) && pointIdToXIndex.count(id2)) {
+                constraints.push_back(std::make_unique<ConstraintCoincident1D>(pointIdToXIndex[id1], pointIdToXIndex[id2]));
+                constraints.push_back(std::make_unique<ConstraintCoincident1D>(pointIdToXIndex[id1] + 1, pointIdToXIndex[id2] + 1));
+            }
+            break;
+
+        }
+        */
+        case ConstraintType::Radius: {
+            cTypeStr = "Radius (" + std::to_string(c.value) + ")";
+            SketchPrimitive* prim = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
+            if (prim && std::holds_alternative<SketchCircle>(*prim)) {
+                auto& circle = std::get<SketchCircle>(*prim);
+                constraints.push_back(std::make_unique<ConstraintRadius>(circleToRIndex[circle.id], c.value));
+            }
+            break;
+        }
+        default:
+            cTypeStr = "Type non géré";
+            LOG_ERROR << "\tERROR : Type de contrainte non géré" << std::endl;
+            break;
+        }
+
+        if (enableDiagnostics) {
+            LOG_DEBUG << " [Constraint ID " << c.id << "] " << cTypeStr << "\n";
+        }
+    }
+
+    // Affichage optionnel des résidus et DOF avant résolution
+    if (enableDiagnostics) {
+        int numEquations = 0;
+        double totalSquaredError = 0.0;
+        for (const auto& c : constraints) {
+            double err = c->calcError(X);
+            totalSquaredError += err * err;
+            numEquations++;
+        }
+        LOG_INFO << " Total équations générées : " << numEquations << std::endl;
+        LOG_INFO << " Erreur globale initiale (L2) : " << std::sqrt(totalSquaredError) << std::endl;
+
+        int dof = numVariables - numEquations;
+        LOG_INFO << "\n--- 3. BILAN DES DEGRÉS DE LIBERTÉ (DOF) ---" << std::endl;
+        LOG_INFO << " Degrés de Liberté : " << dof;
+        if (dof > 0) LOG_INFO << " -> Sous-contraint\n";
+        else if (dof == 0) LOG_INFO << " -> Isostatique\n";
+        else LOG_INFO << " -> Sur-contraint\n";
+        LOG_DEBUG << "==================================================\n" << std::endl;
+    }
+
+    // --- 3. RESOLUTION ---
+    Solver2D_Solver solver;
+    solver.setNumVariables(numVariables);
+    for (auto& c : constraints) {
+        solver.addConstraint(std::move(c));
+    }
+
+    bool success = solver.solve(X);
+    if (!success) {
+        LOG_WARN << "\t[2DSolver_Mapper] Echec de convergence !" << std::endl;
+        return false;
+    }
+
+    // Réinjection des valeurs calculées dans l'esquisse
+    for (int i = 0; i < numVariables; ++i) {
+        *(variablePointers[i]) = X[i];
+    }
+
+    LOG_INFO << "\tFIN fonction SolverOneShot::Solve" << std::endl;
+    sketch.recomputeGeometry3D();
+
+    return true;
+}
+
 /*
+bool SolverOneShot::Solve(SketchParams& sketch, bool enableDiagnostics) {
+    if (enableDiagnostics) {
+        LOG_DEBUG << "\n==================================================" << std::endl;
+        LOG_DEBUG << "         DIAGNOSTIC DU SOLVEUR 2D (OneShot)       " << std::endl;
+        LOG_DEBUG << "==================================================" << std::endl;
+    } else {
+        LOG_DEBUG << "Solver2D_Mapper::PrepareAndSolve(SketchParams& sketch)" << std::endl;
+    }
+
     std::vector<double*> variablePointers;
     std::unordered_map<void*, int> pointToXIndex;
     std::unordered_map<void*, int> circleToRIndex;
@@ -775,9 +985,9 @@ bool SolverOneShot::Solve(SketchParams& sketch, bool enableDiagnostics) {
 
     LOG_INFO << "\tFIN fonction SolverOneShot::Solve" << std::endl;
     sketch.recomputeGeometry3D();
-*/
+
     return true;
 }
-
+*/
 
 

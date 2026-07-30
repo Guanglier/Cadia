@@ -230,10 +230,25 @@ void CAD_Document::tst_add_op_sketch_rect() {
 
 
     // 5. On ajoute les primitives directement dans l'esquisse du document
-    uint64_t l1_id = sketch.addLine( p1, p2 );  //horizontale
-    uint64_t l2_id = sketch.addLine( p2, p3 );  //verticale
+    uint64_t l1_id = sketch.addLine( p1, p2 );
+    uint64_t l2_id = sketch.addLine( p2, p3 );
     uint64_t l3_id = sketch.addLine( p3, p4 );  // horizontale droite vers gauche
     uint64_t l4_id = sketch.addLine( p4, p1 );  // verticale haut vers bas
+
+
+    SketchConstraint hor1;
+    hor1.type = ConstraintType::Horizontal;
+    hor1.ref1.operationId = opId;
+    hor1.ref1.primitiveId = l2_id;
+    hor1.ref1.subElement = ConstraintSubElement::Whole;
+    sketch.addConstraint(hor1);
+
+    SketchConstraint hor2;
+    hor2.type = ConstraintType::Horizontal;
+    hor2.ref1.operationId = opId;
+    hor2.ref1.primitiveId = l4_id;
+    hor2.ref1.subElement = ConstraintSubElement::Whole;
+    sketch.addConstraint(hor2);
 
 
 

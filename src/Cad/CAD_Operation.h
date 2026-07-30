@@ -234,82 +234,26 @@ public:
     const std::vector<SketchPoint>& getPoints()const { return m_points.getItems(); }
 
     uint64_t    addPrimitive(SketchPrimitive primitive) { return m_primitiveRegistry.add(std::move(primitive)); }
-    //uint64_t    addConstraint(SketchConstraint constraint) { return m_constraintRegistry.add(std::move(constraint)); }
     uint64_t    addConstraint(SketchConstraint constraint);
     void        loadPrimitive(SketchPrimitive primitive) { m_primitiveRegistry.load(std::move(primitive)); }
     void        loadConstraint(SketchConstraint constraint) { m_constraintRegistry.load(std::move(constraint)); }
 
-    uint64_t        addLine ( gp_Pnt2d li_PntStart2d, gp_Pnt2d li_PntStop2d ){
-        uint64_t u64_IdStart = addPoint ( li_PntStart2d );
-        uint64_t u64_IdStop = addPoint ( li_PntStop2d );
-        SketchLine  line( u64_IdStart, u64_IdStop );
-        line.b_IsRef = false;
-        return addPrimitive ( line);
-    }
-    uint64_t  addCircle ( gp_Pnt2d li_PntCenter2d, double radius){
-        uint64_t u64_IdCenter = addPoint ( li_PntCenter2d );
-        SketchCircle  circle( u64_IdCenter, radius );
-        return addPrimitive(circle);
-    }
+    uint64_t addLine ( gp_Pnt2d li_PntStart2d, gp_Pnt2d li_PntStop2d );
+    uint64_t addCircle ( gp_Pnt2d li_PntCenter2d, double radius);
+    uint64_t addPoint (const gp_Pnt2d& li_Pnt2D);
+    bool PointExists ( const gp_Pnt2d& li_Pnt2D, uint64_t &lo_PointId);
+    bool removePoint( uint64_t li_id){ m_points.remove( li_id ); }
 
-
-    bool        PointExists ( const gp_Pnt2d& li_Pnt2D, uint64_t &lo_PointId){
-        const auto& items = m_points.getItems();
-
-        double tolerance = 1e-6;
-        auto it = std::find_if(items.begin(), items.end(), [&](const SketchPoint& point) {
-            return li_Pnt2D.IsEqual( point.p2d, tolerance);
-        });
-        if (it != items.end()) {
-            lo_PointId = it->id; // Récupération de l'ID associé
-            return true;         // Point trouvé
-        }
-        return false; // Point non trouvé
-    }
-
-    uint64_t    addPoint (const gp_Pnt2d& li_Pnt2D) {
-        uint64_t lid;
-        if ( false == PointExists(li_Pnt2D,  lid)){
-            SketchPoint l_point(li_Pnt2D);
-            l_point.Update3D( m_sketchPlane);
-            return m_points.add(l_point);
-        }else{
-            return lid;
-        }
-    }
-    bool removePoint( uint64_t li_id){
-        m_points.remove( li_id );
-    }
-
-    SketchPoint& GetPointById ( uint64_t li_id){
-        SketchPoint* pt = m_points.findMutable(li_id);
-        if (pt != nullptr) {
-            return *pt; // On déréférence pour renvoyer une référence SketchPoint&
-        }
-        // 2. Gestion d'erreur si l'ID n'existe pas (par exemple, lancer une exception)
-        throw std::runtime_error("Point ID non trouvé dans le registre !");
-    }
+    SketchPoint& GetPointById ( uint64_t li_id);
 
     SketchPrimitive* GetPrimitiveMutable(uint64_t id) {    return m_primitiveRegistry.findMutable(id); }
 
-    void removePrimitive(uint64_t idASupprimer) {
-        m_primitiveRegistry.remove(idASupprimer);
-        auto& constraints = m_constraintRegistry.getItemsMutable();
-        constraints.erase(
-            std::remove_if(constraints.begin(), constraints.end(), [idASupprimer](const SketchConstraint& c) {
-                return c.ref1.primitiveId == idASupprimer || c.ref2.primitiveId == idASupprimer;
-                }),
-            constraints.end()
-        );
-    }
-
-    // Fonction de synchronisation 2D -> 3D
+    void removePrimitive(uint64_t idASupprimer);
     void recomputeGeometry3D() const {
         for (const auto& point : getPoints()) {
             point.Update3D(m_sketchPlane);
         }
     }
-
     void removeConstraint(uint64_t id) { m_constraintRegistry.remove(id); }
     TopoDS_Shape evaluate(const CAD_Document& doc) const;
 

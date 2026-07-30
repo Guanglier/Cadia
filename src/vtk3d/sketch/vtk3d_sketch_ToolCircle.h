@@ -1,44 +1,16 @@
 #pragma once
 
-#include <vtkAssemblyPath.h>
-#include <vtkAssemblyNode.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkRenderWindow.h>
-#include <vtkRenderer.h>
-#include <vtkProperty.h>
-#include <vtkProp.h>
-#include <vtkPolyDataMapper.h>
-#include <vtkProp3DCollection.h>
-#include <vtkPropPicker.h>
-#include <vtkInteractorStyleTrackballCamera.h>
-#include <vtkInteractorStyleImage.h>
-#include <vtkDataSetMapper.h>
-#include <vtkDataObject.h>
-#include <vtkCellPicker.h>
-#include <vtkCellData.h>
-#include <vtkCellArray.h>
-#include <vtkCamera.h>
-#include <vtkSphereSource.h>
-#include <vtkCallbackCommand.h>
-#include <vtkFloatArray.h>
-#include <vtkMapper.h>
-#include <vtkRegularPolygonSource.h>
-#include <vtkPoints.h>
-#include <vtkPolyData.h>
 
-#include <gp_Pln.hxx>
+#include <vtkRegularPolygonSource.h>
+#include <vtkActor.h> // Indispensable pour vtkSmartPointer<vtkActor>
 #include <gp_Pnt.hxx>
 #include <gp_Pnt2d.hxx>
-#include <gp_Dir.hxx>
-#include <gp_Ax3.hxx>
 #include <QMouseEvent>
-#include <cmath>
-#include <variant>
-#include <qevent.h>
+#include <QWheelEvent>
+
+// Vos en-têtes
 #include "DimensionEngine.h"
 #include "cad_events.h"
-
-//#include "vtk3d_sketch_Tools.h"
 
 
 class Vtk3d_Sketch;
@@ -61,11 +33,8 @@ struct Tool_CircleDraw {
     bool gererkeyPressEvent(QKeyEvent* event);
 
     void EndDrawCircle();
-    //void ajusterEchelleCarreSnap();
     void ajusterEchelleElements( double li_echelle);
-    //void AddCircleToOp(Vector2D<double> centerPoint2D, Vector2D<double> edgePoint2D);
-    //void AddCircleToOp(gp_Pnt2d centerPoint2D, gp_Pnt2d edgePoint2D);
-    //void AddCircleToOp(gp_Pnt centerPoint3D, double radius);
+
     void AddCircleToOp(gp_Pnt2d centerPoint2D, double radius);
 
 
@@ -87,13 +56,7 @@ struct Tool_CircleDraw {
     gp_Pnt2d m_center2D;
     gp_Pnt m_edge3D;
 
-    // Vector3D<double> m_centerPoint3D;
-    // Vector3D<double> m_edgePoint3D;
 
-    // Vector2D<double> m_mouseCenterPoint;
-    // Vector2D<double> m_mouseEdgePoint;
-    // Vector3D<double> m_center3D;
-    // Vector3D<double> m_edge3D;
 
     void CADEvent_TraiterCommande(const CadCommandEvent& event);
 

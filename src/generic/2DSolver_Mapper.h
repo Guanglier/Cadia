@@ -106,7 +106,13 @@ struct SolverOneShot {
 struct SolverInteractiveSession {
     Solver2D_Solver solver;
     Eigen::VectorXd Vector_X;
+
+    // vecteur plat (unidimensionnel) de pointeurs vers des double (std::vector<double*>),
+    // chaque point géométrique 2D (qui possède une coordonnée $X$ et une coordonnée $Y$)
+    // va occuper 2 entrées consécutives dans ce vecteur :
+    // L'indice i pointe vers la coordonnée X.L'indice i + 1 pointe vers la coordonnée Y.
     std::vector<double*> variablePointers;
+
     std::vector<int>    activeVarIndicesAll;
     bool isInitialized = false;
 
@@ -153,6 +159,7 @@ struct SolverInteractiveSession {
      * @return bool True si trouvé, false sinon.
      */
     static bool GetIndicesForHandle(SketchParams& sketch, int primitiveId, int handleType, int& outIndexX, int& outIndexY);
+    static bool GetIndicesForHandle(SketchParams& sketch, uint64_t targetPointId, int& outIndexX, int& outIndexY);
     /**
      * @brief Récupère l'ensemble des indices d'une arête complète.
      * @param sketch [Entrée] Référence vers l'esquisse.
