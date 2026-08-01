@@ -145,6 +145,9 @@ qt_add_executable(Cad_IA
     src/Cad/CAD_PartOp.h
     src/Cad/CAD_PartOp_extrude.cpp
     src/Cad/CAD_PartOp_sketch.cpp
+    src/Cad/CAD_PartConstraints.h
+    src/Cad/CAD_PartConstraints.cpp
+    src/Cad/CAD_PartOpIdentifiable.h
     src/generic/DimensionEngine.h
     src/generic/Contours.cpp
     src/generic/Contours.h

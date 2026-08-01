@@ -1,5 +1,6 @@
 #ifndef CAD_OPERATION_H
 #define CAD_OPERATION_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -19,56 +20,17 @@
 #include <ElSLib.hxx>
 #include <Bnd_Box2d.hxx>
 #include "chrono.h"
-
 #include "Contours.h"
+#include "CAD_PartOpIdentifiable.h"
+#include "CAD_PartConstraints.h"
 
 // On indique au compilateur que cette classe existe sans l'inclure tout de suite
 class CAD_Part;
 
-// ==========================================
-// 1. STRUCTURES DE BASE & ENUMS
-// ==========================================
 
-struct Identifiable {
-    uint64_t id = 0;
-};
 
-enum class ConstraintType {
-    Horizontal, Vertical, Parallel, Perpendicular,
-    Coincident, Tangent, Distance, Radius
-};
 
-enum class ConstraintSubElement {
-    Whole, StartPoint, EndPoint, CenterPoint
-};
-std::ostream& operator<<(std::ostream& os, ConstraintSubElement sub);
 
-struct GeometryReference {
-    uint64_t             operationId = 0;
-    uint64_t             primitiveId = 0;
-    ConstraintSubElement subElement = ConstraintSubElement::Whole;
-};
-
-struct SketchConstraint : public Identifiable {
-    ConstraintType    type;
-    GeometryReference ref1;
-    GeometryReference ref2;
-    double            value = 0.0;
-    bool              isDriven = false;
-
-    bool isEquivalentTo(const SketchConstraint& other) const {
-        // 1. Si les types de contraintes diffèrent, elles ne sont pas équivalentes
-        if (this->type != other.type) {
-            return false;
-        }
-
-        // 2. Comparer les identités des entités ou points ciblés
-        // (selon la façon dont vos contraintes stockent leurs références, ex: IDs de points ou de primitives)
-        // Note : Il faut parfois gérer la symétrie (ex: une contrainte A->B équivaut à B->A pour certaines règles)
-
-        return false;
-    }
-};
 
 // ==========================================
 // 2. PRIMITIVES DE L'ESQUISSE

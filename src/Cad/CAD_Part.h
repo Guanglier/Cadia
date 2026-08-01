@@ -6,6 +6,9 @@
 #include <vector>
 #include "CAD_PartOp.h"
 
+std::ostream& operator<<(std::ostream& os, ConstraintSubElement sub);
+
+
 class CAD_Part {
 private:
     std::string               m_filename = "";
