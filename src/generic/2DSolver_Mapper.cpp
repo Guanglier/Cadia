@@ -463,7 +463,6 @@ bool SolverInteractiveSession::GetIndicesForHandle(SketchParams& sketch, uint64_
         outIndexY = it->second + 1;
         return true;
     }
-
     return false;
 }
 

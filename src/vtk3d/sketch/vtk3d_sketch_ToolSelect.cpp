@@ -73,14 +73,8 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
 
                 uint64_t ptId = DynamicDrag.PtrSelectedPoint->id;
 
-                for (int idx : m_Parent->m_SolverSession.activeVarIndicesAll) {
-                    m_Parent->m_SolverSession.UpdatePoint( idx );
-                }
-
-                // Si vous avez stocké une map ou une fonction pour retrouver l'index X à partir de l'ID :
-                // (Ou utilisez vos variables actives stockées dans m_Parent->m_SolverSession si elles sont correctement assignées)
-                //m_Parent->m_SolverSession.UpdatePoint( m_Parent->m_SolverSession.activeVarIndexX );
-                //m_Parent->m_SolverSession.UpdatePoint( m_Parent->m_SolverSession.activeVarIndexY );
+                m_Parent->m_SolverSession.UpdatePoint( DynamicDrag.PointDrag.IndexX );
+                m_Parent->m_SolverSession.UpdatePoint( DynamicDrag.PointDrag.IndexY );
 
             }
 
@@ -253,6 +247,7 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
         if (pickedActor && pickedActor == m_Parent->m_ActorSquareOfPrim) {
             vtkIdType VtkPointId = cellPicker->GetPointId();
             if (VtkPointId == -1) {
+                LOG_ERROR << "Tool_Select::gererMousePress -> VtkPointId == -1" << std::endl;
                 return false;
             }
 
@@ -287,7 +282,9 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
 
             m_Parent->m_SolverSession.Initialize(*sketchParams);
 
-            SolverInteractiveSession::GetIndicesForEntireEdge(*sketchParams, DynamicDrag.m_activePrimitiveId, m_Parent->m_SolverSession.activeVarIndicesAll);
+            SolverInteractiveSession::GetIndicesForHandle(*sketchParams, (uint64_t) DynamicDrag.m_activePrimitiveId, DynamicDrag.PointDrag.IndexX, DynamicDrag.PointDrag.IndexY );
+
+            //SolverInteractiveSession::GetIndicesForEntireEdge(*sketchParams, DynamicDrag.m_activePrimitiveId, m_Parent->m_SolverSession.activeVarIndicesAll);
 
         }
 

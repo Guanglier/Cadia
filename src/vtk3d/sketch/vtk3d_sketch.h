@@ -70,16 +70,7 @@ public:
         uint64_t        m_sketchId;
     public:
         void            SetSketchPlane (gp_Ax3 sketchPlane) { m_sketchPlane = sketchPlane; }
-        void SetOperation (CadPartOp* li_op) {
-            m_Operation = li_op;
-            if (m_Operation) {
-                // On récupère l'ID de l'opération pour l'assigner au sketchId.
-                // Adapte "getId()" selon la méthode réelle de ton objet CadPartOp (ex: getId(), getOperationId(), etc.)
-                m_sketchId = m_Operation->id;
-            } else {
-                m_sketchId = 0;
-            }
-        }
+        void SetOperation (CadPartOp* li_op) { m_Operation = li_op; if (m_Operation) { m_sketchId = m_Operation->id;} else { m_sketchId = 0;}  }
         gp_Ax3&         GetSketchPlane_Mutable () { return m_sketchPlane; }
         const gp_Ax3&   GetSketchPlane () const { return m_sketchPlane; }
         CadPartOp*   GetOperation () const { return m_Operation; }

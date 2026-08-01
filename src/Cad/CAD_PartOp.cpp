@@ -22,6 +22,27 @@
 
 
 
+void SketchParams::initializeOriginElements() {
+    // 1. Point (0,0)
+    uint64_t pCenter = m_points.add(SketchPoint(gp_Pnt2d(0.0, 0.0))); // Force l'ID 0 si ton IdRegistry commence à 0
+
+    // 2. Points de direction pour les axes de construction (ex: longueur visuelle de 10mm)
+    uint64_t pX = m_points.add(SketchPoint(gp_Pnt2d(10.0, 0.0)));
+    uint64_t pY = m_points.add(SketchPoint(gp_Pnt2d(0.0, 10.0)));
+
+    // 3. Lignes d'axes
+    SketchLine axisX(pCenter, pX);
+    axisX.b_IsRef = true; // Indique que c'est une ligne de construction/référence
+    axisX.b_Locked = true;
+    // axisX.b_IsLocked = true; si tu veux l'interdire à la suppression
+    m_primitiveRegistry.add(axisX); // ID 1
+
+    SketchLine axisY(pCenter, pY);
+    axisY.b_IsRef = true;
+    axisY.b_Locked = true;
+    m_primitiveRegistry.add(axisY); // ID 2
+}
+
 
 
 SketchPoint& SketchParams::GetPointById ( uint64_t li_id){
@@ -33,6 +54,18 @@ SketchPoint& SketchParams::GetPointById ( uint64_t li_id){
     throw std::runtime_error("Point ID non trouvé dans le registre !");
 }
 void SketchParams::removePrimitive(uint64_t idASupprimer) {
+
+    // 1. Vérifier si la primitive est verrouillée
+    const auto* primPtr = GetPrimitiveMutable(idASupprimer);
+    if (primPtr) {
+        bool isLocked = std::visit([](const auto& arg) { return arg.b_Locked; }, *primPtr);
+        if (isLocked) {
+            LOG_WARN << "Impossible de supprimer la primitive ID " << idASupprimer << " : elle est verrouillée." << std::endl;
+            return; // On annule la suppression
+        }
+    }
+
+
     m_primitiveRegistry.remove(idASupprimer);
     auto& constraints = m_constraintRegistry.getItemsMutable();
 
@@ -62,6 +95,16 @@ void SketchParams::removePrimitive(uint64_t idASupprimer) {
         }),
         constraints.end()
         );
+}
+
+bool SketchParams::removePoint(uint64_t li_id) {
+    const auto* pt = m_points.find(li_id);
+    if (pt && pt->b_Locked) {
+        LOG_WARN << "Impossible de supprimer le point ID " << li_id << " : il est verrouillé." << std::endl;
+        return false;
+    }
+    m_points.remove(li_id);
+    return true;
 }
 
 uint64_t SketchParams::addPoint (const gp_Pnt2d& li_Pnt2D) {

@@ -39,6 +39,8 @@ struct SketchPoint : public Identifiable{
     uint64_t id;
     gp_Pnt2d p2d; // position 2D dans l'esquisse
     mutable gp_Pnt   cache_p3d; // position 3D dans l'espace de la pièce
+    bool    b_Locked = false;
+
     SketchPoint(const gp_Pnt2d& point2D) : p2d(point2D), cache_p3d(0, 0, 0) {}
     void setPoint(const gp_Pnt2d& li_Pnt2D, const gp_Ax3* li_SketchPlane = nullptr) {
         p2d = li_Pnt2D; // On met à jour la position 2D dans tous les cas
@@ -57,6 +59,7 @@ struct SketchLine : public Identifiable {
     SketchLine(const uint64_t startId, const uint64_t endId)
         : startPointId(startId), stopPointId(endId) {}
     bool    b_IsRef = false;
+    bool    b_Locked = false;
 };
 
 struct SketchCircle : public Identifiable {
@@ -64,6 +67,7 @@ struct SketchCircle : public Identifiable {
     double radius;
     SketchCircle(const uint64_t centerId, double r) : centerPointId(centerId), radius(r) {
     }
+    bool    b_Locked = false; // Ajouté
     bool    b_IsRef = false;
 };
 
@@ -77,6 +81,7 @@ struct SketchArc : public Identifiable {
     gp_Pnt endPoint;
     SketchArc(gp_Pnt start, gp_Pnt mid, gp_Pnt end) : startPoint(start), midPoint(mid), endPoint(end) {}
     bool    b_IsRef = false;
+    bool    b_Locked = false; // Ajouté
 };
 
 
@@ -183,10 +188,19 @@ private:
 
     std::vector<ContoursElement> PrepareEnginePrimitives() const ;
 
+    // IDs fixes réservés pour l'origine de l'esquisse
+    static constexpr uint64_t ORIGIN_POINT_ID = 0;
+    static constexpr uint64_t ORIGIN_AXIS_X_ID = 1;
+    static constexpr uint64_t ORIGIN_AXIS_Y_ID = 2;
+
 public:
 
-    SketchParams() : m_sketchPlane(gp_Ax3()) {}
+    SketchParams() : m_sketchPlane(gp_Ax3()) {
+        //initializeOriginElements();
+    }
     explicit SketchParams(const gp_Ax3& plane) : m_sketchPlane(plane) {}
+
+    void initializeOriginElements();
 
     uint64_t referenceCoordinateSystemId = 0;
     gp_Ax3  m_sketchPlane;
@@ -204,7 +218,10 @@ public:
     uint64_t addCircle ( gp_Pnt2d li_PntCenter2d, double radius);
     uint64_t addPoint (const gp_Pnt2d& li_Pnt2D);
     bool PointExists ( const gp_Pnt2d& li_Pnt2D, uint64_t &lo_PointId);
-    bool removePoint( uint64_t li_id){ m_points.remove( li_id ); }
+    //bool removePoint( uint64_t li_id){ m_points.remove( li_id ); }
+    bool removePoint( uint64_t li_id);
+
+
 
     SketchPoint& GetPointById ( uint64_t li_id);
 
