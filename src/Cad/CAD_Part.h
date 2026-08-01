@@ -1,12 +1,12 @@
 #pragma once
-#ifndef CAD_DOCUMENT_H
-#define CAD_DOCUMENT_H
+#ifndef CAD_Part_H
+#define CAD_Part_H
 
 #include <string>
 #include <vector>
 #include "CAD_Operation.h"
 
-class CAD_Document {
+class CAD_Part {
 private:
     std::string               m_filename = "";
     std::string               m_path = "";
@@ -16,7 +16,7 @@ private:
     void tst_dump_tree(std::ostream& flux_out = std::cout) const;
 
 public:
-    CAD_Document();
+    CAD_Part();
 
     void revaluerOperation(CadOperation& op);
     uint64_t add_operation(CadOperation& op);
@@ -47,6 +47,6 @@ public:
 
 };
 
-#endif // CAD_DOCUMENT_H
+#endif // CAD_Part_H
 
 

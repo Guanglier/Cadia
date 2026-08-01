@@ -79,7 +79,7 @@ namespace CadEvent::Drawing {
 }
 
 // ============================================================================
-// 4. MESSAGES GLOBAUX DU DOCUMENT / NOYAU (CORE)
+// 4. MESSAGES GLOBAUX DU Part / NOYAU (CORE)
 // ============================================================================
 namespace CadEvent::Core {
     struct CmdRecomputeModel {};
@@ -112,7 +112,7 @@ using CadCommandParams = std::variant<
 >;
 
 struct CadCommandEvent {
-    uint64_t documentId = 0;
+    uint64_t PartId = 0;
     CadCommandParams params;
 };
 
@@ -134,7 +134,7 @@ using CadResponseParams = std::variant<
 >;
 
 struct CadResponseEvent {
-    uint64_t documentId = 0;
+    uint64_t PartId = 0;
     CadResponseParams params;
 };
 

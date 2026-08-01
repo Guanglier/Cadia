@@ -8,22 +8,22 @@
 #include <QMenu>
 #include <QAction>
 
-void MainWindow::onNewDocument()
+void MainWindow::onNewPart()
 {
     // Ici vous brancherez votre logique de création (ex: QMdiSubWindow avec votre vtk3d_MainView)
-    statusBar()->showMessage(tr("Nouveau document créé."), 2000);
+    statusBar()->showMessage(tr("Nouveau Part créé."), 2000);
 }
 
-void MainWindow::onOpenDocument()
+void MainWindow::onOpenPart()
 {
 
-    statusBar()->showMessage(tr("Ouverture d'un document..."), 2000);
+    statusBar()->showMessage(tr("Ouverture d'un Part..."), 2000);
 }
 
-void MainWindow::onSaveDocument()
+void MainWindow::onSavePart()
 {
 
-    statusBar()->showMessage(tr("Document enregistré."), 2000);
+    statusBar()->showMessage(tr("Part enregistré."), 2000);
 }
 
 
@@ -56,10 +56,10 @@ void MainWindow::on_test_CreeForme(){
         doc.tst_add_op_step_2();
         doc.compute_final_topo();
         //CadOperation* opDansDoc = doc.trouverOperationMutable(6);
-        m_view3d->synchroniserDocument(1, doc);
+        m_view3d->synchroniserPart(1, doc);
         //if (opDansDoc){
         //    std::cout << "opDansDoc update  " << std::endl;
-            m_cadTreeModel->refreshFromDocument(doc);
+            m_cadTreeModel->refreshFromPart(doc);
             m_treeView->expandAll();
         //}
 
@@ -68,7 +68,7 @@ void MainWindow::on_test_CreeForme(){
 }
 void MainWindow::on_test_ComputeTopo (){
     doc.compute_final_topo();
-    m_view3d->synchroniserDocument(1, doc);
+    m_view3d->synchroniserPart(1, doc);
     m_view3d->getRenderer()->Render();
 }
 void MainWindow::on_test_ModeEsquisse (){
@@ -150,7 +150,7 @@ void MainWindow::on_test_ModifieForme(){
             if (opDansDocExtrude){
                 std::cout << "opDansDocExtrude update  " << std::endl;
                 //m_view3d->updateShape(  opDansDocExtrude->getResultingTopo() );
-                m_cadTreeModel->refreshFromDocument(doc);
+                m_cadTreeModel->refreshFromPart(doc);
                 m_treeView->expandAll();
             }else{
                 qDebug() << "\tERR if (opDansDocExtrude) second \n";
@@ -171,10 +171,10 @@ void MainWindow::on_test_DumpVTK_ToConsole (){
     m_view3d->diag_dumpArchitecture( std::cout );
     std::cout  << std::endl;
 }
-void MainWindow::on_test_DumpCAD_DocumentToConsole (){
+void MainWindow::on_test_DumpCAD_PartToConsole (){
     doc.tst_dump_tree_to_console();
 }
-void MainWindow::on_test_DumpCAD_DocumentToFiles (){
+void MainWindow::on_test_DumpCAD_PartToFiles (){
     doc.tst_dump_tree_to_file("__tree_dump.txt");
     doc.tst_dump_all_op_to_file ();
 }
@@ -212,7 +212,7 @@ void MainWindow::onTreeViewOperation_clicked(const QModelIndex& index){
         if (auto* extrudeParams = std::get_if<ExtrudeParams>(&ptr_op_param)) {
 
 
-            //--- listing des sketch dans le document pour les proposer à la sélection
+            //--- listing des sketch dans le Part pour les proposer à la sélection
             const IdRegistry<CadOperation>& operation_list = doc.getOperationRegistry();
             std::vector<CadOperation> op_list = operation_list.getItems();
             std::vector<ExtrusionDialog_SketchRef> SketchRefList;
@@ -258,7 +258,7 @@ void MainWindow::onTreeViewOperation_clicked(const QModelIndex& index){
 
                 doc.revaluerOperation( *ptr_op );
                 doc.compute_final_topo();
-                m_view3d->synchroniserDocument(1, doc);
+                m_view3d->synchroniserPart(1, doc);
             }
 
         }else if (auto* extrudeParams = std::get_if<SketchParams>(&ptr_op_param)) {

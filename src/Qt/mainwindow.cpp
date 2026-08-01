@@ -77,7 +77,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     //creerToolbarVisibilite ();
     //createToolBars_vues ();
 
-    // 4. Remplissage et calcul du document
+    // 4. Remplissage et calcul du Part
     doc.tst_add_repere_origine();
     doc.tst_add_op_sketch_rect();
     doc.tst_add_op_extrude();
@@ -88,11 +88,11 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     //doc.tst_dump_tree_to_file("__tree.txt");
 
     // 5. Synchronisation de la géométrie
-    m_view3d->synchroniserDocument(1, doc);
+    m_view3d->synchroniserPart(1, doc);
 
     // 6. UI Tree View
     setupTreeView();
-    m_cadTreeModel->refreshFromDocument(doc);
+    m_cadTreeModel->refreshFromPart(doc);
     m_treeView->expandAll();
 
     SetAffichage_Part ();

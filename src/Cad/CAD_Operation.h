@@ -23,7 +23,7 @@
 #include "Contours.h"
 
 // On indique au compilateur que cette classe existe sans l'inclure tout de suite
-class CAD_Document;
+class CAD_Part;
 
 // ==========================================
 // 1. STRUCTURES DE BASE & ENUMS
@@ -255,7 +255,7 @@ public:
         }
     }
     void removeConstraint(uint64_t id) { m_constraintRegistry.remove(id); }
-    TopoDS_Shape evaluate(const CAD_Document& doc) const;
+    TopoDS_Shape evaluate(const CAD_Part& part) const;
 
     void        Contours_ProcessAndValidate();
 
@@ -271,7 +271,7 @@ struct BooleanParams {
     EBooleanOp boolOp = EBooleanOp::None;
 
     // Obligatoire pour le std::visit
-    TopoDS_Shape evaluate(const CAD_Document& doc) const { return TopoDS_Shape(); }
+    TopoDS_Shape evaluate(const CAD_Part& part) const { return TopoDS_Shape(); }
 };
 
 struct ExtrudeParams {
@@ -281,12 +281,12 @@ struct ExtrudeParams {
     gp_Vec      vecteurExtrusion;
 
     // Declaration seule
-    TopoDS_Shape evaluate(const CAD_Document& doc) const;
+    TopoDS_Shape evaluate(const CAD_Part& part) const;
 };
 
 struct CoordinateSystem {
     gp_Ax2 AxisSystem;
-    TopoDS_Shape evaluate(const CAD_Document& doc) const;
+    TopoDS_Shape evaluate(const CAD_Part& part) const;
 };
 
 using OperationParams = std::variant<SketchParams, ExtrudeParams, CoordinateSystem, BooleanParams>;
@@ -341,9 +341,9 @@ public:
     const OperationParams&      getParamsConst() const { return m_params; }
 
     // La methode execute ne recalcule m_localTopo QUE si necessaire
-    void execute(const CAD_Document& doc, bool forceRecalcul) {
-        m_Topo_locale = std::visit([&doc](const auto& params) -> TopoDS_Shape {
-            return params.evaluate(doc);
+    void execute(const CAD_Part& part, bool forceRecalcul) {
+        m_Topo_locale = std::visit([&part](const auto& params) -> TopoDS_Shape {
+            return params.evaluate(part);
         }, m_params);
         setLocaleTopoChanged (true); //la topo locale a ete modifiee il faut recalculer la topo resulting
     }

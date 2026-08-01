@@ -120,7 +120,7 @@ bool Tool_CircleDraw::gererMousePress(QMouseEvent* event) {
         m_mouseCenterPoint.SetY(event->y() );
 
         if (m_Parent->calculerIntersectionSourisSurPlan(m_mouseCenterPoint.X(), m_mouseCenterPoint.Y(), currentPoint2D, m_centerPoint3D)) {
-            gp_Dir normalPlan = m_Parent->DocumentRefs.GetSketchPlane().Direction();
+            gp_Dir normalPlan = m_Parent->PartRefs.GetSketchPlane().Direction();
 
             // On cale le centre VTK et on initialise le rayon à 0
             m_circleSource->SetCenter(m_centerPoint3D.X(), m_centerPoint3D.Y(), m_centerPoint3D.Z());
@@ -163,11 +163,11 @@ bool Tool_CircleDraw::gererkeyPressEvent(QKeyEvent* event) {
 //      Ajouter le cercle à l'opération locale OpenCascade
 //─────────────────────────────────────────────────────────────────────
 void Tool_CircleDraw::AddCircleToOp(gp_Pnt2d centerPoint2D, double radius) {
-    if (!m_Parent->DocumentRefs.GetOperation()) {
+    if (!m_Parent->PartRefs.GetOperation()) {
         std::cerr << "[ERROR] AddCircleToOp: m_Operation est nul !\n";
         return;
     }
-    auto* sketchParams = m_Parent->DocumentRefs.GetParams();
+    auto* sketchParams = m_Parent->PartRefs.GetParams();
     if (!sketchParams) {
         std::cerr << "[ERROR] AddCircleToOp: L'opération cible n'est pas un SketchParams.\n";
         return;

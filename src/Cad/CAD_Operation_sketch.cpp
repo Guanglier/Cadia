@@ -1,6 +1,6 @@
 
 #include "CAD_Operation.h"
-#include "CAD_Document.h" // Indispensable ICI pour que le compilateur connaisse enfin les methodes de CAD_Document !
+#include "CAD_Part.h" // Indispensable ICI pour que le compilateur connaisse enfin les methodes de CAD_Part !
 #include "Contours.h"
 
 // OpenCASCADE requis pour construire la geometrie
@@ -101,7 +101,7 @@ void PrintPoint(const std::string& label, const gp_Pnt& p) {
 //─────────────────────────────────────────────────────────────────────
 // Évalue le Sketch pour générer la face plane finale prête à l'extrusion
 //─────────────────────────────────────────────────────────────────────
-TopoDS_Shape SketchParams::evaluate(const CAD_Document& doc) const {
+TopoDS_Shape SketchParams::evaluate(const CAD_Part& part) const {
     LOG_DEBUG << "SketchParams::evaluate -> Début" << std::endl;
 
     std::vector<ContoursElement> inputPrimitives = PrepareEnginePrimitives();

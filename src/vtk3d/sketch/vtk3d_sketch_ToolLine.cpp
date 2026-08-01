@@ -123,8 +123,8 @@ bool Tool_LineDraw::gererMouseMove(QMouseEvent* event){
         m_bDescriptorDefined = true;
         pDescDistance->mode = DimensionEngine::DimMode::PointToPoint;
         pDescDistance->offset = 2.0;
-        DimensionEngine::GeometryResult geoResult = DimensionEngine::ComputeGeometry(m_Parent->DocumentRefs.GetSketchPlane(), m_currentDimensionDescriptor);
-        m_Parent->m_Cotation->DessinerCotationDepuisResultat(m_Parent->DocumentRefs.GetSketchPlane(), geoResult);
+        DimensionEngine::GeometryResult geoResult = DimensionEngine::ComputeGeometry(m_Parent->PartRefs.GetSketchPlane(), m_currentDimensionDescriptor);
+        m_Parent->m_Cotation->DessinerCotationDepuisResultat(m_Parent->PartRefs.GetSketchPlane(), geoResult);
 
 
         m_linePoints->SetPoint(1, currentPoint3D.X(), currentPoint3D.Y(), currentPoint3D.Z());
@@ -228,11 +228,11 @@ bool Tool_LineDraw::gererkeyPressEvent(QKeyEvent* event){
 //      ajtouer la ligne à l'opération locale
 //─────────────────────────────────────────────────────────────────────
 void Tool_LineDraw::AddLineToOp (gp_Pnt2d& StartPoint2D, gp_Pnt2d& StopPoint2D){
-    if (!m_Parent->DocumentRefs.GetOperation()) {
+    if (!m_Parent->PartRefs.GetOperation()) {
         std::cerr << "[ERROR] AddLineToOp: m_Operation est nul !\n";
         return;
     }
-    auto* sketchParams = m_Parent->DocumentRefs.GetParams();
+    auto* sketchParams = m_Parent->PartRefs.GetParams();
 
     if (!sketchParams) {
         std::cerr << "[ERROR] AddLineToOp: L'opération cible n'est pas un SketchParams.\n";

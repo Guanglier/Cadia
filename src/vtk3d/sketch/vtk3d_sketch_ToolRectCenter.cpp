@@ -121,8 +121,8 @@ bool Tool_RectCenterDraw::gererMouseMove(QMouseEvent* event) {
         m_bDescriptorDefined = true;
         pDescDistance->mode = DimensionEngine::DimMode::PointToPoint;
         pDescDistance->offset = 2.0;
-        DimensionEngine::GeometryResult geoResult = DimensionEngine::ComputeGeometry(m_Parent->DocumentRefs.GetSketchPlane(), m_currentDimensionDescriptor);
-        m_Parent->m_Cotation->DessinerCotationDepuisResultat(m_Parent->DocumentRefs.GetSketchPlane(), geoResult);
+        DimensionEngine::GeometryResult geoResult = DimensionEngine::ComputeGeometry(m_Parent->PartRefs.GetSketchPlane(), m_currentDimensionDescriptor);
+        m_Parent->m_Cotation->DessinerCotationDepuisResultat(m_Parent->PartRefs.GetSketchPlane(), geoResult);
     }
     else if (m_drawStep == 2) {
         // 🟨 ÉTAPE 2 : Largeur et Angle figés, on règle la HAUTEUR
@@ -136,7 +136,7 @@ bool Tool_RectCenterDraw::gererMouseMove(QMouseEvent* event) {
             gp_Dir localX(v);
 
             // 2. On récupère la normale 3D de ton plan d'esquisse (Axe Z local)
-            gp_Dir planeNormal = m_Parent->DocumentRefs.GetSketchPlane().Direction();
+            gp_Dir planeNormal = m_Parent->PartRefs.GetSketchPlane().Direction();
 
             // 3. Produit Vectoriel (Z_local ^ X_local = Y_local) pour obtenir l'axe perpendiculaire exact en 3D
             gp_Dir localY = planeNormal ^ localX;
@@ -179,16 +179,16 @@ bool Tool_RectCenterDraw::gererMouseMove(QMouseEvent* event) {
             m_bDescriptorDefined = true;
             pDescDistance->mode = DimensionEngine::DimMode::PointToPoint;
             pDescDistance->offset = 2.0;
-            DimensionEngine::GeometryResult geoResult = DimensionEngine::ComputeGeometry(m_Parent->DocumentRefs.GetSketchPlane(), m_currentDimensionDescriptor);
-            m_Parent->m_Cotation->DessinerCotationDepuisResultat(m_Parent->DocumentRefs.GetSketchPlane(), geoResult);
+            DimensionEngine::GeometryResult geoResult = DimensionEngine::ComputeGeometry(m_Parent->PartRefs.GetSketchPlane(), m_currentDimensionDescriptor);
+            m_Parent->m_Cotation->DessinerCotationDepuisResultat(m_Parent->PartRefs.GetSketchPlane(), geoResult);
 
             gp_Vec TmpVectCot2 ( m_widthPoint3D, currentPoint3D );
             gp_Pnt pntCot2_Start = pntExtremite;
             gp_Pnt pntCot2_End = pntCot2_Start.Translated( -2 * vecH);
             m_Cotation2_bDescriptorDefined = true;
             Cotation2_Configure (pntCot2_Start, pntCot2_End );
-            DimensionEngine::GeometryResult Cot2_geoResult = DimensionEngine::ComputeGeometry(m_Parent->DocumentRefs.GetSketchPlane(), m_Cotation2_currentDimensionDescriptor);
-            m_Parent->m_Cotation2->DessinerCotationDepuisResultat(m_Parent->DocumentRefs.GetSketchPlane(), Cot2_geoResult);
+            DimensionEngine::GeometryResult Cot2_geoResult = DimensionEngine::ComputeGeometry(m_Parent->PartRefs.GetSketchPlane(), m_Cotation2_currentDimensionDescriptor);
+            m_Parent->m_Cotation2->DessinerCotationDepuisResultat(m_Parent->PartRefs.GetSketchPlane(), Cot2_geoResult);
 
 
         }
@@ -282,7 +282,7 @@ bool Tool_RectCenterDraw::gererMousePress(QMouseEvent* event) {
         m_rectPoints->GetPoint(2, p2);
         m_rectPoints->GetPoint(3, p3);
 
-        gp_Pln plan(m_Parent->DocumentRefs.GetSketchPlane());
+        gp_Pln plan(m_Parent->PartRefs.GetSketchPlane());
 
         gp_Pnt p0_3d(p0[0], p0[1], p0[2]);
         gp_Pnt p1_3d(p1[0], p1[1], p1[2]);
@@ -325,8 +325,8 @@ bool Tool_RectCenterDraw::gererkeyPressEvent(QKeyEvent* event) {
 //      Ajouter le rectangle sous forme de 4 SketchLine distinctes
 //─────────────────────────────────────────────────────────────────────
 void Tool_RectCenterDraw::AddCenterRectangleToOp(const gp_Pnt2d& li_PA, const gp_Pnt2d& li_PB, const gp_Pnt2d& li_PC, const gp_Pnt2d& li_PD) {
-    if (!m_Parent->DocumentRefs.GetOperation()) return;
-    auto* sketchParams = m_Parent->DocumentRefs.GetParams();
+    if (!m_Parent->PartRefs.GetOperation()) return;
+    auto* sketchParams = m_Parent->PartRefs.GetParams();
     if (!sketchParams) return;
 
     sketchParams->addLine(li_PA, li_PB);
@@ -336,20 +336,20 @@ void Tool_RectCenterDraw::AddCenterRectangleToOp(const gp_Pnt2d& li_PA, const gp
 
     /*
     SketchLine L_AB(li_PA, li_PB);
-    L_AB.start.Update3D(m_Parent->DocumentRefs.GetSketchPlane() );
-    L_AB.stop.Update3D(m_Parent->DocumentRefs.GetSketchPlane() );
+    L_AB.start.Update3D(m_Parent->PartRefs.GetSketchPlane() );
+    L_AB.stop.Update3D(m_Parent->PartRefs.GetSketchPlane() );
 
     SketchLine L_BC(li_PB, li_PC);
-    L_BC.start.Update3D(m_Parent->DocumentRefs.GetSketchPlane() );
-    L_BC.stop.Update3D(m_Parent->DocumentRefs.GetSketchPlane() );
+    L_BC.start.Update3D(m_Parent->PartRefs.GetSketchPlane() );
+    L_BC.stop.Update3D(m_Parent->PartRefs.GetSketchPlane() );
 
     SketchLine L_CD(li_PC, li_PD);
-    L_CD.start.Update3D(m_Parent->DocumentRefs.GetSketchPlane() );
-    L_CD.stop.Update3D(m_Parent->DocumentRefs.GetSketchPlane() );
+    L_CD.start.Update3D(m_Parent->PartRefs.GetSketchPlane() );
+    L_CD.stop.Update3D(m_Parent->PartRefs.GetSketchPlane() );
 
     SketchLine L_DA(li_PD, li_PA);
-    L_DA.start.Update3D(m_Parent->DocumentRefs.GetSketchPlane() );
-    L_DA.stop.Update3D(m_Parent->DocumentRefs.GetSketchPlane() );
+    L_DA.start.Update3D(m_Parent->PartRefs.GetSketchPlane() );
+    L_DA.stop.Update3D(m_Parent->PartRefs.GetSketchPlane() );
 
     // Injection des 4 lignes constituant le rectangle incliné
     sketchParams->addPrimitive( L_AB );

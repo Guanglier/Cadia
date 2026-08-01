@@ -1,5 +1,5 @@
 #include "CadTreeModel.h"
-#include "CAD_Document.h"
+#include "CAD_Part.h"
 #include <QIcon>
 #include <QDebug>
 #include <QFile>
@@ -21,14 +21,14 @@ Qt::ItemFlags CadTreeModel::flags(const QModelIndex& index) const {
     return defaultFlags;
 }
 
-void CadTreeModel::refreshFromDocument(const CAD_Document& doc) {
+void CadTreeModel::refreshFromPart(const CAD_Part& part) {
     this->clear(); // On vide l'arbre avant de le reconstruire
     setHorizontalHeaderLabels({ tr("Arborescence du modèle") });
 
     // Récupération des opérations (on accède aux items constants)
-    // Note : Pense à ajouter un accesseur public const sur m_operationRegistry dans CAD_Document si ce n'est pas fait.
-    //const auto& operations = doc.trouverToutesLesOperations(); // À adapter selon ton accesseur
-    const auto& operations = doc.getOperationRegistry().getItems();
+    // Note : Pense à ajouter un accesseur public const sur m_operationRegistry dans CAD_Part si ce n'est pas fait.
+    //const auto& operations = part.trouverToutesLesOperations(); // À adapter selon ton accesseur
+    const auto& operations = part.getOperationRegistry().getItems();
 
 
 

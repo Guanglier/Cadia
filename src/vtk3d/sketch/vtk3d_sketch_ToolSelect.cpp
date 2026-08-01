@@ -55,7 +55,7 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
         return false;
     }
 
-    auto* sketchParams = m_Parent->DocumentRefs.GetParams();
+    auto* sketchParams = m_Parent->PartRefs.GetParams();
     if (!sketchParams){
         LOG_ERROR << "Tool_Select::gererMouseMove : nullptr == sketchParams" << std::endl;
         return false;
@@ -69,7 +69,7 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
             if (nullptr != DynamicDrag.PtrSelectedPoint ){
                 DynamicDrag.PtrSelectedPoint->p2d.SetX( mousePoint2D.X() );
                 DynamicDrag.PtrSelectedPoint->p2d.SetY( mousePoint2D.Y() );
-                DynamicDrag.PtrSelectedPoint->Update3D( m_Parent->DocumentRefs.GetSketchPlane());
+                DynamicDrag.PtrSelectedPoint->Update3D( m_Parent->PartRefs.GetSketchPlane());
 
                 uint64_t ptId = DynamicDrag.PtrSelectedPoint->id;
 
@@ -109,8 +109,8 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
                     gp_Pnt2d PntStop  = mousePoint2D.Translated(DynamicDrag.PrimToMoseVects.line.stop );
                     SketchPoint&  sp_start = sketchParams->GetPointById(curr_prim.startPointId);
                     SketchPoint&  sp_stop = sketchParams->GetPointById(curr_prim.stopPointId);
-                    sp_start.setPoint ( PntStart, &m_Parent->DocumentRefs.GetSketchPlane() );
-                    sp_stop.setPoint (PntStop, &m_Parent->DocumentRefs.GetSketchPlane() );
+                    sp_start.setPoint ( PntStart, &m_Parent->PartRefs.GetSketchPlane() );
+                    sp_stop.setPoint (PntStop, &m_Parent->PartRefs.GetSketchPlane() );
 
                     // On applique le delta sur tous les indices de la primitive entière
                     for (int idx : m_Parent->m_SolverSession.activeVarIndicesAll) {
@@ -119,9 +119,9 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
 
                 }else if constexpr ( std::is_same_v<T,SketchCircle>){
                     gp_Pnt2d PntCenter = mousePoint2D.Translated(DynamicDrag.PrimToMoseVects.circle.center);
-                    //curr_prim.center.setPoint(PntCenter, &m_Parent->DocumentRefs.GetSketchPlane());
+                    //curr_prim.center.setPoint(PntCenter, &m_Parent->PartRefs.GetSketchPlane());
                     SketchPoint&  sp_center = sketchParams->GetPointById(curr_prim.centerPointId);
-                    sp_center.setPoint(PntCenter, &m_Parent->DocumentRefs.GetSketchPlane() );
+                    sp_center.setPoint(PntCenter, &m_Parent->PartRefs.GetSketchPlane() );
 
                     // On applique le delta sur tous les indices de la primitive entière
                     for (int idx : m_Parent->m_SolverSession.activeVarIndicesAll) {
@@ -154,7 +154,7 @@ bool Tool_Select::gererMouseMove(QMouseEvent* event) {
             break;
 
     }; // fin swtich
-
+    return true;
 }
 
 
@@ -169,7 +169,7 @@ bool Tool_Select::gererMouseRelease(QMouseEvent* event) {
         //DynamicDrag.m_activePointIndex = -1;
 
         // Résolution finale de clôture (OneShot propre pour éliminer toute dérive)
-        auto* sketchParams = m_Parent->DocumentRefs.GetParams();
+        auto* sketchParams = m_Parent->PartRefs.GetParams();
         if (sketchParams) {
             SolverOneShot::Solve(*sketchParams, false);
         }
@@ -272,7 +272,7 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
 
 
 
-            auto* sketchParams = m_Parent->DocumentRefs.GetParams();
+            auto* sketchParams = m_Parent->PartRefs.GetParams();
             if (!sketchParams) {
                 LOG_ERROR << "Tool_Select::gererMousePress(QMouseEvent* event) -> if ( sketchParams ) " << std::endl;
                 return false;
@@ -328,8 +328,8 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
 
                 DynamicDrag.m_lastMousePos2D = startPoint2D;
 
-               //auto* sketchParams = std::get_if<SketchParams>(&m_Parent->DocumentRefs.GetOperation()->getParamsMutable());
-                auto* sketchParams = m_Parent->DocumentRefs.GetParams();
+               //auto* sketchParams = std::get_if<SketchParams>(&m_Parent->PartRefs.GetOperation()->getParamsMutable());
+                auto* sketchParams = m_Parent->PartRefs.GetParams();
                 if ( nullptr == sketchParams) {
                     LOG_ERROR << " Tool_Select::gererMousePress: sketchParams = nullptr " << std::endl;
                     return false;
@@ -342,7 +342,7 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
                 // Remonter l'événement à l'IHM
                 std::string l_string = "[Sketch Mode] Primitive sélectionnée ! ID unique CAO " + std::to_string(primitiveId);
                 CadResponseEvent resp;
-                resp.documentId = 0;
+                resp.PartId = 0;
                 resp.params = CadEvent::Sketch::RespStatus{ l_string };
                 m_Parent->CADEvent_RemonterEvent(resp);
 
@@ -400,11 +400,11 @@ bool Tool_Select::gererkeyPressEvent(QKeyEvent* event) {
 #endif
             PrimitiveIsSelected = false;
 
-            auto* sketchParams = m_Parent->DocumentRefs.GetParams();
+            auto* sketchParams = m_Parent->PartRefs.GetParams();
             if (!sketchParams) return false;
 
             sketchParams->removePrimitive(SelectedPrimitiveId);
-            sketchParams->evaluate(*(m_Parent->GetView()->GetCurrentDoc()));
+            sketchParams->evaluate(*(m_Parent->GetView()->GetCurrentPart()));
 
             m_Parent->GetView()->m_Chighlighter->masquerSurbrillance();
             m_Parent->rafraichirAffichageEsquisse();
@@ -433,12 +433,12 @@ void Tool_Select::CADEvent_TraiterCommande(const CadCommandEvent& event){
         case CadEvent::Sketch::CadEvent_SketchConstraints::Set_Vertical:
             LOG_ERROR << "Tool_Select::CADEvent_TraiterCommande : vertical !" << std::endl;
             if ( true == PrimitiveIsSelected ){
-                auto* sketchParams = m_Parent->DocumentRefs.GetParams();
+                auto* sketchParams = m_Parent->PartRefs.GetParams();
                 if (!sketchParams) return;
 
                 SketchConstraint vert1;
                 vert1.type = ConstraintType::Vertical;
-                vert1.ref1.operationId = m_Parent->DocumentRefs.GetSketchId();             //TEST BUG ATTENTION mettre la bonne valeur
+                vert1.ref1.operationId = m_Parent->PartRefs.GetSketchId();             //TEST BUG ATTENTION mettre la bonne valeur
                 vert1.ref1.primitiveId = SelectedPrimitiveId;
                 vert1.ref1.subElement = ConstraintSubElement::Whole;
                 sketchParams->addConstraint(vert1);

@@ -115,10 +115,10 @@ bool Vtk3d_Part::gererMouseRelease(QMouseEvent* event) {
 
                 vtkIdType cellId = picker->GetCellId();
 
-                // 🎯 Appel de ton analyseur géométrique (qui renvoie le documentId dans operationId)
+                // 🎯 Appel de ton analyseur géométrique (qui renvoie le PartId dans operationId)
                 SelectionResult selection = m_view->analyserClic(pickedActor, cellId);
 
-                // Si l'acteur n'appartient à aucun document enregistré, on ne fait rien
+                // Si l'acteur n'appartient à aucun Part enregistré, on ne fait rien
                 if (selection.operationId == 0) {
                     m_view->m_Chighlighter->masquerSurbrillance();
                     m_view->renderWindow()->Render();
@@ -127,26 +127,26 @@ bool Vtk3d_Part::gererMouseRelease(QMouseEvent* event) {
 
                 switch (selection.type) {
                 case SelectionType::Face: {
-                    std::cout << "[Document ID: " << selection.operationId << "] Face CAO detectee (CellID: " << selection.internalVtkId << ")" << std::endl;
+                    std::cout << "[Part ID: " << selection.operationId << "] Face CAO detectee (CellID: " << selection.internalVtkId << ")" << std::endl;
                     vtkPolyData* polyData = vtkPolyData::SafeDownCast(pickedActor->GetMapper()->GetInput());
                     m_view->m_Chighlighter->mettreEnSurbrillanceFaceParId(polyData, selection.internalVtkId);
                     break;
                 }
                 case SelectionType::Edge: {
-                    std::cout << "[Document ID: " << selection.operationId << "] Arete detectee (CellID VTK: " << selection.internalVtkId << ")" << std::endl;
+                    std::cout << "[Part ID: " << selection.operationId << "] Arete detectee (CellID VTK: " << selection.internalVtkId << ")" << std::endl;
                     vtkPolyData* polyDataEdge = vtkPolyData::SafeDownCast(pickedActor->GetMapper()->GetInput());
                     m_view->m_Chighlighter->mettreEnSurbrillanceEdgeParId(polyDataEdge, selection.internalVtkId);
                     break;
                 }
                 case SelectionType::Axis: {
-                    std::cout << "[Document ID: " << selection.operationId << "] Axe de repere detecte (CellID: " << selection.internalVtkId << ")" << std::endl;
+                    std::cout << "[Part ID: " << selection.operationId << "] Axe de repere detecte (CellID: " << selection.internalVtkId << ")" << std::endl;
                     double facteurEchelle = m_view->m_dernierParallelScale;
                     vtkPolyData* polyDataEdge = vtkPolyData::SafeDownCast(pickedActor->GetMapper()->GetInput());
                     m_view->m_Chighlighter->mettreEnSurbrillanceAxeParId(polyDataEdge, selection.internalVtkId, facteurEchelle);
                     break;
                 }
                 case SelectionType::Sketch: {
-                    std::cout << "[Document ID: " << selection.operationId << "] Esquisse detectee (ID CAO: " << selection.internalVtkId << ")" << std::endl;
+                    std::cout << "[Part ID: " << selection.operationId << "] Esquisse detectee (ID CAO: " << selection.internalVtkId << ")" << std::endl;
                     vtkPolyData* polyDataSketch = vtkPolyData::SafeDownCast(pickedActor->GetMapper()->GetInput());
                     m_view->m_Chighlighter->mettreEnSurbrillanceEdgeParId(polyDataSketch, selection.internalVtkId);
                     break;

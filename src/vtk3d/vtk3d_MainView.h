@@ -13,7 +13,7 @@
 #include <set>
 #include <variant>
 #include <type_traits>
-#include "CAD_Document.h"
+#include "CAD_Part.h"
 #include "vtk3d_HighLighter.h"
 #include <vtkOrientationMarkerWidget.h>
 #include <QVTKOpenGLNativeWidget.h>
@@ -77,7 +77,7 @@ public:
     //void CameraFitAll ();
 
 
-    void synchroniserDocument(uint64_t documentId,  CAD_Document& doc);
+    void synchroniserPart(uint64_t PartId,  CAD_Part& part);
     SelectionResult analyserClic(vtkActor* pickedActor, vtkIdType cellId);
     void mettreEnSurbrillanceFaceParId(vtkPolyData* sourcePolyData, int faceId);
     //void masquerSurbrillance ();
@@ -119,7 +119,7 @@ public:
 
     std::unique_ptr<vtk3d_HighLighter> m_Chighlighter;
 
-    CAD_Document* GetCurrentDoc () { return m_currentDoc; }
+    CAD_Part* GetCurrentPart () { return m_currentPart; }
 
     void CADEvent_TraiterCommande(const CadCommandEvent& event);
     void CADEvent_RemonterEvent(const CadResponseEvent& event);
@@ -146,7 +146,7 @@ private:
 
 
     std::map<uint64_t, PieceRenderNode> m_piecesNodes;  // map de pièces qui contiendra les acteurs pour la pièce
-    CAD_Document* m_currentDoc = nullptr; // Pointeur vers le document actif
+    CAD_Part* m_currentPart = nullptr; // Pointeur vers le part actif
 
     // Tes fonctions d'extraction actuelles encapsulées proprement
     void    updateSolideActor(vtkActor* actor, const TopoDS_Shape& shape, const float color[3]);
@@ -165,7 +165,7 @@ private:
     bool       m_isDrawing = false;              // Est-on au milieu d'un tracé ?
     QPoint     m_MouseclickStartPosition;
     double      m_dernierParallelScale = -1.0;
-    int         m_CurrentDocumentId;       //le dernier document ID affiché
+    int         m_CurrentPartId;       //le dernier part ID affiché
 
 };
 

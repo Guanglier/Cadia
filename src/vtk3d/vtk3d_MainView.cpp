@@ -262,7 +262,7 @@ void vtk3d_MainView::updateRepereDorigineActor(vtkActor* actor, const TopoDS_Sha
 
 
 void vtk3d_MainView::ajusterEchelleRepere() {
-    if (!m_currentDoc) return;
+    if (!m_currentPart) return;
 
     vtkActor* axesActor = nullptr;
 
@@ -319,21 +319,21 @@ vtkSmartPointer<vtkAssembly> vtk3d_MainView::buildSketchAssembly(const CadOperat
 }
 
 
-void vtk3d_MainView::synchroniserDocument(uint64_t documentId, CAD_Document& doc) {
-    m_currentDoc = &doc;
-    const auto& operations = doc.getOperationRegistry().getItems();
+void vtk3d_MainView::synchroniserPart(uint64_t partId, CAD_Part& part) {
+   m_currentPart = &part;
+    const auto& operations = part.getOperationRegistry().getItems();
 
-    m_CurrentDocumentId = documentId;
+    m_CurrentPartId = partId;
 
     // 🎯 1. ON RÉCUPÈRE L'UNIQUE NOEUD DE LA PIÈCE
-    auto& node = m_piecesNodes[m_CurrentDocumentId];
+    auto& node = m_piecesNodes[m_CurrentPartId];
     if (!node.rootAssembly) {
-        node.pieceId = m_CurrentDocumentId;
+        node.pieceId = m_CurrentPartId;
         node.rootAssembly = vtkSmartPointer<vtkAssembly>::New();
         m_renderer->AddViewProp(node.rootAssembly);
     }
 
-    // 2. Si le document est vide, on nettoie TOUS les acteurs internes
+    // 2. Si le part est vide, on nettoie TOUS les acteurs internes
     if (operations.empty()) {
         if (node.originActor) node.rootAssembly->RemovePart(node.originActor);
         if (node.solidActor)  node.rootAssembly->RemovePart(node.solidActor);
@@ -507,7 +507,7 @@ void vtk3d_MainView::keyPressEvent(QKeyEvent* event){
 SelectionResult vtk3d_MainView::analyserClic(vtkActor* pickedActor, vtkIdType cellId) {
     SelectionResult result;
     result.type = SelectionType::None;
-    result.operationId = 0;    // ID du Document (PieceId)
+    result.operationId = 0;    // ID du part (PieceId)
     result.internalVtkId = -1;  // Contiendra le VRAI ID CAO
 
 #ifdef DEBG_CONSOLE_ANALYSERCLIC
@@ -527,7 +527,7 @@ SelectionResult vtk3d_MainView::analyserClic(vtkActor* pickedActor, vtkIdType ce
     // 🎯 RECHERCHE DIRECTE
     for (const auto& [docId, node] : m_piecesNodes) {
 
-        // 0. Est-ce le repère d'origine de ce document ?
+        // 0. Est-ce le repère d'origine de ce part ?
         if (node.originActor && node.originActor == pickedActor) {
 #ifdef DEBG_CONSOLE_ANALYSERCLIC
             std::cout<<"\tnode.originActor" << std::endl;
@@ -549,7 +549,7 @@ SelectionResult vtk3d_MainView::analyserClic(vtkActor* pickedActor, vtkIdType ce
             return result;
         }
 
-        // 1. Est-ce le solide 3D (Faces) de ce document ?
+        // 1. Est-ce le solide 3D (Faces) de ce part ?
         if (node.solidActor && node.solidActor == pickedActor) {
 #ifdef DEBG_CONSOLE_ANALYSERCLIC
             std::cout<<"\tnode.solidActor" << std::endl;
@@ -571,7 +571,7 @@ SelectionResult vtk3d_MainView::analyserClic(vtkActor* pickedActor, vtkIdType ce
             return result;
         }
 
-        // 2. Est-ce le rendu filaire (Arêtes) de ce document ?
+        // 2. Est-ce le rendu filaire (Arêtes) de ce part ?
         if (node.edgeActor && node.edgeActor == pickedActor) {
 #ifdef DEBG_CONSOLE_ANALYSERCLIC
             std::cout<<"\tnode.edgeActor" << std::endl;
@@ -593,7 +593,7 @@ SelectionResult vtk3d_MainView::analyserClic(vtkActor* pickedActor, vtkIdType ce
             return result;
         }
 
-        // 3. Est-ce une des esquisses logées dans le sketchesAssembly de ce document ?
+        // 3. Est-ce une des esquisses logées dans le sketchesAssembly de ce part ?
         if (node.sketchesAssembly) {
 
 #ifdef DEBG_CONSOLE_ANALYSERCLIC
@@ -684,7 +684,7 @@ void vtk3d_MainView::showEvent (QShowEvent* event){
 }
 
 void vtk3d_MainView::setCategoryVisibility(SelectionType type, bool visible) {
-    // On parcourt toutes nos pièces/documents enregistrés
+    // On parcourt toutes nos pièces/parts enregistrés
     for (auto& [docId, node] : m_piecesNodes) {
         if (!node.rootAssembly) continue;
 
@@ -723,7 +723,7 @@ void vtk3d_MainView::setCategoryVisibility(SelectionType type, bool visible) {
             }
         }
         else if (type == SelectionType::Sketch) { // 🎯 Cible explicitement la catégorie Sketch
-            // Toutes les esquisses du document d'un seul coup
+            // Toutes les esquisses du part d'un seul coup
             if (node.sketchesAssembly) {
                 int visFlag = visible ? 1 : 0;
 
@@ -760,14 +760,14 @@ void vtk3d_MainView::setCategoryVisibility(SelectionType type, bool visible) {
 
 
 void vtk3d_MainView::mode_passerModeEsquisse( uint64_t id ){
-    if ( nullptr != m_currentDoc ){
-        //CadOperation* opDansDoc = m_currentDoc->trouverOperationMutable(1);
-        CadOperation* opDansDoc = m_currentDoc->trouverOperationMutable(id);
-        if (opDansDoc){
+    if ( nullptr != m_currentPart ){
+        //CadOperation* opDansPart = m_currentPart->trouverOperationMutable(1);
+        CadOperation* opDansPart = m_currentPart->trouverOperationMutable(id);
+        if (opDansPart){
             if (m_modeActif) {
                 m_modeActif->desactiver();
             }
-            m_modeActif = std::make_unique<Vtk3d_Sketch>(this, opDansDoc );
+            m_modeActif = std::make_unique<Vtk3d_Sketch>(this, opDansPart );
             m_modeActif->activer();
             return;
         }else{
@@ -782,9 +782,9 @@ void vtk3d_MainView::mode_passerMode3D(){
     if (m_modeActif) {
         m_modeActif->desactiver();
     }
-    if( nullptr != m_currentDoc ){
-        m_currentDoc->compute_final_topo();
-        synchroniserDocument ( m_CurrentDocumentId, *m_currentDoc);
+    if( nullptr != m_currentPart ){
+        m_currentPart->compute_final_topo();
+        synchroniserPart ( m_CurrentPartId, *m_currentPart);
     }
     m_modeActif = std::make_unique<Vtk3d_Part>(this);
     if (m_modeActif) {

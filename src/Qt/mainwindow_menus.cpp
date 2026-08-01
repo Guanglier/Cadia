@@ -34,8 +34,8 @@ void MainWindow::createMenus()
     m_editMenu = barreMenu->addMenu(tr("&Test"));
     m_editMenu->addAction(m_TestAction_CreeForme);
     //m_editMenu->addAction(m_TestAction_ModifieForme);
-    m_editMenu->addAction(m_TestAction_Dump_CAD_DocumentToConsole);
-    m_editMenu->addAction(m_TestAction_Dump_CAD_DocumentToFiles);
+    m_editMenu->addAction(m_TestAction_Dump_CAD_PartToConsole);
+    m_editMenu->addAction(m_TestAction_Dump_CAD_PartToFiles);
     m_editMenu->addAction(m_TestAction_Dump_VTK);
     m_editMenu->addAction(m_TestAction_ModeEsquisse);
     m_editMenu->addAction(m_TestAction_Mode3D);
@@ -52,18 +52,18 @@ void MainWindow::createActions()
 
     m_newAction = new QAction(tr("&Nouveau"), this);
     m_newAction->setShortcut(QKeySequence::New);
-    m_newAction->setStatusTip(tr("Créer un nouveau document CAO"));
-    connect(m_newAction, &QAction::triggered, this, &MainWindow::onNewDocument);
+    m_newAction->setStatusTip(tr("Créer un nouveau Part CAO"));
+    connect(m_newAction, &QAction::triggered, this, &MainWindow::onNewPart);
 
     m_openAction = new QAction(tr("&Ouvrir..."), this);
     m_openAction->setShortcut(QKeySequence::Open);
     m_openAction->setStatusTip(tr("Ouvrir un fichier existant"));
-    connect(m_openAction, &QAction::triggered, this, &MainWindow::onOpenDocument);
+    connect(m_openAction, &QAction::triggered, this, &MainWindow::onOpenPart);
 
     m_saveAction = new QAction(tr("&Enregistrer"), this);
     m_saveAction->setShortcut(QKeySequence::Save);
-    m_saveAction->setStatusTip(tr("Enregistrer le document actuel"));
-    connect(m_saveAction, &QAction::triggered, this, &MainWindow::onSaveDocument);
+    m_saveAction->setStatusTip(tr("Enregistrer le Part actuel"));
+    connect(m_saveAction, &QAction::triggered, this, &MainWindow::onSavePart);
 
     m_exitAction = new QAction(tr("&Quitter"), this);
     m_exitAction->setShortcut(QKeySequence::Quit);
@@ -89,15 +89,15 @@ void MainWindow::createActions()
     m_TestAction_Dump_VTK->setStatusTip(tr("dump de la structure VTK"));
     connect(m_TestAction_Dump_VTK, &QAction::triggered, this, &MainWindow::on_test_DumpVTK_ToConsole);
 
-    m_TestAction_Dump_CAD_DocumentToConsole = new QAction(tr("Dump CAD_Document -> console"), this);
-    m_TestAction_Dump_CAD_DocumentToConsole->setShortcut(QKeySequence::Save);
-    m_TestAction_Dump_CAD_DocumentToConsole->setStatusTip(tr("dump de la structure cad_document"));
-    connect(m_TestAction_Dump_CAD_DocumentToConsole, &QAction::triggered, this, &MainWindow::on_test_DumpCAD_DocumentToConsole);
+    m_TestAction_Dump_CAD_PartToConsole = new QAction(tr("Dump CAD_Part -> console"), this);
+    m_TestAction_Dump_CAD_PartToConsole->setShortcut(QKeySequence::Save);
+    m_TestAction_Dump_CAD_PartToConsole->setStatusTip(tr("dump de la structure CAD_Part"));
+    connect(m_TestAction_Dump_CAD_PartToConsole, &QAction::triggered, this, &MainWindow::on_test_DumpCAD_PartToConsole);
 
-    m_TestAction_Dump_CAD_DocumentToFiles = new QAction(tr("Dump CAD_Document -> fichiers"), this);
-    m_TestAction_Dump_CAD_DocumentToFiles->setShortcut(QKeySequence::Save);
-    m_TestAction_Dump_CAD_DocumentToFiles->setStatusTip(tr("dump de la structure cad_document dans des fichiers"));
-    connect(m_TestAction_Dump_CAD_DocumentToFiles, &QAction::triggered, this, &MainWindow::on_test_DumpCAD_DocumentToFiles);
+    m_TestAction_Dump_CAD_PartToFiles = new QAction(tr("Dump CAD_Part -> fichiers"), this);
+    m_TestAction_Dump_CAD_PartToFiles->setShortcut(QKeySequence::Save);
+    m_TestAction_Dump_CAD_PartToFiles->setStatusTip(tr("dump de la structure CAD_Part dans des fichiers"));
+    connect(m_TestAction_Dump_CAD_PartToFiles, &QAction::triggered, this, &MainWindow::on_test_DumpCAD_PartToFiles);
 
     m_TestAction_ModeEsquisse = new QAction(tr("Mode esquisse"), this);
     m_TestAction_ModeEsquisse->setShortcut(QKeySequence::Save);

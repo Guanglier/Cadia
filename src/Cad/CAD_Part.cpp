@@ -1,5 +1,5 @@
 ﻿
-#include "CAD_Document.h"
+#include "CAD_Part.h"
 #include <iostream>
 #include <ostream>
 #include <string>
@@ -25,19 +25,19 @@
 #include "Logger.h"
 
 
-CAD_Document::CAD_Document() {
+CAD_Part::CAD_Part() {
     // Constructeur
 }
 
 
 
-CadOperation* CAD_Document::trouverOperationMutable(uint64_t id) {
+CadOperation* CAD_Part::trouverOperationMutable(uint64_t id) {
     for (auto& op : m_operationRegistry.getItemsMutable()) {
         if (op.id == id) return &op;
     }
     return nullptr;
 }
-const CadOperation* CAD_Document::trouverOperation(uint64_t id) const {
+const CadOperation* CAD_Part::trouverOperation(uint64_t id) const {
     for (const auto& op : m_operationRegistry.getItems()) {
         if (op.id == id) return &op;
     }
@@ -45,8 +45,8 @@ const CadOperation* CAD_Document::trouverOperation(uint64_t id) const {
 }
 
 // Fonction utilitaire globale ou statique
-void CAD_Document::sauvegarderOperationEnBrep(uint64_t opId, const std::string& chemin, bool exporterLocal) {
-    LOG_DEBUG << "CAD_Document::sauvegarderOperationEnBrep" << std::endl;
+void CAD_Part::sauvegarderOperationEnBrep(uint64_t opId, const std::string& chemin, bool exporterLocal) {
+    LOG_DEBUG << "CAD_Part::sauvegarderOperationEnBrep" << std::endl;
     const CadOperation* op = trouverOperation(opId);
     if (!op) return ;
     const TopoDS_Shape& shapeAExporter = exporterLocal ? op->getLocalTopo() : op->getResultingTopo();
@@ -78,16 +78,16 @@ std::ostream& operator<<(std::ostream& os, ConstraintSubElement sub) {
 }
 
 
-uint64_t CAD_Document::add_operation(CadOperation& op) {
+uint64_t CAD_Part::add_operation(CadOperation& op) {
     return m_operationRegistry.add(std::move(op));
 }
-void CAD_Document::revaluerOperation(CadOperation& op) {
-    LOG_DEBUG << "CAD_Document::revaluerOperation -> name = " << op.getName() << "\n";
+void CAD_Part::revaluerOperation(CadOperation& op) {
+    LOG_DEBUG << "CAD_Part::revaluerOperation -> name = " << op.getName() << "\n";
     op.execute(*this, false);
 }
 
-void CAD_Document::compute_final_topo() {
-    LOG_DEBUG << "\nCAD_Document::compute_final_topo" << std::endl;
+void CAD_Part::compute_final_topo() {
+    LOG_DEBUG << "\nCAD_Part::compute_final_topo" << std::endl;
 
     auto& operations = m_operationRegistry.getItemsMutable();
     TopoDS_Shape solideGlobalPrecedent;

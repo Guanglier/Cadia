@@ -138,9 +138,9 @@ qt_add_executable(Cad_IA
     src/vtk3d/sketch/vtk3d_Sketch_Render_Cotations.cpp
     src/vtk3d/sketch/vtk3d_sketch_SnapperManager.h
     src/vtk3d/sketch/vtk3d_sketch_SnapperManager.cpp
-    src/Cad/CAD_Document.cpp
-    src/Cad/CAD_Document_tests.cpp
-    src/Cad/CAD_Document.h
+    src/Cad/CAD_Part.cpp
+    src/Cad/CAD_Part_tests.cpp
+    src/Cad/CAD_Part.h
     src/Cad/CAD_Operation.cpp
     src/Cad/CAD_Operation.h
     src/Cad/CAD_Operation_extrude.cpp

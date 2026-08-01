@@ -1,6 +1,6 @@
 
 #include "CAD_Operation.h"
-#include "CAD_Document.h" // Indispensable ICI pour que le compilateur connaisse enfin les methodes de CAD_Document !
+#include "CAD_Part.h" // Indispensable ICI pour que le compilateur connaisse enfin les methodes de CAD_Part !
 
 // OpenCASCADE requis pour construire la geometrie
 #include <BRepBuilderAPI_MakeWire.hxx>
@@ -32,10 +32,10 @@
 
 
 
-TopoDS_Shape ExtrudeParams::evaluate(const CAD_Document& doc) const {
+TopoDS_Shape ExtrudeParams::evaluate(const CAD_Part& part) const {
     std::cout << "ExtrudeParams::evaluate\n";
 
-    const CadOperation* opEsquisse = doc.trouverOperation(this->SketchId);
+    const CadOperation* opEsquisse = part.trouverOperation(this->SketchId);
     if (!opEsquisse) {
         LOG_ERROR << "\tExtrudeParams::evaluate -> Erreur : Esquisse parente ID "
                   << this->SketchId << " introuvable." << std::endl;

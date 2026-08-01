@@ -76,7 +76,7 @@ public:
         CadOperation*   GetOperation () const { return m_Operation; }
         uint64_t        GetSketchId() const {return m_sketchId;}
         auto*           GetParams () { return std::get_if<SketchParams>(&GetOperation()->getParamsMutable()); }
-    }DocumentRefs;
+    }PartRefs;
 
 
     vtkSmartPointer<vtkActor>       m_ActorSketchDisplay = nullptr;

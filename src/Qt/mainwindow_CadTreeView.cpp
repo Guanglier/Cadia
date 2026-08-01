@@ -7,7 +7,7 @@ void MainWindow::TreeView_Cfg_SketchView (){
     m_cadTreeModel->m_DisplaySketchDetails = true;
     m_cadTreeModel->m_DisplaySolids = false;
 
-    m_cadTreeModel->refreshFromDocument(doc);
+    m_cadTreeModel->refreshFromPart(doc);
 
     // On déplie les niveaux 1 et 2
     for (int i = 0; i < m_cadTreeModel->rowCount(); ++i) {
@@ -24,7 +24,7 @@ void MainWindow::TreeView_Cfg_SketchView (){
 void MainWindow::TreeView_Cfg_PartView (){
     m_cadTreeModel->m_DisplaySketchDetails = false;
     m_cadTreeModel->m_DisplaySolids = true;
-    m_cadTreeModel->refreshFromDocument(doc);
+    m_cadTreeModel->refreshFromPart(doc);
     m_treeView->expandAll();
 }
 void MainWindow::TreeView_Cfg_AllView (){

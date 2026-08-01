@@ -1,8 +1,8 @@
 #pragma once
 #include <QStandardItemModel>
-#include "CAD_Document.h"
+#include "CAD_Part.h"
 
-class CAD_Document;
+class CAD_Part;
 
 class CadTreeModel : public QStandardItemModel {
     Q_OBJECT
@@ -19,8 +19,8 @@ public:
     bool m_DisplaySketchDetails = true;
     bool m_DisplaySolids = true;
 
-    // Recrée complètement l'arbre à partir du document CAD
-    void refreshFromDocument(const CAD_Document& doc);
+    // Recrée complètement l'arbre à partir du Part CAD
+    void refreshFromPart(const CAD_Part& part);
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
 private:

@@ -1,6 +1,6 @@
 
 #include "CAD_Operation.h"
-#include "CAD_Document.h" // Indispensable ICI pour que le compilateur connaisse enfin les methodes de CAD_Document !
+#include "CAD_Part.h" // Indispensable ICI pour que le compilateur connaisse enfin les methodes de CAD_Part !
 
 // OpenCASCADE requis pour construire la geometrie
 #include <BRepBuilderAPI_MakeWire.hxx>
@@ -113,7 +113,7 @@ bool SketchParams::PointExists ( const gp_Pnt2d& li_Pnt2D, uint64_t &lo_PointId)
 
 
 
-TopoDS_Shape CoordinateSystem::evaluate(const CAD_Document& doc) const {
+TopoDS_Shape CoordinateSystem::evaluate(const CAD_Part& part) const {
     std::cout << "CoordinateSystem::evaluate : Generation geometrique du repère local (Plans XY, XZ, YZ)" << std::endl;
 
     // 1. Récupérer l'axe spatial de ta structure (gp_Ax2)

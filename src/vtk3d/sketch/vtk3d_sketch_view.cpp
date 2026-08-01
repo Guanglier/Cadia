@@ -28,9 +28,9 @@
 
 
 void Vtk3d_Sketch::rafraichirAffichageEsquisse() {
-    if (!DocumentRefs.GetOperation() || !m_view) return;
+    if (!PartRefs.GetOperation() || !m_view) return;
 
-    auto* sketchParams = std::get_if<SketchParams>(&DocumentRefs.GetOperation()->getParamsMutable());
+    auto* sketchParams = std::get_if<SketchParams>(&PartRefs.GetOperation()->getParamsMutable());
     if (!sketchParams) return;
 
     rafraichirGeometrie(sketchParams);
@@ -42,7 +42,7 @@ void Vtk3d_Sketch::rafraichirAffichageEsquisse() {
 
 
 void Vtk3d_Sketch::rafraichirAffichageEsquisseInteractif() {
-    auto* sketchParams = std::get_if<SketchParams>(&DocumentRefs.GetOperation()->getParamsMutable());
+    auto* sketchParams = std::get_if<SketchParams>(&PartRefs.GetOperation()->getParamsMutable());
     if (!sketchParams) return;
 
     // Récupérer le vtkPolyData principal de l'affichage de l'esquisse
@@ -101,7 +101,7 @@ void Vtk3d_Sketch::rafraichirAffichageEsquisseInteractif() {
                     double localV = sp_center.p2d.Y() + concretePrim.radius * std::sin(angle);
 
                     // Projection 3D fidèle à l'orientation du plan
-                    gp_Pnt p3d = ElSLib::Value(localU, localV, DocumentRefs.GetSketchPlane() );
+                    gp_Pnt p3d = ElSLib::Value(localU, localV, PartRefs.GetSketchPlane() );
 
                     pts->SetPoint(ptIndex++, p3d.X(), p3d.Y(), p3d.Z() );
                 }
@@ -154,7 +154,7 @@ void Vtk3d_Sketch::Echelle_ajusterEchelleElements(vtkCamera* camera) {
 //      l'intersection avec le plan
 gp_Pnt Vtk3d_Sketch::convertir2DEn3D(const gp_Pnt2d& point2D) {
     // Équivalent mathématique de : Point3D = Origine + U * AxeX + V * AxeY
-    return ElSLib::Value(point2D.X(), point2D.Y(), DocumentRefs.GetSketchPlane() );
+    return ElSLib::Value(point2D.X(), point2D.Y(), PartRefs.GetSketchPlane() );
 }
 
 bool Vtk3d_Sketch::calculerIntersectionSourisSurPlan(int mouseX, int mouseY, gp_Pnt2d &point2DOut, gp_Pnt &point3DOut) {
@@ -180,8 +180,8 @@ bool Vtk3d_Sketch::calculerIntersectionSourisSurPlan(int mouseX, int mouseY, gp_
     gp_Pnt R2(pLointain[0]/pLointain[3], pLointain[1]/pLointain[3], pLointain[2]/pLointain[3]);
 
     gp_Vec V(R1, R2);
-    gp_Pnt O = DocumentRefs.GetSketchPlane() .Location();
-    gp_Dir N = DocumentRefs.GetSketchPlane() .Direction();
+    gp_Pnt O = PartRefs.GetSketchPlane() .Location();
+    gp_Dir N = PartRefs.GetSketchPlane() .Direction();
 
     double denominateur = V.XYZ().Dot(N.XYZ());
     if (std::abs(denominateur) < 1e-6) {
@@ -197,7 +197,7 @@ bool Vtk3d_Sketch::calculerIntersectionSourisSurPlan(int mouseX, int mouseY, gp_
 
 
     // 2. EXTRACTION CRUCIALE : On convertit ce point 3D en coordonnées 2D locales (U, V) de l'esquisse
-    gp_Pln planCalcul(DocumentRefs.GetSketchPlane() );
+    gp_Pln planCalcul(PartRefs.GetSketchPlane() );
     double u = 0.0, v = 0.0;
     ElSLib::Parameters(planCalcul, pointIntersection, u, v);
 
@@ -436,7 +436,7 @@ void Vtk3d_Sketch::rafraichirGeometrie(SketchParams* sketchParams) {
                 double centerU = 0.0, centerV = 0.0;
 
                 SketchPoint&  sp_center = sketchParams->GetPointById(concretePrim.centerPointId);
-                ElSLib::Parameters(gp_Pln(DocumentRefs.GetSketchPlane()), sp_center.cache_p3d, centerU, centerV);
+                ElSLib::Parameters(gp_Pln(PartRefs.GetSketchPlane()), sp_center.cache_p3d, centerU, centerV);
 
                 for (int i = 0; i <= numSegments; ++i) {
                     double angle = 2.0 * M_PI * i / numSegments;
@@ -446,7 +446,7 @@ void Vtk3d_Sketch::rafraichirGeometrie(SketchParams* sketchParams) {
                     double localV = centerV + concretePrim.radius * std::sin(angle);
 
                     // Projection 3D fidèle à l'orientation du plan
-                    gp_Pnt p3d = ElSLib::Value(localU, localV, DocumentRefs.GetSketchPlane());
+                    gp_Pnt p3d = ElSLib::Value(localU, localV, PartRefs.GetSketchPlane());
 
                     pointsGeom->InsertNextPoint(p3d.X(), p3d.Y(), p3d.Z());
                     polyLineObj->GetPointIds()->SetId(i, ptCounterGeom + i);

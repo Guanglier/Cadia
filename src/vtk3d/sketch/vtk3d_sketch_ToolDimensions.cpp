@@ -53,7 +53,7 @@ bool Tool_Dimensions::gererWheelEvent(QWheelEvent* event) {
 
 void Tool_Dimensions::Cotation_Configure(int li_PrimId, int li_PrimSubElmt) {
     // 1. Récupération des SketchParams mutables car on va vouloir y ajouter la cote plus tard
-    OperationParams& param = m_Parent->DocumentRefs.GetOperation()->getParamsMutable();
+    OperationParams& param = m_Parent->PartRefs.GetOperation()->getParamsMutable();
     auto* sketchParams = std::get_if<SketchParams>(&param);
     if (!sketchParams) return;
 
@@ -101,7 +101,7 @@ void Tool_Dimensions::Cotation_Configure(int li_PrimId, int li_PrimSubElmt) {
 }
 
 bool Tool_Dimensions::Cotation_MouseMove (gp_Pnt& PtnMouse3D){
-    gp_Ax3 sketchPlane = m_Parent->DocumentRefs.GetSketchPlane();
+    gp_Ax3 sketchPlane = m_Parent->PartRefs.GetSketchPlane();
 
     std::visit([&](auto& desc) {
         using ActualType = std::decay_t<decltype(desc)>;
@@ -368,11 +368,11 @@ bool Tool_Dimensions::gererkeyPressEvent(QKeyEvent* event) {
 #endif
             PrimitiveIsSelected = false;
 
-            auto* sketchParams = m_Parent->DocumentRefs.GetParams();
+            auto* sketchParams = m_Parent->PartRefs.GetParams();
             if (!sketchParams) return false;
 
             sketchParams->removePrimitive(SelectedPrimitiveId);
-            sketchParams->evaluate(*(m_Parent->GetView()->GetCurrentDoc()));
+            sketchParams->evaluate(*(m_Parent->GetView()->GetCurrentPart()));
 
             m_Parent->GetView()->m_Chighlighter->masquerSurbrillance();
             m_Parent->rafraichirAffichageEsquisse();

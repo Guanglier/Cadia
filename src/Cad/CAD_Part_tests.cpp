@@ -2,24 +2,24 @@
 
 
 
-#include "CAD_Document.h"
+#include "CAD_Part.h"
 #include <iostream>
 #include <string>
 #include <variant>
 #include <ostream>
 
 // dump des brep dans des fichiers, à ouvrir par cad assistant par exemple
-void CAD_Document::tst_dump_all_op_to_file (){
+void CAD_Part::tst_dump_all_op_to_file (){
     const auto& operations = m_operationRegistry.getItems();
     if (operations.empty()) {
-        std::cerr << " (Document vide)" << std::endl;
+        std::cerr << " (Part vide)" << std::endl;
         return;
     }
     for (size_t i = 0; i < operations.size(); ++i) {
         const auto& op = operations[i];
         std::string  string_filename = "_";
         string_filename = string_filename + std::to_string(op.id) + "_"  + op.getTypeName();
-        std::cout<< "CAD_Document::tst_dump_all_op_to_file : [" << string_filename << "]" << std::endl;
+        std::cout<< "CAD_Part::tst_dump_all_op_to_file : [" << string_filename << "]" << std::endl;
         std::string  string_filename_local = string_filename + "_local.brep";
         std::string  string_filename_result = string_filename + "_result.brep";
         sauvegarderOperationEnBrep ( op.id, string_filename_local, true);
@@ -27,13 +27,13 @@ void CAD_Document::tst_dump_all_op_to_file (){
     }
 }
 
-void CAD_Document::tst_dump_tree(std::ostream& flux_out ) const {
-    flux_out << "\n=== ARBORESCENCE DU DOCUMENT CAD ===" << std::endl;
+void CAD_Part::tst_dump_tree(std::ostream& flux_out ) const {
+    flux_out << "\n=== ARBORESCENCE DU Part ===" << std::endl;
 
     const auto& operations = m_operationRegistry.getItems();
 
     if (operations.empty()) {
-        flux_out << " (Document vide)" << std::endl;
+        flux_out << " (Part vide)" << std::endl;
         return;
     }
 
@@ -149,9 +149,9 @@ void CAD_Document::tst_dump_tree(std::ostream& flux_out ) const {
     flux_out << "====================================\n" << std::endl;
 }
 
-void CAD_Document::tst_dump_tree_to_console (){tst_dump_tree(); }
+void CAD_Part::tst_dump_tree_to_console (){tst_dump_tree(); }
 
-void CAD_Document::tst_dump_tree_to_file (const std::string& filename){
+void CAD_Part::tst_dump_tree_to_file (const std::string& filename){
     std::ofstream logFile(filename);
     if (logFile.is_open()) {
         tst_dump_tree(logFile);
@@ -159,14 +159,14 @@ void CAD_Document::tst_dump_tree_to_file (const std::string& filename){
     }
 }
 
-void CAD_Document::tst_add_empty_sketch (){
+void CAD_Part::tst_add_empty_sketch (){
 
     //------------ construction de la sketch -------------------------------
     CadOperation cad_op_sketch("Esquisse 04", SketchParams());
     uint64_t opId_sketch_3 = this->add_operation(cad_op_sketch);
 
 
-    // 3. On récupère l'accès direct et modifiable à l'esquisse qui vit DANS le document
+    // 3. On récupère l'accès direct et modifiable à l'esquisse qui vit DANS le Part
     CadOperation* opDansDocSketch = this->trouverOperationMutable(opId_sketch_3);
     if (!opDansDocSketch) return; // Sécurité
 
@@ -180,7 +180,7 @@ void CAD_Document::tst_add_empty_sketch (){
 
 }
 
-void CAD_Document::tst_add_repere_origine() {
+void CAD_Part::tst_add_repere_origine() {
 
     //------------ construction de l'axe d'origine -------------------------------
     CoordinateSystem origineDefaut; // gp::XOY() crée un gp_Ax2 à (0,0,0) avec Z=(0,0,1) et X=(1,0,0)
@@ -202,7 +202,7 @@ void CAD_Document::tst_add_repere_origine() {
 
 }
 
-void CAD_Document::tst_add_op_sketch_rect() {
+void CAD_Part::tst_add_op_sketch_rect() {
 
     
 
@@ -211,7 +211,7 @@ void CAD_Document::tst_add_op_sketch_rect() {
     uint64_t opId = this->add_operation(cad_op);
 
 
-    // 3. On récupère l'accès direct et modifiable à l'esquisse qui vit DANS le document
+    // 3. On récupère l'accès direct et modifiable à l'esquisse qui vit DANS le Part
     CadOperation* opDansDoc = this->trouverOperationMutable(opId);
     if (!opDansDoc) return; // Sécurité
 
@@ -229,7 +229,7 @@ void CAD_Document::tst_add_op_sketch_rect() {
     gp_Pnt2d p4 (25, -10);
 
 
-    // 5. On ajoute les primitives directement dans l'esquisse du document
+    // 5. On ajoute les primitives directement dans l'esquisse du Part
     uint64_t l1_id = sketch.addLine( p1, p2 );
     uint64_t l2_id = sketch.addLine( p2, p3 );
     uint64_t l3_id = sketch.addLine( p3, p4 );  // horizontale droite vers gauche
@@ -442,7 +442,7 @@ void CAD_Document::tst_add_op_sketch_rect() {
     
 }
 
-void CAD_Document::tst_add_op_extrude() {
+void CAD_Part::tst_add_op_extrude() {
     CadOperation cad_op("Extrusion 01", ExtrudeParams());
     uint64_t opId = this->add_operation(cad_op);
 
@@ -461,7 +461,7 @@ void CAD_Document::tst_add_op_extrude() {
     //sauvegarderOperationEnBrep(opId, "_Extrude_1_local.brep", true);
 }
 
-void CAD_Document::tst_add_op_sketch_circle() {
+void CAD_Part::tst_add_op_sketch_circle() {
 /*
     uint64_t u64_id_repere = 0;
 
@@ -470,7 +470,7 @@ void CAD_Document::tst_add_op_sketch_circle() {
     uint64_t opId = this->add_operation(cad_op);
 
 
-    // 3. On récupère l'accès direct et modifiable à l'esquisse qui vit DANS le document
+    // 3. On récupère l'accès direct et modifiable à l'esquisse qui vit DANS le Part
     CadOperation* opDansDoc = this->trouverOperationMutable(opId);
     if (!opDansDoc) return; // Sécurité
     opDansDoc->setColor(0.5, 0.8, 0.5);
@@ -494,7 +494,7 @@ void CAD_Document::tst_add_op_sketch_circle() {
     */
 }
 
-void CAD_Document::tst_add_op_extrude_2() {
+void CAD_Part::tst_add_op_extrude_2() {
     /*
     CadOperation cad_op("Extrusion 02", ExtrudeParams());
     uint64_t opId = this->add_operation(cad_op);
@@ -515,14 +515,14 @@ void CAD_Document::tst_add_op_extrude_2() {
     */
 }
 
-void CAD_Document::tst_add_op_step_2 (){
+void CAD_Part::tst_add_op_step_2 (){
 /*
     //------------ construction de la sketch -------------------------------
     CadOperation cad_op_sketch("Esquisse 03", SketchParams());
     uint64_t opId_sketch_3 = this->add_operation(cad_op_sketch);
 
 
-    // 3. On récupère l'accès direct et modifiable à l'esquisse qui vit DANS le document
+    // 3. On récupère l'accès direct et modifiable à l'esquisse qui vit DANS le Part
     CadOperation* opDansDocSketch = this->trouverOperationMutable(opId_sketch_3);
     if (!opDansDocSketch) return; // Sécurité
 
@@ -543,7 +543,7 @@ void CAD_Document::tst_add_op_step_2 (){
     gp_Pnt2d p4(5, -5);
 
 
-    // 5. On ajoute les primitives directement dans l'esquisse du document
+    // 5. On ajoute les primitives directement dans l'esquisse du Part
     uint64_t l1_id = sketch3.addPrimitive(SketchLine(p1, p2));
     uint64_t l2_id = sketch3.addPrimitive(SketchLine(p2, p3));
     uint64_t l3_id = sketch3.addPrimitive(SketchLine(p3, p4));

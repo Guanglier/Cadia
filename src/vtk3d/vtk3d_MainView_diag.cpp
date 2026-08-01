@@ -91,12 +91,12 @@ void vtk3d_MainView::diag_dumpArchitecture(std::ostream& out) {
     out << "============================================================\n";
     
     if (m_piecesNodes.empty()) {
-        out << "Aucun document/nœud actif dans la vue 3D.\n";
+        out << "Aucun part/nœud actif dans la vue 3D.\n";
         return;
     }
 
     for (const auto& [docId, node] : m_piecesNodes) {
-        out << "\n DOCUMENT ID: " << docId << " (Node Piece ID: " << node.pieceId << ")\n";
+        out << "\n part ID: " << docId << " (Node Piece ID: " << node.pieceId << ")\n";
         
         // Pointers de tracking du Node
         out << "  |-- Pointers Tracked:\n";

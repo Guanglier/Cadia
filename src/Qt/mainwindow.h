@@ -12,7 +12,7 @@
 #include <QAction>
 
 #include "CadTreeModel.h"
-#include "CAD_Document.h"
+#include "CAD_Part.h"
 //#include "vtk3d_sketch_Tools.h"
 #include "CadResponseCustomEvent.h"
 
@@ -21,22 +21,22 @@ class MainWindow : public QMainWindow {
 public:
     MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
-    CAD_Document    doc;
+    CAD_Part    doc;
 
 
 private slots:
     void onModelChanged();
 
 
-    void onNewDocument();
-    void onOpenDocument();
-    void onSaveDocument();
+    void onNewPart();
+    void onOpenPart();
+    void onSavePart();
     void onOpenOptions();
-    //void onTestDocument();
-    //void onTest2Document();
+    //void onTestPart();
+    //void onTest2Part();
     void on_test_DumpVTK_ToConsole ();
-    void on_test_DumpCAD_DocumentToConsole ();
-    void on_test_DumpCAD_DocumentToFiles ();
+    void on_test_DumpCAD_PartToConsole ();
+    void on_test_DumpCAD_PartToFiles ();
     void on_test_CreeForme();
     void on_test_ModifieForme();
     void on_test_ModeEsquisse ();
@@ -87,8 +87,8 @@ private:
     QAction* m_exitAction;
     QAction* m_TestAction_CreeForme;
     QAction* m_TestAction_ModifieForme;
-    QAction* m_TestAction_Dump_CAD_DocumentToConsole;
-    QAction* m_TestAction_Dump_CAD_DocumentToFiles;
+    QAction* m_TestAction_Dump_CAD_PartToConsole;
+    QAction* m_TestAction_Dump_CAD_PartToFiles;
     QAction* m_TestAction_Dump_VTK;
     QAction* m_TestAction_ModeEsquisse;
     QAction* m_TestAction_Mode3D;
