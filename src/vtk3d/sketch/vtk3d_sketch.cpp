@@ -90,6 +90,12 @@ Vtk3d_Sketch::~Vtk3d_Sketch() {
     }
 }
 
+
+
+
+
+
+
 void Vtk3d_Sketch::activer() {
     if (!m_view || !m_view->renderWindow()) return;
 
