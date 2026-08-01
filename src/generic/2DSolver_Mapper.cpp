@@ -89,28 +89,6 @@ gp_Pnt2d* Solver2D_Mapper::getPointPointerFromRef(SketchParams& sketch, const Ge
     }
 
     gp_Pnt2d* targetPnt = nullptr;
-/*
-    std::visit([&](auto& concretePrim) {
-        using T = std::decay_t<decltype(concretePrim)>;
-
-        if constexpr (std::is_same_v<T, SketchLine>) {
-            if (ref.subElement == ConstraintSubElement::StartPoint) {
-                targetPnt = &(concretePrim.start.p2d);
-            } else if (ref.subElement == ConstraintSubElement::EndPoint) {
-                targetPnt = &(concretePrim.stop.p2d);
-            }else{
-                LOG_ERROR << "ERROR DEFAULT dans if (ref.subElement == ConstraintSubElement ) " << std::endl;
-            }
-        }
-        else if constexpr (std::is_same_v<T, SketchCircle>) {
-            if (ref.subElement == ConstraintSubElement::CenterPoint || ref.subElement == ConstraintSubElement::Whole) {
-                targetPnt = &(concretePrim.center.p2d);
-            }
-        }else{
-            LOG_ERROR << "ERROR else if constexpr (std::is_same_v<T, SketchCircle>) VIDE " << std::endl;
-        }
-    }, *prim);
-*/
     return targetPnt;
 }
 
@@ -239,33 +217,18 @@ void SolverInteractiveSession::Initialize(SketchParams& sketch) {
                 }
                 break;
             }
-            /*
-        case ConstraintType::Horizontal: {
-            SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
-            if (p1 && std::holds_alternative<SketchLine>(*p1)) {
-                SketchLine& line = std::get<SketchLine>(*p1);
 
-                int idxStart = getIndexOrError(&line.start.p2d, "Horizontal (start)");
-                int idxStop  = getIndexOrError(&line.stop.p2d, "Horizontal (stop)");
 
-                if (idxStart != -1 && idxStop != -1) {
-                    solver.addConstraint(std::make_unique<ConstraintHorizontal>(
-                        idxStart + 1,
-                        idxStop + 1
-                        ));
-                }
-            } else {
-                LOG_ERROR << "[Solver] Horizontal : Primitive ID " << c.ref1.primitiveId << " introuvable ou ce n'est pas une ligne !" << std::endl;
-            }
-            break;
-        }
         case ConstraintType::Vertical: {
             SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
             if (p1 && std::holds_alternative<SketchLine>(*p1)) {
                 SketchLine& line = std::get<SketchLine>(*p1);
 
-                int idxStart = getIndexOrError(&line.start.p2d, "Vertical (start)");
-                int idxStop  = getIndexOrError(&line.stop.p2d, "Vertical (stop)");
+                int idxStart = pointIdToXIndex[line.startPointId];
+                int idxStop  = pointIdToXIndex[line.stopPointId];
+
+                //int idxStart = getIndexOrError(&line.start.p2d, "Vertical (start)");
+                //int idxStop  = getIndexOrError(&line.stop.p2d, "Vertical (stop)");
 
                 if (idxStart != -1 && idxStop != -1) {
                     solver.addConstraint(std::make_unique<ConstraintVertical>(
@@ -278,6 +241,8 @@ void SolverInteractiveSession::Initialize(SketchParams& sketch) {
             }
             break;
         }
+
+/*
         case ConstraintType::Coincident: {
             gp_Pnt2d* p1 = Solver2D_Mapper::getPointPointerFromRef(sketch, c.ref1);
             gp_Pnt2d* p2 = Solver2D_Mapper::getPointPointerFromRef(sketch, c.ref2);
