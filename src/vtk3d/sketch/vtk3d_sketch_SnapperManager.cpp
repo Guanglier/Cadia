@@ -428,7 +428,6 @@ bool SketchSnapperManager::alignWithExistingPoints(gp_Pnt2d& lio_Point2D, gp_Pnt
 }
 
 
-
 void SketchSnapperManager::updateSnapLineActor(bool li_AlignX, bool li_AlignY,
                                                   const gp_Pnt& pointCibleVert3D,
                                                   const gp_Pnt& pointCibleHor3D,
