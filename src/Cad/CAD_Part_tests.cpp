@@ -112,25 +112,46 @@ void CAD_Part::tst_dump_tree(std::ostream& flux_out ) const {
                 }
 
                 if (!constraints.empty()) {
-                    flux_out << subPrefix << "|--  Contraintes :" << std::endl;
+                    flux_out << subPrefix << "|--   Contraintes :" << std::endl;
                     for (size_t c = 0; c < constraints.size(); ++c) {
                         bool isLastConst = (c == constraints.size() - 1);
                         std::string cBranch = isLastConst ? "|-- " : "|-- ";
-                        const auto& ct = constraints[c];
+                        const auto& constraint = constraints[c];
 
                         flux_out << subPrefix << "    " << cBranch;
-                        if (ct.type == ConstraintType::Coincident) flux_out << "Coincident";
-                        else if (ct.type == ConstraintType::Parallel) flux_out << "Parallel";
-                        else if (ct.type == ConstraintType::Perpendicular) flux_out << "Perpendicular";
-                        else if (ct.type == ConstraintType::Distance) flux_out << "Distance : " << ct.value << "mm";
-                        else if (ct.type == ConstraintType::Horizontal) flux_out << "Horizontal ";
-                        else if (ct.type == ConstraintType::Vertical) flux_out << "Vertical ";
-                        else if (ct.type == ConstraintType::Radius) flux_out << "Radius ";
-                        else if (ct.type == ConstraintType::Tangent) flux_out << "Tangent ";
 
-                        flux_out << " : Op" << ct.ref1.operationId << ":Prim" << ct.ref1.primitiveId << ":" << ct.ref1.subElement
-                                 << " <-> Op" << ct.ref2.operationId << ":Prim" << ct.ref2.primitiveId << ":" << ct.ref2.subElement << " "
-                                 << std::endl;
+                        // Utilisation de std::visit pour formater dynamiquement selon le type actif du variant
+                        std::visit([&](const auto& ct) {
+                            using T = std::decay_t<decltype(ct)>;
+
+                            if constexpr (std::is_same_v<T, PartSketchConstraint::CoincidentConstraint>) {
+                                flux_out << "Coincident : Op" << ct.ref1.operationId << ":Prim" << ct.ref1.primitiveId << ":" << static_cast<int>(ct.ref1.subElement)
+                                << " <-> Op" << ct.ref2.operationId << ":Prim" << ct.ref2.primitiveId << ":" << static_cast<int>(ct.ref2.subElement);
+                            }
+                            else if constexpr (std::is_same_v<T, PartSketchConstraint::ParallelConstraint>) {
+                                flux_out << "Parallel : Op" << ct.ref1.operationId << ":Prim" << ct.ref1.primitiveId << ":" << static_cast<int>(ct.ref1.subElement)
+                                << " <-> Op" << ct.ref2.operationId << ":Prim" << ct.ref2.primitiveId << ":" << static_cast<int>(ct.ref2.subElement);
+                            }
+                            else if constexpr (std::is_same_v<T, PartSketchConstraint::PerpendicularConstraint>) {
+                                flux_out << "Perpendicular : Op" << ct.ref1.operationId << ":Prim" << ct.ref1.primitiveId << ":" << static_cast<int>(ct.ref1.subElement)
+                                << " <-> Op" << ct.ref2.operationId << ":Prim" << ct.ref2.primitiveId << ":" << static_cast<int>(ct.ref2.subElement);
+                            }
+                            else if constexpr (std::is_same_v<T, PartSketchConstraint::DistanceConstraint>) {
+                                flux_out << "Distance : " << ct.value << "mm : Op" << ct.ref1.operationId << ":Prim" << ct.ref1.primitiveId << ":" << static_cast<int>(ct.ref1.subElement)
+                                << " <-> Op" << ct.ref2.operationId << ":Prim" << ct.ref2.primitiveId << ":" << static_cast<int>(ct.ref2.subElement);
+                            }
+                            else if constexpr (std::is_same_v<T, PartSketchConstraint::HorizontalConstraint>) {
+                                flux_out << "Horizontal : Op" << ct.ref.operationId << ":Prim" << ct.ref.primitiveId << ":" << static_cast<int>(ct.ref.subElement);
+                            }
+                            else if constexpr (std::is_same_v<T, PartSketchConstraint::VerticalConstraint>) {
+                                flux_out << "Vertical : Op" << ct.ref.operationId << ":Prim" << ct.ref.primitiveId << ":" << static_cast<int>(ct.ref.subElement);
+                            }
+                            else if constexpr (std::is_same_v<T, PartSketchConstraint::RadiusConstraint>) {
+                                flux_out << "Radius : " << ct.value << "mm : Op" << ct.ref1.operationId << ":Prim" << ct.ref1.primitiveId << ":" << static_cast<int>(ct.ref1.subElement);
+                            }
+                        }, constraint.data);
+
+                        flux_out << std::endl;
                     }
                 }
             }
@@ -236,18 +257,16 @@ void CAD_Part::tst_add_op_sketch_rect() {
     uint64_t l4_id = sketch.addLine( p4, p1 );  // verticale haut vers bas
 
 
-    PartSketchConstraint hor1;
-    hor1.type = ConstraintType::Horizontal;
-    hor1.ref1.operationId = opId;
-    hor1.ref1.primitiveId = l2_id;
-    hor1.ref1.subElement = ConstraintSubElement::Whole;
+    PartSketchConstraint::SketchConstraint hor1;
+    hor1.data = PartSketchConstraint::HorizontalConstraint{
+        {opId, l2_id, PartSketchConstraint::SubElement::Whole}
+    };
     sketch.addConstraint(hor1);
 
-    PartSketchConstraint hor2;
-    hor2.type = ConstraintType::Horizontal;
-    hor2.ref1.operationId = opId;
-    hor2.ref1.primitiveId = l4_id;
-    hor2.ref1.subElement = ConstraintSubElement::Whole;
+    PartSketchConstraint::SketchConstraint hor2;
+    hor2.data = PartSketchConstraint::HorizontalConstraint{
+        {opId, l4_id, PartSketchConstraint::SubElement::Whole}
+    };
     sketch.addConstraint(hor2);
 
 

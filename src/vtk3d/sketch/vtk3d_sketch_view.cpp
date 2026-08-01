@@ -562,72 +562,88 @@ void Vtk3d_Sketch::rafraichirContraintesGeometriques(SketchParams* sketchParams)
     auto pointsPerpendicular = vtkSmartPointer<vtkPoints>::New();
 
     for (const auto& constraint : sketchParams->getConstraints()) {
-        size_t targetId = constraint.ref1.primitiveId;
-        auto* primitiveVariant = sketchParams->GetPrimitiveMutable(targetId);
-        if (!primitiveVariant) continue;
+        std::visit([&](const auto& c) {
+            using T = std::decay_t<decltype(c)>;
 
-        if (auto* line = std::get_if<SketchLine>(primitiveVariant)) {
-            double glyphPos[3];
-            SketchPoint Line1pnt_start = sketchParams->GetPointById(line->startPointId);
-            SketchPoint Line1pnt_stop = sketchParams->GetPointById(line->stopPointId);
-            glyphPos[0] = (Line1pnt_start.cache_p3d.X() + Line1pnt_stop.cache_p3d.X()) / 2.0;
-            glyphPos[1] = (Line1pnt_start.cache_p3d.Y() + Line1pnt_stop.cache_p3d.Y()) / 2.0;
-            glyphPos[2] = (Line1pnt_start.cache_p3d.Z() + Line1pnt_stop.cache_p3d.Z()) / 2.0;
-
-            if (constraint.type == ConstraintType::Horizontal) {
-                double glyphPosBas[3] = { glyphPos[0], glyphPos[1] - 1.0, glyphPos[2] };
-                pointsHorizontal->InsertNextPoint(glyphPosBas);
-
-                double glyphPosHaut[3] = { glyphPos[0], glyphPos[1] + 1.0, glyphPos[2] };
-                pointsHorizontal->InsertNextPoint(glyphPosHaut);
+            // Détermination de la primitive cible principale selon le type de contrainte
+            uint64_t targetId = 0;
+            if constexpr (std::is_same_v<T, PartSketchConstraint::HorizontalConstraint> ||
+                          std::is_same_v<T, PartSketchConstraint::VerticalConstraint>) {
+                targetId = c.ref.primitiveId;
             }
-            else if (constraint.type == ConstraintType::Vertical) {
-                glyphPos[0] -= 1.0;
-                pointsVertical->InsertNextPoint(glyphPos);
+            else if constexpr (std::is_same_v<T, PartSketchConstraint::PerpendicularConstraint> ||
+                               std::is_same_v<T, PartSketchConstraint::DistanceConstraint> ||
+                               std::is_same_v<T, PartSketchConstraint::ParallelConstraint> ||
+                               std::is_same_v<T, PartSketchConstraint::CoincidentConstraint> ||
+                               std::is_same_v<T, PartSketchConstraint::RadiusConstraint>) {
+                targetId = c.ref1.primitiveId;
             }
-            else if (constraint.type == ConstraintType::Perpendicular) {
-                // Utilisation directe de ref2 sans redéclaration
-                size_t targetId2 = constraint.ref2.primitiveId;
-                auto* primitiveVariant2 = sketchParams->GetPrimitiveMutable(targetId2);
 
-                if (primitiveVariant2) {
-                    if (auto* line2 = std::get_if<SketchLine>(primitiveVariant2)) {
-                        double interX = 0, interY = 0, interZ = 0;
-                        bool hasIntersection = false;
-                        SketchPoint Line2Pnt_start = sketchParams->GetPointById(line2->startPointId);
-                        SketchPoint Line2Pnt_stop = sketchParams->GetPointById(line2->stopPointId);
+            auto* primitiveVariant = sketchParams->GetPrimitiveMutable(targetId);
+            if (!primitiveVariant) return;
 
-                        const double eps = 1e-6;
-                        auto ptsMatch = [&](const auto& p1, const auto& p2) {
-                            return std::abs(p1.cache_p3d.X() - p2.cache_p3d.X()) < eps &&
-                                   std::abs(p1.cache_p3d.Y() - p2.cache_p3d.Y()) < eps;
-                        };
+            if (auto* line = std::get_if<SketchLine>(primitiveVariant)) {
+                double glyphPos[3];
+                SketchPoint Line1pnt_start = sketchParams->GetPointById(line->startPointId);
+                SketchPoint Line1pnt_stop = sketchParams->GetPointById(line->stopPointId);
+                glyphPos[0] = (Line1pnt_start.cache_p3d.X() + Line1pnt_stop.cache_p3d.X()) / 2.0;
+                glyphPos[1] = (Line1pnt_start.cache_p3d.Y() + Line1pnt_stop.cache_p3d.Y()) / 2.0;
+                glyphPos[2] = (Line1pnt_start.cache_p3d.Z() + Line1pnt_stop.cache_p3d.Z()) / 2.0;
 
-                        if (ptsMatch(Line1pnt_start, Line2Pnt_start) || ptsMatch(Line1pnt_start, Line2Pnt_stop)) {
-                            interX = Line1pnt_start.cache_p3d.X();
-                            interY = Line1pnt_start.cache_p3d.Y();
-                            interZ = Line1pnt_start.cache_p3d.Z();
-                            hasIntersection = true;
+                if constexpr (std::is_same_v<T, PartSketchConstraint::HorizontalConstraint>) {
+                    double glyphPosBas[3] = { glyphPos[0], glyphPos[1] - 1.0, glyphPos[2] };
+                    pointsHorizontal->InsertNextPoint(glyphPosBas);
+
+                    double glyphPosHaut[3] = { glyphPos[0], glyphPos[1] + 1.0, glyphPos[2] };
+                    pointsHorizontal->InsertNextPoint(glyphPosHaut);
+                }
+                else if constexpr (std::is_same_v<T, PartSketchConstraint::VerticalConstraint>) {
+                    glyphPos[0] -= 1.0;
+                    pointsVertical->InsertNextPoint(glyphPos);
+                }
+                else if constexpr (std::is_same_v<T, PartSketchConstraint::PerpendicularConstraint>) {
+                    uint64_t targetId2 = c.ref2.primitiveId;
+                    auto* primitiveVariant2 = sketchParams->GetPrimitiveMutable(targetId2);
+
+                    if (primitiveVariant2) {
+                        if (auto* line2 = std::get_if<SketchLine>(primitiveVariant2)) {
+                            double interX = 0, interY = 0, interZ = 0;
+                            bool hasIntersection = false;
+                            SketchPoint Line2Pnt_start = sketchParams->GetPointById(line2->startPointId);
+                            SketchPoint Line2Pnt_stop = sketchParams->GetPointById(line2->stopPointId);
+
+                            const double eps = 1e-6;
+                            auto ptsMatch = [&](const auto& p1, const auto& p2) {
+                                return std::abs(p1.cache_p3d.X() - p2.cache_p3d.X()) < eps &&
+                                       std::abs(p1.cache_p3d.Y() - p2.cache_p3d.Y()) < eps;
+                            };
+
+                            if (ptsMatch(Line1pnt_start, Line2Pnt_start) || ptsMatch(Line1pnt_start, Line2Pnt_stop)) {
+                                interX = Line1pnt_start.cache_p3d.X();
+                                interY = Line1pnt_start.cache_p3d.Y();
+                                interZ = Line1pnt_start.cache_p3d.Z();
+                                hasIntersection = true;
+                            }
+                            else if (ptsMatch(Line1pnt_stop, Line2Pnt_start) || ptsMatch(Line1pnt_stop, Line2Pnt_stop)) {
+                                interX = Line1pnt_stop.cache_p3d.X();
+                                interY = Line1pnt_stop.cache_p3d.Y();
+                                interZ = Line1pnt_stop.cache_p3d.Z();
+                                hasIntersection = true;
+                            }
+
+                            if (!hasIntersection) {
+                                interX = glyphPos[0];
+                                interY = glyphPos[1];
+                                interZ = glyphPos[2];
+                            }
+
+                            double perpPos[3] = { interX, interY, interZ };
+                            pointsPerpendicular->InsertNextPoint(perpPos);
                         }
-                        else if (ptsMatch(Line1pnt_stop, Line2Pnt_start) || ptsMatch(Line1pnt_stop, Line2Pnt_stop)) {
-                            interX = Line1pnt_stop.cache_p3d.X();
-                            interY = Line1pnt_stop.cache_p3d.Y();
-                            interZ = Line1pnt_stop.cache_p3d.Z();
-                            hasIntersection = true;
-                        }
-
-                        if (!hasIntersection) {
-                            interX = glyphPos[0];
-                            interY = glyphPos[1];
-                            interZ = glyphPos[2];
-                        }
-
-                        double perpPos[3] = { interX, interY, interZ };
-                        pointsPerpendicular->InsertNextPoint(perpPos);
                     }
                 }
             }
-        }
+        }, constraint.data);
     }
 
     bool hasH = (pointsHorizontal->GetNumberOfPoints() > 0);

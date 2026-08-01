@@ -436,11 +436,14 @@ void Tool_Select::CADEvent_TraiterCommande(const CadCommandEvent& event){
                 auto* sketchParams = m_Parent->PartRefs.GetParams();
                 if (!sketchParams) return;
 
-                PartSketchConstraint vert1;
-                vert1.type = ConstraintType::Vertical;
-                vert1.ref1.operationId = m_Parent->PartRefs.GetSketchId();             //TEST BUG ATTENTION mettre la bonne valeur
-                vert1.ref1.primitiveId = SelectedPrimitiveId;
-                vert1.ref1.subElement = ConstraintSubElement::Whole;
+                PartSketchConstraint::SketchConstraint vert1;
+                vert1.data = PartSketchConstraint::VerticalConstraint{
+                    {
+                        m_Parent->PartRefs.GetSketchId(),           // operationId (TEST BUG ATTENTION)
+                        (uint64_t) SelectedPrimitiveId,             // primitiveId
+                        PartSketchConstraint::SubElement::Whole
+                    }
+                };
                 sketchParams->addConstraint(vert1);
             }else{
                 LOG_ERROR << "Tool_Select::CADEvent_TraiterCommande : default  !" << std::endl;

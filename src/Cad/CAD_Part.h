@@ -6,7 +6,7 @@
 #include <vector>
 #include "CAD_PartOp.h"
 
-std::ostream& operator<<(std::ostream& os, ConstraintSubElement sub);
+//std::ostream& operator<<(std::ostream& os, PartSketchConstraint::SubElement sub);
 
 
 class CAD_Part {

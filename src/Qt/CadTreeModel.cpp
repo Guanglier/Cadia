@@ -89,21 +89,42 @@ void CadTreeModel::refreshFromPart(const CAD_Part& part) {
                         //contraintesFolder->setIcon(QIcon(":/icons/folder_geom.png"));
 
                         for (const auto& constraint : params.getConstraints()) {
-                            QString label;
-
-                            label = QString::fromStdString( op.getConstraintTypeString (constraint.type) );
+                            QString label = QString::fromStdString(op.getConstraintTypeString(constraint));
                             QStandardItem *contrainteType = new QStandardItem(label);
 
-                            QString const_ref1 = "op:" + QString::number(constraint.ref1.operationId) + "; primId:" + QString::number(constraint.ref1.primitiveId) + " ";
-                            QString qs_SubElement =  QString::fromStdString( op.getConstraintSubElementString (constraint.ref1.subElement) );
-                            const_ref1 += qs_SubElement;
+                            std::visit([&](const auto& c) {
+                                using T = std::decay_t<decltype(c)>;
 
-                            QString const_ref2 =  "op:" + QString::number(constraint.ref2.operationId) + " primId:" + QString::number(constraint.ref2.primitiveId) + " ";
-                            qs_SubElement =  QString::fromStdString( op.getConstraintSubElementString (constraint.ref2.subElement) );
-                            const_ref2 += qs_SubElement;
+                                if constexpr (std::is_same_v<T, PartSketchConstraint::ParallelConstraint> ||
+                                              std::is_same_v<T, PartSketchConstraint::DistanceConstraint> ||
+                                              std::is_same_v<T, PartSketchConstraint::PerpendicularConstraint> ||
+                                              std::is_same_v<T, PartSketchConstraint::CoincidentConstraint>) {
+                                    // Cas des contraintes à 2 références (ref1 et ref2)
+                                    QString const_ref1 = "op:" + QString::number(c.ref1.operationId) + "; primId:" + QString::number(c.ref1.primitiveId) + " " +
+                                                         QString::fromStdString(op.getConstraintSubElementString(c.ref1.subElement));
+                                    QString const_ref2 = "op:" + QString::number(c.ref2.operationId) + " primId:" + QString::number(c.ref2.primitiveId) + " " +
+                                                         QString::fromStdString(op.getConstraintSubElementString(c.ref2.subElement));
 
-                            contrainteType->appendRow( new QStandardItem(const_ref1));
-                            contrainteType->appendRow( new QStandardItem(const_ref2));
+                                    contrainteType->appendRow(new QStandardItem(const_ref1));
+                                    contrainteType->appendRow(new QStandardItem(const_ref2));
+                                }
+                                else if constexpr (std::is_same_v<T, PartSketchConstraint::VerticalConstraint> ||
+                                                   std::is_same_v<T, PartSketchConstraint::HorizontalConstraint>) {
+                                    // Cas des contraintes à 1 seule référence nommée ref
+                                    QString const_ref = "op:" + QString::number(c.ref.operationId) + "; primId:" + QString::number(c.ref.primitiveId) + " " +
+                                                        QString::fromStdString(op.getConstraintSubElementString(c.ref.subElement));
+
+                                    contrainteType->appendRow(new QStandardItem(const_ref));
+                                }
+                                else if constexpr (std::is_same_v<T, PartSketchConstraint::RadiusConstraint>) {
+                                    // Cas de la contrainte Radius (qui utilise ref1 seule)
+                                    QString const_ref1 = "op:" + QString::number(c.ref1.operationId) + "; primId:" + QString::number(c.ref1.primitiveId) + " " +
+                                                         QString::fromStdString(op.getConstraintSubElementString(c.ref1.subElement));
+
+                                    contrainteType->appendRow(new QStandardItem(const_ref1));
+                                }
+                            }, constraint.data);
+
                             contraintesFolder->appendRow(contrainteType);
                         }
 

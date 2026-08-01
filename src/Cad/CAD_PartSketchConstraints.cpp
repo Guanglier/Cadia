@@ -4,7 +4,7 @@
 
 
 
-
+/*
 
 bool PartSketchConstraint::isEquivalentTo(const PartSketchConstraint& other) const {
 	// 1. Si les types de contraintes diffèrent, elles ne sont pas équivalentes
@@ -19,7 +19,7 @@ bool PartSketchConstraint::isEquivalentTo(const PartSketchConstraint& other) con
 	return false;
 }
 
-
+*/
 
 
 

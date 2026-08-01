@@ -178,7 +178,7 @@ public:
 struct SketchParams {
 private:
     IdRegistry<SketchPrimitive>     m_primitiveRegistry;
-    IdRegistry<PartSketchConstraint>    m_constraintRegistry;
+    IdRegistry<PartSketchConstraint::SketchConstraint>    m_constraintRegistry;
     IdRegistry<SketchPoint>         m_points;
 
     std::vector<ContoursElement> PrepareEnginePrimitives() const ;
@@ -192,13 +192,13 @@ public:
     gp_Ax3  m_sketchPlane;
 
     const std::vector<SketchPrimitive>& getPrimitives() const { return m_primitiveRegistry.getItems(); }
-    const std::vector<PartSketchConstraint>& getConstraints() const { return m_constraintRegistry.getItems(); }
+    const std::vector<PartSketchConstraint::SketchConstraint>& getConstraints() const { return m_constraintRegistry.getItems(); }
     const std::vector<SketchPoint>& getPoints()const { return m_points.getItems(); }
 
     uint64_t    addPrimitive(SketchPrimitive primitive) { return m_primitiveRegistry.add(std::move(primitive)); }
-    uint64_t    addConstraint(PartSketchConstraint constraint);
+    uint64_t    addConstraint(PartSketchConstraint::SketchConstraint constraint);
     void        loadPrimitive(SketchPrimitive primitive) { m_primitiveRegistry.load(std::move(primitive)); }
-    void        loadConstraint(PartSketchConstraint constraint) { m_constraintRegistry.load(std::move(constraint)); }
+    void        loadConstraint(PartSketchConstraint::SketchConstraint constraint) { m_constraintRegistry.load(std::move(constraint)); }
 
     uint64_t addLine ( gp_Pnt2d li_PntStart2d, gp_Pnt2d li_PntStop2d );
     uint64_t addCircle ( gp_Pnt2d li_PntCenter2d, double radius);
@@ -310,9 +310,10 @@ public:
         setLocaleTopoChanged (true); //la topo locale a ete modifiee il faut recalculer la topo resulting
     }
 
-    std::string getConstraintTypeString( const ConstraintType li_ConstType) const ;
-    std::string getConstraintSubElementString( const ConstraintSubElement li_SubElmt) const ;
-
+    //std::string getConstraintTypeString( const ConstraintType li_ConstType) const ;
+    //std::string getConstraintSubElementString( const ConstraintSubElement li_SubElmt) const ;
+    std::string getConstraintTypeString( const PartSketchConstraint::SketchConstraint& li_Constraint) const ;
+    std::string getConstraintSubElementString( const PartSketchConstraint::SubElement li_SubElmt) const ;
 
 
 };

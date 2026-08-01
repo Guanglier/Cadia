@@ -182,8 +182,8 @@ class Solver2D_Mapper {
     friend struct SolverInteractiveSession;
 
 private:
-    static std::string formatRef(const SketchParams& sketch, const GeometryReference& ref);
-    static gp_Pnt2d* getPointPointerFromRef(SketchParams& sketch, const GeometryReference& ref);
+    static std::string formatRef(const SketchParams& sketch, const PartSketchConstraint::RefGeometry& ref);
+    static gp_Pnt2d* getPointPointerFromRef(SketchParams& sketch, const PartSketchConstraint::RefGeometry& ref);
 
 public:
     Solver2D_Mapper() = default;

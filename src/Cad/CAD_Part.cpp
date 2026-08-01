@@ -64,9 +64,8 @@ void CAD_Part::sauvegarderOperationEnBrep(uint64_t opId, const std::string& chem
     LOG_DEBUG << "\t->[Debug Export] Fichier '" << chemin << "' enregistré avec succès." << std::endl;
 }
 
-
-
-std::ostream& operator<<(std::ostream& os, ConstraintSubElement sub) {
+/*
+std::ostream& operator<<(std::ostream& os, PartSketchConstraint::SubElement sub){
     switch (sub) {
     case ConstraintSubElement::Whole:       os << "Whole"; break;
     case ConstraintSubElement::StartPoint:  os << "StartPoint"; break;
@@ -76,7 +75,7 @@ std::ostream& operator<<(std::ostream& os, ConstraintSubElement sub) {
     }
     return os;
 }
-
+*/
 
 uint64_t CAD_Part::add_operation(CadPartOp& op) {
     return m_operationRegistry.add(std::move(op));

@@ -18,7 +18,7 @@
 #include <gp_Pln.hxx>
 #include <type_traits>
 #include <TopoDS_Compound.hxx>
-
+#include "Logger.h"
 
 
 
@@ -35,14 +35,34 @@ SketchPoint& SketchParams::GetPointById ( uint64_t li_id){
 void SketchParams::removePrimitive(uint64_t idASupprimer) {
     m_primitiveRegistry.remove(idASupprimer);
     auto& constraints = m_constraintRegistry.getItemsMutable();
+
     constraints.erase(
-        std::remove_if(constraints.begin(), constraints.end(), [idASupprimer](const PartSketchConstraint& c) {
-            return c.ref1.primitiveId == idASupprimer || c.ref2.primitiveId == idASupprimer;
+        std::remove_if(constraints.begin(), constraints.end(), [idASupprimer](const PartSketchConstraint::SketchConstraint& c) {
+            return std::visit([idASupprimer](const auto& ct) {
+                using T = std::decay_t<decltype(ct)>;
+
+                if constexpr (std::is_same_v<T, PartSketchConstraint::ParallelConstraint> ||
+                              std::is_same_v<T, PartSketchConstraint::DistanceConstraint> ||
+                              std::is_same_v<T, PartSketchConstraint::PerpendicularConstraint> ||
+                              std::is_same_v<T, PartSketchConstraint::CoincidentConstraint>) {
+                    // Contraintes avec ref1 et ref2
+                    return ct.ref1.primitiveId == idASupprimer || ct.ref2.primitiveId == idASupprimer;
+                }
+                else if constexpr (std::is_same_v<T, PartSketchConstraint::VerticalConstraint> ||
+                                   std::is_same_v<T, PartSketchConstraint::HorizontalConstraint>) {
+                    // Contraintes avec une seule référence nommée ref
+                    return ct.ref.primitiveId == idASupprimer;
+                }
+                else if constexpr (std::is_same_v<T, PartSketchConstraint::RadiusConstraint>) {
+                    // Contrainte Radius avec une seule référence nommée ref1
+                    return ct.ref1.primitiveId == idASupprimer;
+                }
+                return false;
+            }, c.data);
         }),
         constraints.end()
         );
 }
-
 
 uint64_t SketchParams::addPoint (const gp_Pnt2d& li_Pnt2D) {
     uint64_t lid;
@@ -155,26 +175,45 @@ std::string EBooleanOpToString(EBooleanOp type) {
 
 
 
-std::string CadPartOp::getConstraintTypeString( const ConstraintType li_ConstType) const {
-    // votre switch qui retourne un std::string ou const char*
-    switch ( li_ConstType ){
-        case ConstraintType::Horizontal:    return "Horizontal"; break;
-        case ConstraintType::Vertical:      return "Vertical"; break;
-        case ConstraintType::Parallel:      return "Parallel"; break;
-        case ConstraintType::Perpendicular: return "Perpendicular"; break;
-        case ConstraintType::Coincident:    return "Coincident"; break;
-        case ConstraintType::Tangent:       return "Tangent"; break;
-        case ConstraintType::Distance:      return "Distance"; break;
-        case ConstraintType::Radius:        return "Radius"; break;
-        default : return "??"; break;
-    }
+std::string CadPartOp::getConstraintTypeString(const PartSketchConstraint::SketchConstraint& li_Constraint) const {
+    return std::visit([](const auto& constraintData) -> std::string {
+        using T = std::decay_t<decltype(constraintData)>;
+
+        if constexpr (std::is_same_v<T, PartSketchConstraint::HorizontalConstraint>) {
+            return "Horizontal";
+        }
+        else if constexpr (std::is_same_v<T, PartSketchConstraint::DistanceConstraint>) {
+            return "Distance";
+        }
+        else if constexpr (std::is_same_v<T, PartSketchConstraint::CoincidentConstraint>) {
+            return "Coincident";
+        }
+        else if constexpr (std::is_same_v<T, PartSketchConstraint::VerticalConstraint>) {
+            return "Vertical";
+        }
+        else if constexpr (std::is_same_v<T, PartSketchConstraint::ParallelConstraint>) {
+            return "Parallel";
+        }
+        else if constexpr (std::is_same_v<T, PartSketchConstraint::PerpendicularConstraint>) {
+            return "Perpendicular";
+        }
+        else if constexpr (std::is_same_v<T, PartSketchConstraint::RadiusConstraint>) {
+            return "Radius";
+        }
+        // Ajoute les autres types de ton variant ici...
+        else {
+            return "Unknown";
+            LOG_ERROR << "CadPartOp::getConstraintTypeString : type inconnu" << std::endl;
+        }
+    }, li_Constraint.data);
 }
-std::string CadPartOp::getConstraintSubElementString( const ConstraintSubElement li_SubElmt) const {
+
+std::string CadPartOp::getConstraintSubElementString( const PartSketchConstraint::SubElement li_SubElmt) const {
     switch ( li_SubElmt ){
-    case ConstraintSubElement::Whole:           return "Whole"; break;
-        case ConstraintSubElement::StartPoint:  return "StartPoint"; break;
-        case ConstraintSubElement::EndPoint:    return "EndPoint"; break;
-        case ConstraintSubElement::CenterPoint: return "CenterPoint"; break;
+        case PartSketchConstraint::SubElement::Whole:           return "Whole"; break;
+        case PartSketchConstraint::SubElement::StartPoint:      return "StartPoint"; break;
+        case PartSketchConstraint::SubElement::EndPoint:        return "EndPoint"; break;
+        case PartSketchConstraint::SubElement::CenterPoint:     return "CenterPoint"; break;
         default : return "??"; break;
     }
 }

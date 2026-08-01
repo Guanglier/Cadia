@@ -41,19 +41,19 @@
  * @param ref [Entrée] Référence géométrique à formater.
  * @return std::string Représentation textuelle de la référence (ex: "Line #1 (Start)").
  */
-std::string Solver2D_Mapper::formatRef(const SketchParams& sketch, const GeometryReference& ref) {
-    if (ref.primitiveId == 0 && ref.subElement == ConstraintSubElement::Whole) {
+std::string Solver2D_Mapper::formatRef(const SketchParams& sketch, const PartSketchConstraint::RefGeometry& ref) {
+    if (ref.primitiveId == 0 && ref.subElement == PartSketchConstraint::SubElement::Whole) {
         // Au cas où c'est une ref nulle / non assignée
         return "None";
     }
 
     std::string subStr = "";
     switch (ref.subElement) {
-    case ConstraintSubElement::StartPoint: subStr = "Start"; break;
-    case ConstraintSubElement::EndPoint:   subStr = "End"; break;
-    case ConstraintSubElement::CenterPoint:     subStr = "Center"; break;
-    case ConstraintSubElement::Whole:      subStr = "Whole"; break;
-    default:                               subStr = "Unknown"; break;
+        case PartSketchConstraint::SubElement::StartPoint: subStr = "Start"; break;
+        case PartSketchConstraint::SubElement::EndPoint:   subStr = "End"; break;
+        case PartSketchConstraint::SubElement::CenterPoint:     subStr = "Center"; break;
+        case PartSketchConstraint::SubElement::Whole:      subStr = "Whole"; break;
+        default:                               subStr = "Unknown"; break;
     }
 
     // Récupération du type de primitive pour le contexte
@@ -79,7 +79,7 @@ std::string Solver2D_Mapper::formatRef(const SketchParams& sketch, const Geometr
  * @param ref [Entrée] Référence géométrique pointant vers un sous-élément.
  * @return gp_Pnt2d* Pointeur vers le point 2D, ou nullptr en cas d'erreur.
  */
-gp_Pnt2d* Solver2D_Mapper::getPointPointerFromRef(SketchParams& sketch, const GeometryReference& ref) {
+gp_Pnt2d* Solver2D_Mapper::getPointPointerFromRef(SketchParams& sketch, const PartSketchConstraint::RefGeometry& ref) {
     //if (ref.primitiveId == 0) return nullptr;
 
     SketchPrimitive* prim = sketch.GetPrimitiveMutable(ref.primitiveId);
@@ -194,137 +194,133 @@ void SolverInteractiveSession::Initialize(SketchParams& sketch) {
     solver.clearConstraints();
 
 
-    for (const auto& c : sketch.getConstraints()) {
-        if (c.isDriven) continue;
+    for (const auto& constraint : sketch.getConstraints())
+    {
+        std::visit([&](const auto& c) {
+            using T = std::decay_t<decltype(c)>;
 
-        switch (c.type) {
+            // Si la contrainte est pilotée (driven), on peut l'ignorer
+            //if constexpr (requires { c.isDriven; }) {
+            //    if (c.isDriven) return;
+            //}
 
-            case ConstraintType::Horizontal: {
-                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
+            if constexpr (std::is_same_v<T, PartSketchConstraint::HorizontalConstraint>) {
+                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref.primitiveId);
                 if (p1 && std::holds_alternative<SketchLine>(*p1)) {
                     auto& line = std::get<SketchLine>(*p1);
 
-                    // On récupère les indices X et Y via les IDs de points de la ligne
                     int idxStart = pointIdToXIndex[line.startPointId];
                     int idxStop  = pointIdToXIndex[line.stopPointId];
 
-                    // Pour une contrainte horizontale, on s'assure que Y_start == Y_stop
-                    // (donc l'index Y correspond à l'index X + 1)
-                    solver.addConstraint(std::make_unique<ConstraintHorizontal>(
-                        idxStart + 1, // Y1
-                        idxStop + 1   // Y2
+                    if (idxStart != -1 && idxStop != -1) {
+                        solver.addConstraint(std::make_unique<ConstraintHorizontal>(
+                            idxStart + 1, // Y1
+                            idxStop + 1   // Y2
+                            ));
+                    }
+                }
+            }
+            else if constexpr (std::is_same_v<T, PartSketchConstraint::VerticalConstraint>) {
+                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref.primitiveId);
+                if (p1 && std::holds_alternative<SketchLine>(*p1)) {
+                    auto& line = std::get<SketchLine>(*p1);
+
+                    int idxStart = pointIdToXIndex[line.startPointId];
+                    int idxStop  = pointIdToXIndex[line.stopPointId];
+
+                    if (idxStart != -1 && idxStop != -1) {
+                        solver.addConstraint(std::make_unique<ConstraintVertical>(
+                            idxStart,
+                            idxStop
+                            ));
+                    }
+                } else {
+                    LOG_ERROR << "[Solver] Vertical : Primitive ID " << c.ref.primitiveId << " introuvable ou ce n'est pas une ligne !" << std::endl;
+                }
+            }
+            else if constexpr (std::is_same_v<T, PartSketchConstraint::CoincidentConstraint>) {
+                /*
+                gp_Pnt2d* p1 = Solver2D_Mapper::getPointPointerFromRef(sketch, c.ref1);
+                gp_Pnt2d* p2 = Solver2D_Mapper::getPointPointerFromRef(sketch, c.ref2);
+
+                int idx1 = getIndexOrError(p1, "Coincident (ref1)");
+                int idx2 = getIndexOrError(p2, "Coincident (ref2)");
+
+                if (idx1 != -1 && idx2 != -1) {
+                    solver.addConstraint(std::make_unique<ConstraintCoincident1D>(idx1, idx2));
+                    solver.addConstraint(std::make_unique<ConstraintCoincident1D>(idx1 + 1, idx2 + 1));
+                }
+                */
+            }
+            else if constexpr (std::is_same_v<T, PartSketchConstraint::DistanceConstraint>) {
+                /*
+                gp_Pnt2d* p1 = Solver2D_Mapper::getPointPointerFromRef(sketch, c.ref1);
+                gp_Pnt2d* p2 = Solver2D_Mapper::getPointPointerFromRef(sketch, c.ref2);
+
+                int idx1 = getIndexOrError(p1, "Distance (ref1)");
+                int idx2 = getIndexOrError(p2, "Distance (ref2)");
+
+                if (idx1 != -1 && idx2 != -1) {
+                    solver.addConstraint(std::make_unique<ConstraintDistancePointPoint>(
+                        idx1, idx1 + 1,
+                        idx2, idx2 + 1,
+                        c.value
                         ));
                 }
-                break;
+                */
             }
+            else if constexpr (std::is_same_v<T, PartSketchConstraint::RadiusConstraint>) {
+                /*
+                SketchPrimitive* prim = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
+                if (prim && std::holds_alternative<SketchCircle>(*prim)) {
+                    SketchCircle& circle = std::get<SketchCircle>(*prim);
 
-
-        case ConstraintType::Vertical: {
-            SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
-            if (p1 && std::holds_alternative<SketchLine>(*p1)) {
-                SketchLine& line = std::get<SketchLine>(*p1);
-
-                int idxStart = pointIdToXIndex[line.startPointId];
-                int idxStop  = pointIdToXIndex[line.stopPointId];
-
-                //int idxStart = getIndexOrError(&line.start.p2d, "Vertical (start)");
-                //int idxStop  = getIndexOrError(&line.stop.p2d, "Vertical (stop)");
-
-                if (idxStart != -1 && idxStop != -1) {
-                    solver.addConstraint(std::make_unique<ConstraintVertical>(
-                        idxStart,
-                        idxStop
-                        ));
+                    int rIdx = getRadiusIndexOrError(&circle, "Radius");
+                    if (rIdx != -1) {
+                        solver.addConstraint(std::make_unique<ConstraintRadius>(rIdx, c.value));
+                    }
+                } else {
+                    LOG_ERROR << "[Solver] Radius : Primitive ID " << c.ref1.primitiveId << " introuvable ou ce n'est pas un cercle !" << std::endl;
                 }
-            } else {
-                LOG_ERROR << "[Solver] Vertical : Primitive ID " << c.ref1.primitiveId << " introuvable ou ce n'est pas une ligne !" << std::endl;
+                */
             }
-            break;
-        }
+            else if constexpr (std::is_same_v<T, PartSketchConstraint::PerpendicularConstraint>) {
+                LOG_ERROR << "[Solver] Perpendicular : NON GERE !" << std::endl;
 
-/*
-        case ConstraintType::Coincident: {
-            gp_Pnt2d* p1 = Solver2D_Mapper::getPointPointerFromRef(sketch, c.ref1);
-            gp_Pnt2d* p2 = Solver2D_Mapper::getPointPointerFromRef(sketch, c.ref2);
+                /*
+                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
+                SketchPrimitive* p2 = sketch.GetPrimitiveMutable(c.ref2.primitiveId);
 
-            int idx1 = getIndexOrError(p1, "Coincident (ref1)");
-            int idx2 = getIndexOrError(p2, "Coincident (ref2)");
+                if (p1 && p2 && std::holds_alternative<SketchLine>(*p1) && std::holds_alternative<SketchLine>(*p2)) {
+                    auto& line1 = std::get<SketchLine>(*p1);
+                    auto& line2 = std::get<SketchLine>(*p2);
 
-            if (idx1 != -1 && idx2 != -1) {
-                solver.addConstraint(std::make_unique<ConstraintCoincident1D>(idx1, idx2));
-                solver.addConstraint(std::make_unique<ConstraintCoincident1D>(idx1 + 1, idx2 + 1));
-            }
-            break;
-        }
-        case ConstraintType::Distance: {
-            gp_Pnt2d* p1 = Solver2D_Mapper::getPointPointerFromRef(sketch, c.ref1);
-            gp_Pnt2d* p2 = Solver2D_Mapper::getPointPointerFromRef(sketch, c.ref2);
+                    int l1_startX = getIndexOrError(&line1.start.p2d, "Perpendicular (line1.start.X)");
+                    int l1_startY = getIndexOrError(&line1.start.p2d, "Perpendicular (line1.start.Y)");
+                    int l1_stopX  = getIndexOrError(&line1.stop.p2d,  "Perpendicular (line1.stop.X)");
+                    int l1_stopY  = getIndexOrError(&line1.stop.p2d,  "Perpendicular (line1.stop.Y)");
 
-            int idx1 = getIndexOrError(p1, "Distance (ref1)");
-            int idx2 = getIndexOrError(p2, "Distance (ref2)");
+                    int l2_startX = getIndexOrError(&line2.start.p2d, "Perpendicular (line2.start.X)");
+                    int l2_startY = getIndexOrError(&line2.start.p2d, "Perpendicular (line2.start.Y)");
+                    int l2_stopX  = getIndexOrError(&line2.stop.p2d,  "Perpendicular (line2.stop.X)");
+                    int l2_stopY  = getIndexOrError(&line2.stop.p2d,  "Perpendicular (line2.stop.Y)");
 
-            if (idx1 != -1 && idx2 != -1) {
-                solver.addConstraint(std::make_unique<ConstraintDistancePointPoint>(
-                    idx1, idx1 + 1,
-                    idx2, idx2 + 1,
-                    c.value
-                    ));
-            }
-            break;
-        }
-        case ConstraintType::Radius: {
-            SketchPrimitive* prim = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
-            if (prim && std::holds_alternative<SketchCircle>(*prim)) {
-                SketchCircle& circle = std::get<SketchCircle>(*prim);
-
-                int rIdx = getRadiusIndexOrError(&circle, "Radius");
-                if (rIdx != -1) {
-                    solver.addConstraint(std::make_unique<ConstraintRadius>(rIdx, c.value));
+                    if (l1_startX != -1 && l1_stopX != -1 && l2_startX != -1 && l2_stopX != -1) {
+                        solver.addConstraint(std::make_unique<ConstraintPerpendicular>(
+                            l1_startX, l1_startY + 1,
+                            l1_stopX,  l1_stopY + 1,
+                            l2_startX, l2_startY + 1,
+                            l2_stopX,  l2_stopY + 1
+                            ));
+                    }
+                } else {
+                    LOG_ERROR << "[Solver] Perpendicular : Une ou plusieurs primitives sont introuvables ou ne sont pas des lignes !" << std::endl;
                 }
-            } else {
-                LOG_ERROR << "[Solver] Radius : Primitive ID " << c.ref1.primitiveId << " introuvable ou ce n'est pas un cercle !" << std::endl;
+                */
             }
-            break;
-        }
-        case ConstraintType::Perpendicular: {
-            SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
-            SketchPrimitive* p2 = sketch.GetPrimitiveMutable(c.ref2.primitiveId);
-
-            if (p1 && p2 && std::holds_alternative<SketchLine>(*p1) && std::holds_alternative<SketchLine>(*p2)) {
-                auto& line1 = std::get<SketchLine>(*p1);
-                auto& line2 = std::get<SketchLine>(*p2);
-
-                int l1_startX = getIndexOrError(&line1.start.p2d, "Perpendicular (line1.start.X)");
-                int l1_startY = getIndexOrError(&line1.start.p2d, "Perpendicular (line1.start.Y)"); // même index de base, +1 pour Y
-                int l1_stopX  = getIndexOrError(&line1.stop.p2d,  "Perpendicular (line1.stop.X)");
-                int l1_stopY  = getIndexOrError(&line1.stop.p2d,  "Perpendicular (line1.stop.Y)");
-
-                int l2_startX = getIndexOrError(&line2.start.p2d, "Perpendicular (line2.start.X)");
-                int l2_startY = getIndexOrError(&line2.start.p2d, "Perpendicular (line2.start.Y)");
-                int l2_stopX  = getIndexOrError(&line2.stop.p2d,  "Perpendicular (line2.stop.X)");
-                int l2_stopY  = getIndexOrError(&line2.stop.p2d,  "Perpendicular (line2.stop.Y)");
-
-                if (l1_startX != -1 && l1_stopX != -1 && l2_startX != -1 && l2_stopX != -1) {
-                    solver.addConstraint(std::make_unique<ConstraintPerpendicular>(
-                        l1_startX, l1_startY + 1,
-                        l1_stopX,  l1_stopY + 1,
-                        l2_startX, l2_startY + 1,
-                        l2_stopX,  l2_stopY + 1
-                        ));
-                }
-            } else {
-                LOG_ERROR << "[Solver] Perpendicular : Une ou plusieurs primitives sont introuvables ou ne sont pas des lignes !" << std::endl;
-            }
-            break;
-
-        }
-        */
-        default:
-            LOG_WARN << "SolverInteractiveSession::Initialize -> default dans switch (c.type) " << std::endl;
-            break;
-        }
+            // Gère les autres types potentiels (Parallel, etc.) si besoin par la suite
+        }, constraint.data);
     }
-
     isInitialized = true;
 }
 
@@ -587,79 +583,61 @@ bool SolverOneShot::Solve(SketchParams& sketch, bool enableDiagnostics) {
     if (enableDiagnostics) LOG_DEBUG << "\n--- 2. EVALUATION DES CONTRAINTES ---" << std::endl;
     std::vector<std::unique_ptr<IConstraint2D>> constraints;
 
-    for (const auto& c : sketch.getConstraints()) {
-        if (c.isDriven) {
-            if (enableDiagnostics) LOG_DEBUG << " [Constraint ID " << c.id << "] -> IGNOREE (Pilotee/Driven)\n";
-            continue;
-        }
-
+    for (const auto& constraint : sketch.getConstraints()) {
         std::string cTypeStr = "";
-        switch (c.type) {
-        case ConstraintType::Horizontal: {
-            cTypeStr = "Horizontal";
-            SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
-            if (p1 && std::holds_alternative<SketchLine>(*p1)) {
-                auto& line = std::get<SketchLine>(*p1);
-                constraints.push_back(std::make_unique<ConstraintHorizontal>(
-                    pointIdToXIndex[line.startPointId] + 1,
-                    pointIdToXIndex[line.stopPointId] + 1
-                    ));
-            } else {
-                LOG_ERROR << "ERROR: Horizontal attend une ligne valide." << std::endl;
-            }
-            break;
-        }
-        case ConstraintType::Vertical: {
-            cTypeStr = "Vertical";
-            SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
-            if (p1 && std::holds_alternative<SketchLine>(*p1)) {
-                auto& line = std::get<SketchLine>(*p1);
-                constraints.push_back(std::make_unique<ConstraintVertical>(
-                    pointIdToXIndex[line.startPointId],
-                    pointIdToXIndex[line.stopPointId]
-                    ));
-            } else {
-                LOG_ERROR << "ERROR: Vertical attend une ligne valide." << std::endl;
-            }
-            break;
-        }
-            /*
-        case ConstraintType::Coincident: {
-            cTypeStr = "Coincident (2 eq.)";
-            gp_Pnt2d* p1 = Solver2D_Mapper::getPointPointerFromRef(sketch, c.ref1);
-            gp_Pnt2d* p2 = Solver2D_Mapper::getPointPointerFromRef(sketch, c.ref2);
-            // Récupération des IDs associés via les pointeurs ou adaptation de la logique de référence
-            // (Si getPointPointerFromRef retourne un pointeur, on peut retrouver l'index, ou utiliser les helpers d'ID)
-            // Alternative propre basée sur les IDs si vos helpers le supportent :
-            uint64_t id1 = sketch.findPointIdFromRef(c.ref1); // Assurez-vous d'avoir une méthode équivalente ou utilisez la map inverse
-            uint64_t id2 = sketch.findPointIdFromRef(c.ref2);
-            if (pointIdToXIndex.count(id1) && pointIdToXIndex.count(id2)) {
-                constraints.push_back(std::make_unique<ConstraintCoincident1D>(pointIdToXIndex[id1], pointIdToXIndex[id2]));
-                constraints.push_back(std::make_unique<ConstraintCoincident1D>(pointIdToXIndex[id1] + 1, pointIdToXIndex[id2] + 1));
-            }
-            break;
 
-        }
-        */
-        case ConstraintType::Radius: {
-            cTypeStr = "Radius (" + std::to_string(c.value) + ")";
-            SketchPrimitive* prim = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
-            if (prim && std::holds_alternative<SketchCircle>(*prim)) {
-                auto& circle = std::get<SketchCircle>(*prim);
-                constraints.push_back(std::make_unique<ConstraintRadius>(circleToRIndex[circle.id], c.value));
+        std::visit([&](const auto& c) {
+            using T = std::decay_t<decltype(c)>;
+
+            // Si la contrainte possède isDriven et que tu souhaites l'ignorer :
+            // if constexpr (requires { c.isDriven; }) { if (c.isDriven) return; }
+
+            if constexpr (std::is_same_v<T, PartSketchConstraint::HorizontalConstraint>) {
+                cTypeStr = "Horizontal";
+                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref.primitiveId);
+                if (p1 && std::holds_alternative<SketchLine>(*p1)) {
+                    auto& line = std::get<SketchLine>(*p1);
+                    constraints.push_back(std::make_unique<ConstraintHorizontal>(
+                        pointIdToXIndex[line.startPointId] + 1,
+                        pointIdToXIndex[line.stopPointId] + 1
+                        ));
+                } else {
+                    LOG_ERROR << "ERROR: Horizontal attend une ligne valide." << std::endl;
+                }
             }
-            break;
-        }
-        default:
-            cTypeStr = "Type non géré";
-            LOG_ERROR << "\tERROR : Type de contrainte non géré" << std::endl;
-            break;
-        }
+            else if constexpr (std::is_same_v<T, PartSketchConstraint::VerticalConstraint>) {
+                cTypeStr = "Vertical";
+                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref.primitiveId);
+                if (p1 && std::holds_alternative<SketchLine>(*p1)) {
+                    auto& line = std::get<SketchLine>(*p1);
+                    constraints.push_back(std::make_unique<ConstraintVertical>(
+                        pointIdToXIndex[line.startPointId],
+                        pointIdToXIndex[line.stopPointId]
+                        ));
+                } else {
+                    LOG_ERROR << "ERROR: Vertical attend une ligne valide." << std::endl;
+                }
+            }
+            else if constexpr (std::is_same_v<T, PartSketchConstraint::RadiusConstraint>) {
+                cTypeStr = "Radius (" + std::to_string(c.value) + ")";
+                SketchPrimitive* prim = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
+                if (prim && std::holds_alternative<SketchCircle>(*prim)) {
+                    auto& circle = std::get<SketchCircle>(*prim);
+                    constraints.push_back(std::make_unique<ConstraintRadius>(circleToRIndex[circle.id], c.value));
+                }
+            }
+            else {
+                cTypeStr = "Type non géré";
+                LOG_ERROR << "\tERROR : Type de contrainte non géré" << std::endl;
+            }
+        }, constraint.data);
 
         if (enableDiagnostics) {
-            LOG_DEBUG << " [Constraint ID " << c.id << "] " << cTypeStr << "\n";
+            LOG_DEBUG << " [Constraint ID " << constraint.id << "] " << cTypeStr << "\n";
         }
     }
+
+
 
     // Affichage optionnel des résidus et DOF avant résolution
     if (enableDiagnostics) {
