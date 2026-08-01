@@ -176,26 +176,89 @@ bool SketchSnapperManager::snapToExistingPoints(gp_Pnt2d& plio_Ptr2D, gp_Pnt& pl
     const double seuilCoincidenceMm = li_SeuilCoincidence_mm;
     bool aAimante = false;
     double plusProcheDistance = seuilCoincidenceMm;
+    gp_Pnt2d v2d_SnappedPoint2D;
+    gp_Pnt   v2d_SnappedPoint3D;
+
+    // 1. Parcours direct de tous les points du sketch (origine, points de lignes, centres, etc.)
+    for (const auto& sketchPoint : sketchParams->getPoints() ) {
+        if (!sketchPoint.b_IsSnappable) continue;
+
+        double dist = std::hypot(plio_Ptr2D.X() - sketchPoint.p2d.X(), plio_Ptr2D.Y() - sketchPoint.p2d.Y());
+        if (dist < plusProcheDistance) {
+            plusProcheDistance = dist;
+            aAimante = true;
+            v2d_SnappedPoint2D = sketchPoint.p2d;
+            v2d_SnappedPoint3D = sketchPoint.cache_p3d;
+        }
+    }
+
+    // 2. (Optionnel) Si tu dois aussi aimanter sur les milieux des lignes qui ne sont pas forcément
+    // stockés comme des SketchPoint explicites dans ta liste globale :
+    for (const auto& primitive : sketchParams->getPrimitives()) {
+        std::visit([&](const auto& concretePrim) {
+            using T = std::decay_t<decltype(concretePrim)>;
+
+            if constexpr (std::is_same_v<T, SketchLine>) {
+                const SketchPoint& cstart = sketchParams->GetPointById(concretePrim.startPointId);
+                const SketchPoint& cstop = sketchParams->GetPointById(concretePrim.stopPointId);
+
+                if (cstart.b_IsSnappable && cstop.b_IsSnappable) {
+                    double midX = (cstop.p2d.X() + cstart.p2d.X()) / 2.0;
+                    double midY = (cstop.p2d.Y() + cstart.p2d.Y()) / 2.0;
+                    double distMidle = std::hypot(plio_Ptr2D.X() - midX, plio_Ptr2D.Y() - midY);
+
+                    if (distMidle < plusProcheDistance) {
+                        plusProcheDistance = distMidle;
+                        aAimante = true;
+                        v2d_SnappedPoint2D.SetX(midX);
+                        v2d_SnappedPoint2D.SetY(midY);
+
+                        v2d_SnappedPoint3D.SetX((cstop.cache_p3d.X() + cstart.cache_p3d.X()) / 2.0);
+                        v2d_SnappedPoint3D.SetY((cstop.cache_p3d.Y() + cstart.cache_p3d.Y()) / 2.0);
+                        v2d_SnappedPoint3D.SetZ((cstop.cache_p3d.Z() + cstart.cache_p3d.Z()) / 2.0);
+                    }
+                }
+            }
+        }, primitive);
+    }
+
+    if (aAimante) {
+        snapPointsVisited_AddPoint(v2d_SnappedPoint2D);
+        plio_Ptr2D = v2d_SnappedPoint2D;
+        plio_Ptr3D = v2d_SnappedPoint3D;
+        return true;
+    }
+    return false;
+}
+
+/*
+bool SketchSnapperManager::snapToExistingPoints(gp_Pnt2d& plio_Ptr2D, gp_Pnt& plio_Ptr3D, double li_SeuilCoincidence_mm) {
+    if (!m_Parent || !m_Parent->PartRefs.GetOperation()) return false;
+    auto* sketchParams = m_Parent->PartRefs.GetParams();
+    if (!sketchParams) return false;
+
+    const double seuilCoincidenceMm = li_SeuilCoincidence_mm;
+    bool aAimante = false;
+    double plusProcheDistance = seuilCoincidenceMm;
     //gp_Pnt pointCibleExact;
     gp_Pnt2d v2d_SnappedPoint2D;
     gp_Pnt   v2d_SnappedPoint3D;
 
 
-    /*
-            // snapping sur un point
-            if constexpr (std::is_same_v<T, SketchPoint>) {
-                SketchPoint& ptn = sketchParams->GetPointById(concretePrim.startPointId);
-                if( true == ptn.b_IsSnappable ){
-                    double distStart = std::hypot(plio_Ptr2D.X() - ptn.p2d.X(), plio_Ptr2D.Y() - ptn.p2d.Y());
-                    if (distStart < plusProcheDistance) {
-                        plusProcheDistance = distStart;
-                        aAimante = true;
-                        v2d_SnappedPoint2D = ptn.p2d;
-                        v2d_SnappedPoint3D = ptn.cache_p3d;
-                    }
-                }
-            }
-            */
+       //        // snapping sur un point
+    //        if constexpr (std::is_same_v<T, SketchPoint>) {
+    //            SketchPoint& ptn = sketchParams->GetPointById(concretePrim.startPointId);
+    //            if( true == ptn.b_IsSnappable ){
+    //                double distStart = std::hypot(plio_Ptr2D.X() - ptn.p2d.X(), plio_Ptr2D.Y() - ptn.p2d.Y());
+    //                if (distStart < plusProcheDistance) {
+    //                    plusProcheDistance = distStart;
+    //                    aAimante = true;
+    //                    v2d_SnappedPoint2D = ptn.p2d;
+    //                    v2d_SnappedPoint3D = ptn.cache_p3d;
+    //                }
+    //            }
+    //        }
+
 
 
     for (const auto& primitive : sketchParams->getPrimitives()) {
@@ -256,6 +319,8 @@ bool SketchSnapperManager::snapToExistingPoints(gp_Pnt2d& plio_Ptr2D, gp_Pnt& pl
     }
     return false;
 }
+*/
+
 
 
 bool SketchSnapperManager::alignWithExistingPoints(gp_Pnt2d& lio_Point2D, gp_Pnt& lio_Point3D) {

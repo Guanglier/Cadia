@@ -73,7 +73,7 @@ public:
         void SetOperation (CadPartOp* li_op) { m_Operation = li_op; if (m_Operation) { m_sketchId = m_Operation->id;} else { m_sketchId = 0;}  }
         gp_Ax3&         GetSketchPlane_Mutable () { return m_sketchPlane; }
         const gp_Ax3&   GetSketchPlane () const { return m_sketchPlane; }
-        CadPartOp*   GetOperation () const { return m_Operation; }
+        CadPartOp*      GetOperation () const { return m_Operation; }
         uint64_t        GetSketchId() const {return m_sketchId;}
         auto*           GetParams () { return std::get_if<SketchParams>(&GetOperation()->getParamsMutable()); }
     }PartRefs;
