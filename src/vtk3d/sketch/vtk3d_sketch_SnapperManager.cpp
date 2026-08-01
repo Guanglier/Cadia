@@ -189,6 +189,7 @@ bool SketchSnapperManager::snapToExistingPoints(gp_Pnt2d& plio_Ptr2D, gp_Pnt& pl
             aAimante = true;
             v2d_SnappedPoint2D = sketchPoint.p2d;
             v2d_SnappedPoint3D = sketchPoint.cache_p3d;
+            std::cout << "Snap pt " << std::endl;
         }
     }
 
@@ -201,6 +202,27 @@ bool SketchSnapperManager::snapToExistingPoints(gp_Pnt2d& plio_Ptr2D, gp_Pnt& pl
             if constexpr (std::is_same_v<T, SketchLine>) {
                 const SketchPoint& cstart = sketchParams->GetPointById(concretePrim.startPointId);
                 const SketchPoint& cstop = sketchParams->GetPointById(concretePrim.stopPointId);
+
+                if( true == cstart.b_IsSnappable ){
+                    double distStart = std::hypot(plio_Ptr2D.X() - cstart.p2d.X(), plio_Ptr2D.Y() - cstart.p2d.Y());
+                    if (distStart < plusProcheDistance) {
+                        plusProcheDistance = distStart;
+                        aAimante = true;
+                        v2d_SnappedPoint2D = cstart.p2d;
+                        v2d_SnappedPoint3D = cstart.cache_p3d;
+                        std::cout << "Snap L-start " << std::endl;
+                    }
+                }
+                if( true == cstop.b_IsSnappable ){
+                    double distStop = std::hypot(plio_Ptr2D.X() - cstop.p2d.X(), plio_Ptr2D.Y() - cstop.p2d.Y());
+                    if (distStop < plusProcheDistance) {
+                        plusProcheDistance = distStop;
+                        aAimante = true;
+                        v2d_SnappedPoint2D = cstop.p2d;
+                        v2d_SnappedPoint3D = cstop.cache_p3d;
+                        std::cout << "Snap L-stop " << std::endl;
+                    }
+                }
 
                 if (cstart.b_IsSnappable && cstop.b_IsSnappable) {
                     double midX = (cstop.p2d.X() + cstart.p2d.X()) / 2.0;
@@ -216,6 +238,7 @@ bool SketchSnapperManager::snapToExistingPoints(gp_Pnt2d& plio_Ptr2D, gp_Pnt& pl
                         v2d_SnappedPoint3D.SetX((cstop.cache_p3d.X() + cstart.cache_p3d.X()) / 2.0);
                         v2d_SnappedPoint3D.SetY((cstop.cache_p3d.Y() + cstart.cache_p3d.Y()) / 2.0);
                         v2d_SnappedPoint3D.SetZ((cstop.cache_p3d.Z() + cstart.cache_p3d.Z()) / 2.0);
+                        std::cout << "Snap middle " << std::endl;
                     }
                 }
             }
@@ -322,7 +345,90 @@ bool SketchSnapperManager::snapToExistingPoints(gp_Pnt2d& plio_Ptr2D, gp_Pnt& pl
 */
 
 
+bool SketchSnapperManager::alignWithExistingPoints(gp_Pnt2d& lio_Point2D, gp_Pnt& lio_Point3D) {
+    if (!m_Parent || !m_Parent->PartRefs.GetOperation()) return false;
+    auto* sketchParams = m_Parent->PartRefs.GetParams();
+    if (!sketchParams) return false;
 
+    const double seuilCoincidenceMm = 0.5;
+    bool AlignX = false;
+    bool AlignY = false;
+    double plusProcheDistanceX = seuilCoincidenceMm;
+    double plusProcheDistanceY = seuilCoincidenceMm;
+
+    gp_Pnt2d pointCibleExactVert2D;
+    gp_Pnt2d pointCibleExactHor2D;
+    gp_Pnt pointCibleExactVert3D;
+    gp_Pnt pointCibleExactHor3D;
+
+    // --- LA LAMBDA DE FACTORISATION ---
+    auto evaluerPoint = [&](const gp_Pnt2d& pt2D, const gp_Pnt& pt3D) {
+        // Test sur l'axe X (alignement vertical)
+        double distX = std::abs(lio_Point2D.X() - pt2D.X());
+        if (distX < plusProcheDistanceX) {
+            plusProcheDistanceX = distX;
+            pointCibleExactVert2D = pt2D;
+            pointCibleExactVert3D = pt3D;
+            AlignX = true;
+        }
+
+        // Test sur l'axe Y (alignement horizontal)
+        double distY = std::abs(lio_Point2D.Y() - pt2D.Y());
+        if (distY < plusProcheDistanceY) {
+            plusProcheDistanceY = distY;
+            pointCibleExactHor2D = pt2D;
+            pointCibleExactHor3D = pt3D;
+            AlignY = true;
+        }
+    };
+
+    // --- 1. PARCOURS DIRECT DE TOUS LES POINTS GLOBAUX ---
+    // (Inclut l'origine (0,0), les centres de cercles, extrémités de lignes, etc.)
+    for (const auto& sketchPoint : sketchParams->getPoints()) {
+        if (!sketchPoint.b_IsSnappable) continue;
+        evaluerPoint(sketchPoint.p2d, sketchPoint.cache_p3d);
+    }
+
+    // --- 2. PARCOURS DES MILIEUX DE LIGNES (Optionnel si tu veux pouvoir t'aligner sur les milieux) ---
+    for (const auto& primitive : sketchParams->getPrimitives()) {
+        std::visit([&](const auto& concretePrim) {
+            using T = std::decay_t<decltype(concretePrim)>;
+            if constexpr (std::is_same_v<T, SketchLine>) {
+                const SketchPoint& cstart = sketchParams->GetPointById(concretePrim.startPointId);
+                const SketchPoint& cstop = sketchParams->GetPointById(concretePrim.stopPointId);
+
+                if (cstart.b_IsSnappable && cstop.b_IsSnappable) {
+                    gp_Pnt2d ptnConcreteMiddle2D(
+                        (cstart.p2d.X() + cstop.p2d.X()) / 2.0,
+                        (cstart.p2d.Y() + cstop.p2d.Y()) / 2.0
+                        );
+                    gp_Pnt ptnConcreteMiddle3D(
+                        (cstart.cache_p3d.X() + cstop.cache_p3d.X()) / 2.0,
+                        (cstart.cache_p3d.Y() + cstop.cache_p3d.Y()) / 2.0,
+                        (cstart.cache_p3d.Z() + cstop.cache_p3d.Z()) / 2.0
+                        );
+                    evaluerPoint(ptnConcreteMiddle2D, ptnConcreteMiddle3D);
+                }
+            }
+        }, primitive);
+    }
+
+    if (AlignX) {
+        lio_Point2D.SetX(pointCibleExactVert2D.X());
+        lio_Point3D.SetX(pointCibleExactVert3D.X());
+    }
+    if (AlignY) {
+        lio_Point2D.SetY(pointCibleExactHor2D.Y());
+        lio_Point3D.SetY(pointCibleExactHor3D.Y());
+    }
+
+    updateSnapLineActor(AlignX, AlignY, pointCibleExactVert3D, pointCibleExactHor3D, lio_Point3D);
+
+    return (AlignX || AlignY);
+}
+
+
+/*
 bool SketchSnapperManager::alignWithExistingPoints(gp_Pnt2d& lio_Point2D, gp_Pnt& lio_Point3D) {
     if (!m_Parent || !m_Parent->PartRefs.GetOperation()) return false;
     auto* sketchParams = m_Parent->PartRefs.GetParams();
@@ -409,7 +515,7 @@ bool SketchSnapperManager::alignWithExistingPoints(gp_Pnt2d& lio_Point2D, gp_Pnt
 
     return (AlignX || AlignY);
 }
-
+*/
 
 
 
