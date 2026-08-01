@@ -1,4 +1,4 @@
-#include "CAD_PartConstraints.h"
+#include "CAD_PartSketchConstraints.h"
 
 
 
@@ -6,7 +6,7 @@
 
 
 
-bool SketchConstraint::isEquivalentTo(const SketchConstraint& other) const {
+bool PartSketchConstraint::isEquivalentTo(const PartSketchConstraint& other) const {
 	// 1. Si les types de contraintes diffèrent, elles ne sont pas équivalentes
 	if (this->type != other.type) {
 		return false;

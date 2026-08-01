@@ -236,14 +236,14 @@ void CAD_Part::tst_add_op_sketch_rect() {
     uint64_t l4_id = sketch.addLine( p4, p1 );  // verticale haut vers bas
 
 
-    SketchConstraint hor1;
+    PartSketchConstraint hor1;
     hor1.type = ConstraintType::Horizontal;
     hor1.ref1.operationId = opId;
     hor1.ref1.primitiveId = l2_id;
     hor1.ref1.subElement = ConstraintSubElement::Whole;
     sketch.addConstraint(hor1);
 
-    SketchConstraint hor2;
+    PartSketchConstraint hor2;
     hor2.type = ConstraintType::Horizontal;
     hor2.ref1.operationId = opId;
     hor2.ref1.primitiveId = l4_id;
@@ -255,7 +255,7 @@ void CAD_Part::tst_add_op_sketch_rect() {
 /*
 
     // 6. On configure et on ajoute la contrainte
-    SketchConstraint c1;
+    PartSketchConstraint c1;
     c1.type = ConstraintType::Coincident;
     c1.ref1.operationId = opId;
     c1.ref1.primitiveId = l1_id;
@@ -265,7 +265,7 @@ void CAD_Part::tst_add_op_sketch_rect() {
     c1.ref2.subElement = ConstraintSubElement::StartPoint;
     sketch.addConstraint(c1);
 
-    SketchConstraint c2;
+    PartSketchConstraint c2;
     c2.type = ConstraintType::Coincident;
     c2.ref1.operationId = opId;
     c2.ref1.primitiveId = l2_id;
@@ -276,7 +276,7 @@ void CAD_Part::tst_add_op_sketch_rect() {
     sketch.addConstraint(c2);
 
 
-    SketchConstraint c3;
+    PartSketchConstraint c3;
     c3.type = ConstraintType::Coincident;
     c3.ref1.operationId = opId;
     c3.ref1.primitiveId = l3_id;
@@ -287,7 +287,7 @@ void CAD_Part::tst_add_op_sketch_rect() {
     sketch.addConstraint(c3);
 
 
-    SketchConstraint c4;
+    PartSketchConstraint c4;
     c4.type = ConstraintType::Coincident;
     c4.ref1.operationId = opId;
     c4.ref1.primitiveId = l4_id;
@@ -299,7 +299,7 @@ void CAD_Part::tst_add_op_sketch_rect() {
 */
 
 /*
-    SketchConstraint dist1;
+    PartSketchConstraint dist1;
     dist1.type = ConstraintType::Distance;
     dist1.value = 100.0;
     dist1.ref1.operationId = opId;
@@ -311,7 +311,7 @@ void CAD_Part::tst_add_op_sketch_rect() {
     sketch.addConstraint(dist1);
 
 
-    SketchConstraint dist2;
+    PartSketchConstraint dist2;
     dist2.type = ConstraintType::Distance;
     dist2.value = 100.0;
     dist2.ref1.operationId = opId;
@@ -323,7 +323,7 @@ void CAD_Part::tst_add_op_sketch_rect() {
     sketch.addConstraint(dist2);
 
 
-    SketchConstraint dist3;
+    PartSketchConstraint dist3;
     dist3.type = ConstraintType::Distance;
     dist3.value = 30.0;
     dist3.ref1.operationId = opId;
@@ -334,7 +334,7 @@ void CAD_Part::tst_add_op_sketch_rect() {
     dist3.ref2.subElement = ConstraintSubElement::EndPoint;
     sketch.addConstraint(dist3);
 
-    SketchConstraint dist4;
+    PartSketchConstraint dist4;
     dist4.type = ConstraintType::Distance;
     dist4.value = 30.0;
     dist4.ref1.operationId = opId;
@@ -347,7 +347,7 @@ void CAD_Part::tst_add_op_sketch_rect() {
 */
 
     /*
-    SketchConstraint perp1;
+    PartSketchConstraint perp1;
     perp1.type = ConstraintType::Perpendicular;
     perp1.ref1.operationId = opId;
     perp1.ref1.primitiveId = l1_id;
@@ -358,7 +358,7 @@ void CAD_Part::tst_add_op_sketch_rect() {
     sketch.addConstraint(perp1);
 
 
-    SketchConstraint hor1;
+    PartSketchConstraint hor1;
     hor1.type = ConstraintType::Horizontal;
     hor1.ref1.operationId = opId;
     hor1.ref1.primitiveId = l2_id;
@@ -366,7 +366,7 @@ void CAD_Part::tst_add_op_sketch_rect() {
     sketch.addConstraint(hor1);
 
 
-    SketchConstraint hor2;
+    PartSketchConstraint hor2;
     hor2.type = ConstraintType::Horizontal;
     hor2.ref1.operationId = opId;
     hor2.ref1.primitiveId = l4_id;
@@ -374,7 +374,7 @@ void CAD_Part::tst_add_op_sketch_rect() {
     sketch.addConstraint(hor2);
 */
     /*
-    SketchConstraint para1;
+    PartSketchConstraint para1;
     para1.type = ConstraintType::Parallel;
     para1.ref1.operationId = opId;
     para1.ref1.primitiveId = l1_id;
@@ -386,7 +386,7 @@ void CAD_Part::tst_add_op_sketch_rect() {
 
 
 
-    SketchConstraint para2;
+    PartSketchConstraint para2;
     para2.type = ConstraintType::Parallel;
     para2.ref1.operationId = opId;
     para2.ref1.primitiveId = l2_id;
@@ -403,28 +403,28 @@ void CAD_Part::tst_add_op_sketch_rect() {
 
 */
 /*
-    SketchConstraint hor1;
+    PartSketchConstraint hor1;
     hor1.type = ConstraintType::Horizontal;
     hor1.ref1.operationId = opId;
     hor1.ref1.primitiveId = l1_id;
     hor1.ref1.subElement = ConstraintSubElement::Whole;
     sketch.addConstraint(hor1);
 
-    SketchConstraint hor2;
+    PartSketchConstraint hor2;
     hor2.type = ConstraintType::Horizontal;
     hor2.ref1.operationId = opId;
     hor2.ref1.primitiveId = l3_id;
     hor2.ref1.subElement = ConstraintSubElement::Whole;
     sketch.addConstraint(hor2);
 
-    SketchConstraint vert1;
+    PartSketchConstraint vert1;
     vert1.type = ConstraintType::Vertical;
     vert1.ref1.operationId = opId;
     vert1.ref1.primitiveId = l2_id;
     vert1.ref1.subElement = ConstraintSubElement::Whole;
     sketch.addConstraint(vert1);
 
-    SketchConstraint vert2;
+    PartSketchConstraint vert2;
     vert2.type = ConstraintType::Vertical;
     vert2.ref1.operationId = opId;
     vert2.ref1.primitiveId = l4_id;

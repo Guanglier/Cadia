@@ -426,17 +426,17 @@ bool Tool_Select::gererkeyPressEvent(QKeyEvent* event) {
 void Tool_Select::CADEvent_TraiterCommande(const CadCommandEvent& event){
     if (auto* cmd = std::get_if<CadEvent::Sketch::CmdConstraints>(&event.params)  ) {
         switch ( cmd->cmd ){
-        case CadEvent::Sketch::CadEvent_SketchConstraints::Constraint_Resolve:
+        case CadEvent::Sketch::CadEvent_PartSketchConstraints::Constraint_Resolve:
 
             break;
 
-        case CadEvent::Sketch::CadEvent_SketchConstraints::Set_Vertical:
+        case CadEvent::Sketch::CadEvent_PartSketchConstraints::Set_Vertical:
             LOG_ERROR << "Tool_Select::CADEvent_TraiterCommande : vertical !" << std::endl;
             if ( true == PrimitiveIsSelected ){
                 auto* sketchParams = m_Parent->PartRefs.GetParams();
                 if (!sketchParams) return;
 
-                SketchConstraint vert1;
+                PartSketchConstraint vert1;
                 vert1.type = ConstraintType::Vertical;
                 vert1.ref1.operationId = m_Parent->PartRefs.GetSketchId();             //TEST BUG ATTENTION mettre la bonne valeur
                 vert1.ref1.primitiveId = SelectedPrimitiveId;

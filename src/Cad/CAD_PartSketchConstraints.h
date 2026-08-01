@@ -38,14 +38,14 @@ struct GeometryReference {
 //----------------------------------------------------------------------
 //		
 //----------------------------------------------------------------------
-struct SketchConstraint : public Identifiable {
+struct PartSketchConstraint : public Identifiable {
     ConstraintType    type;
     GeometryReference ref1;
     GeometryReference ref2;
     double            value = 0.0;
     bool              isDriven = false;
 
-    bool isEquivalentTo(const SketchConstraint& other) const ;
+    bool isEquivalentTo(const PartSketchConstraint& other) const ;
 };
 
 

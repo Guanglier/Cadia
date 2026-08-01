@@ -27,7 +27,7 @@ namespace CadEvent::Sketch {
         SketchChanged,
         SketchActivated
     };
-    enum class CadEvent_SketchConstraints{
+    enum class CadEvent_PartSketchConstraints{
         Constraint_Resolve,
         Set_Vertical,
         Set_Horizontal
@@ -38,7 +38,7 @@ namespace CadEvent::Sketch {
     };
     struct CmdCancel {};
     struct CmdSetPrecisionValue { double value; };
-    struct CmdConstraints { CadEvent_SketchConstraints cmd; };
+    struct CmdConstraints { CadEvent_PartSketchConstraints cmd; };
 
     struct RespStatus { std::string text; };
     struct RespDimensions { double length; double angle; };

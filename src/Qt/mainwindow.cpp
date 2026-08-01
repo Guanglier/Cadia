@@ -404,7 +404,7 @@ void MainWindow::createRibbon()
         CadCommandEvent evt;
         evt.params = CadEvent::Sketch::CmdActivateTool{
             CadEvent::Sketch::CadEvent_SketchToolMode::SetConstraints,
-            (int)CadEvent::Sketch::CadEvent_SketchConstraints::Set_Horizontal
+            (int)CadEvent::Sketch::CadEvent_PartSketchConstraints::Set_Horizontal
         };
         m_view3d->CADEvent_TraiterCommande(evt);
     });
@@ -414,7 +414,7 @@ void MainWindow::createRibbon()
     connect(Sketch.Constraints.actConstVertical, &QAction::triggered, this, [this](bool checked) {
         CadCommandEvent evt;
         evt.params = CadEvent::Sketch::CmdConstraints{
-            CadEvent::Sketch::CadEvent_SketchConstraints::Set_Vertical
+            CadEvent::Sketch::CadEvent_PartSketchConstraints::Set_Vertical
         };
         m_view3d->CADEvent_TraiterCommande(evt);
     });
@@ -451,7 +451,7 @@ void MainWindow::createRibbon()
     connect(Sketch.Constraints.actConstResolve, &QAction::triggered, this, [this](bool checked) {
         CadCommandEvent evt;
         evt.params = CadEvent::Sketch::CmdConstraints{
-            CadEvent::Sketch::CadEvent_SketchConstraints::Constraint_Resolve
+            CadEvent::Sketch::CadEvent_PartSketchConstraints::Constraint_Resolve
         };
         m_view3d->CADEvent_TraiterCommande(evt);
     });

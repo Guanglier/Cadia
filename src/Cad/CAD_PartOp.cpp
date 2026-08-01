@@ -36,7 +36,7 @@ void SketchParams::removePrimitive(uint64_t idASupprimer) {
     m_primitiveRegistry.remove(idASupprimer);
     auto& constraints = m_constraintRegistry.getItemsMutable();
     constraints.erase(
-        std::remove_if(constraints.begin(), constraints.end(), [idASupprimer](const SketchConstraint& c) {
+        std::remove_if(constraints.begin(), constraints.end(), [idASupprimer](const PartSketchConstraint& c) {
             return c.ref1.primitiveId == idASupprimer || c.ref2.primitiveId == idASupprimer;
         }),
         constraints.end()

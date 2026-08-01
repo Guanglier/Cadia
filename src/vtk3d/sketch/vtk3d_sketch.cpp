@@ -314,7 +314,7 @@ void Vtk3d_Sketch::CADEvent_TraiterCommande(const CadCommandEvent& event) {
 
     if (auto* cmd = std::get_if<CadEvent::Sketch::CmdConstraints>(&event.params)  ) {
         switch ( cmd->cmd ){
-            case CadEvent::Sketch::CadEvent_SketchConstraints::Constraint_Resolve:
+            case CadEvent::Sketch::CadEvent_PartSketchConstraints::Constraint_Resolve:
                 if ( nullptr != PartRefs.GetOperation() ){
                     PartRefs.GetOperation()->setLocaleTopoChanged(true);
                     auto *SketchParam = std::get_if<SketchParams> (&PartRefs.GetOperation()->getParamsMutable() );
@@ -328,7 +328,7 @@ void Vtk3d_Sketch::CADEvent_TraiterCommande(const CadCommandEvent& event) {
                 }
                 break;
 
-            case CadEvent::Sketch::CadEvent_SketchConstraints::Set_Vertical:
+            case CadEvent::Sketch::CadEvent_PartSketchConstraints::Set_Vertical:
                 LOG_ERROR << "Vtk3d_Sketch::CADEvent_TraiterCommande : vertical !" << std::endl;
                 if ( nullptr == PartRefs.GetOperation() ){
                     LOG_ERROR << "Vtk3d_Sketch::CADEvent_TraiterCommande :  nullptr == m_Operation " << std::endl;

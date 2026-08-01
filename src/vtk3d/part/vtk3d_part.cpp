@@ -217,7 +217,7 @@ void Vtk3d_Part::CADEvent_TraiterCommande(const CadCommandEvent& event) {
 
     if (auto* cmd = std::get_if<CadEvent::Sketch::CmdConstraints>(&event.params)  ) {
         switch ( cmd->cmd ){
-        case CadEvent::Sketch::CadEvent_SketchConstraints::Constraint_Resolve:
+        case CadEvent::Sketch::CadEvent_PartSketchConstraints::Constraint_Resolve:
             if ( nullptr != m_Operation ){
                 m_Operation->setLocaleTopoChanged(true);
                 auto *SketchParam = std::get_if<SketchParams> (&m_Operation->getParamsMutable() );
