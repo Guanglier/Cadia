@@ -278,13 +278,15 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
             LOG_INFO << "Tool_Select::gererMousePress(QMouseEvent* event) -> point trouve  Id=" << DynamicDrag.m_activePrimitiveId << std::endl;
             DynamicDrag.m_mode = DragMode::PointUnique;
             PrimitiveIsSelected = true;
-            DynamicDrag.m_isDragging = true;
+            if( sp.b_Locked == false ){
+                DynamicDrag.m_isDragging = true;
+            }else{
+                LOG_INFO << "Tool_Select::gererMousePress(QMouseEvent* event) -> point LOCKED Id=" << DynamicDrag.m_activePrimitiveId << std::endl;
+            }
 
             m_Parent->m_SolverSession.Initialize(*sketchParams);
 
             SolverInteractiveSession::GetIndicesForHandle(*sketchParams, (uint64_t) DynamicDrag.m_activePrimitiveId, DynamicDrag.PointDrag.IndexX, DynamicDrag.PointDrag.IndexY );
-
-            //SolverInteractiveSession::GetIndicesForEntireEdge(*sketchParams, DynamicDrag.m_activePrimitiveId, m_Parent->m_SolverSession.activeVarIndicesAll);
 
         }
 
@@ -354,8 +356,15 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
                 std::visit ([&](auto& ConcretePrim) {
                     using T = std::decay_t<decltype(ConcretePrim)>;
                     if constexpr( std::is_same_v<T,SketchLine>){
-                        DynamicDrag.PrimToMoseVects.line.start = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , sketchParams->GetPointById( ConcretePrim.startPointId).p2d );
-                        DynamicDrag.PrimToMoseVects.line.stop = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , sketchParams->GetPointById( ConcretePrim.stopPointId).p2d );
+                        if( ConcretePrim.b_Locked == false ){
+                            DynamicDrag.m_isDragging = true;
+                            DynamicDrag.PrimToMoseVects.line.start = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , sketchParams->GetPointById( ConcretePrim.startPointId).p2d );
+                            DynamicDrag.PrimToMoseVects.line.stop = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , sketchParams->GetPointById( ConcretePrim.stopPointId).p2d );
+                        }else{
+                            DynamicDrag.m_isDragging = false;
+                            LOG_INFO << "Tool_Select::gererMousePress(QMouseEvent* event) -> ligne LOCKED Id=" << DynamicDrag.m_activePrimitiveId << std::endl;
+                        }
+
                     }else if constexpr( std::is_same_v<T,SketchCircle>){
                         DynamicDrag.PrimToMoseVects.circle.center = gp_Vec2d( DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d , sketchParams->GetPointById( ConcretePrim.centerPointId).p2d );
                     }else if constexpr( std::is_same_v<T,SketchArc>){

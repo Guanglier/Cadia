@@ -180,6 +180,24 @@ bool SketchSnapperManager::snapToExistingPoints(gp_Pnt2d& plio_Ptr2D, gp_Pnt& pl
     gp_Pnt2d v2d_SnappedPoint2D;
     gp_Pnt   v2d_SnappedPoint3D;
 
+
+    /*
+            // snapping sur un point
+            if constexpr (std::is_same_v<T, SketchPoint>) {
+                SketchPoint& ptn = sketchParams->GetPointById(concretePrim.startPointId);
+                if( true == ptn.b_IsSnappable ){
+                    double distStart = std::hypot(plio_Ptr2D.X() - ptn.p2d.X(), plio_Ptr2D.Y() - ptn.p2d.Y());
+                    if (distStart < plusProcheDistance) {
+                        plusProcheDistance = distStart;
+                        aAimante = true;
+                        v2d_SnappedPoint2D = ptn.p2d;
+                        v2d_SnappedPoint3D = ptn.cache_p3d;
+                    }
+                }
+            }
+            */
+
+
     for (const auto& primitive : sketchParams->getPrimitives()) {
         std::visit([&](const auto& concretePrim) {
             using T = std::decay_t<decltype(concretePrim)>;
@@ -189,36 +207,44 @@ bool SketchSnapperManager::snapToExistingPoints(gp_Pnt2d& plio_Ptr2D, gp_Pnt& pl
                 SketchPoint& cstop = sketchParams->GetPointById(concretePrim.stopPointId);
 
                 // TO DO : supprimer les std::hypot qui consomment du temps de calcul pour prendre une formule plus simple
-                double distStart = std::hypot(plio_Ptr2D.X() - cstart.p2d.X(), plio_Ptr2D.Y() - cstart.p2d.Y());
-                if (distStart < plusProcheDistance) {
-                    plusProcheDistance = distStart;
-                    aAimante = true;
-                    v2d_SnappedPoint2D = cstart.p2d;
-                    v2d_SnappedPoint3D = cstart.cache_p3d;
+                if( true == cstart.b_IsSnappable ){
+                    double distStart = std::hypot(plio_Ptr2D.X() - cstart.p2d.X(), plio_Ptr2D.Y() - cstart.p2d.Y());
+                    if (distStart < plusProcheDistance) {
+                        plusProcheDistance = distStart;
+                        aAimante = true;
+                        v2d_SnappedPoint2D = cstart.p2d;
+                        v2d_SnappedPoint3D = cstart.cache_p3d;
+                    }
                 }
-                double distStop = std::hypot(plio_Ptr2D.X() - cstop.p2d.X(), plio_Ptr2D.Y() - cstop.p2d.Y());
-                if (distStop < plusProcheDistance) {
-                    plusProcheDistance = distStop;
-                    aAimante = true;
-                    v2d_SnappedPoint2D = cstop.p2d;
-                    v2d_SnappedPoint3D = cstop.cache_p3d;
+                if( true == cstop.b_IsSnappable ){
+                    double distStop = std::hypot(plio_Ptr2D.X() - cstop.p2d.X(), plio_Ptr2D.Y() - cstop.p2d.Y());
+                    if (distStop < plusProcheDistance) {
+                        plusProcheDistance = distStop;
+                        aAimante = true;
+                        v2d_SnappedPoint2D = cstop.p2d;
+                        v2d_SnappedPoint3D = cstop.cache_p3d;
+                    }
                 }
+                if ( (true == cstart.b_IsSnappable) && (true == cstop.b_IsSnappable) ){
+                    double distMidle = std::hypot(
+                        plio_Ptr2D.X() - ((cstop.p2d.X()+cstart.p2d.X() )/2) ,
+                        plio_Ptr2D.Y() - ((cstop.p2d.Y()+cstart.p2d.Y() )/2 ) );
+                    if (distMidle < plusProcheDistance) {
+                        plusProcheDistance = distMidle;
+                        v2d_SnappedPoint2D.SetX ( ((cstop.p2d.X()+cstart.p2d.X() )/2 ) );
+                        v2d_SnappedPoint2D.SetY ( ((cstop.p2d.Y()+cstart.p2d.Y() )/2 ) );
 
-                double distMidle = std::hypot(
-                    plio_Ptr2D.X() - ((cstop.p2d.X()+cstart.p2d.X() )/2) ,
-                    plio_Ptr2D.Y() - ((cstop.p2d.Y()+cstart.p2d.Y() )/2 ) );
-                if (distMidle < plusProcheDistance) {
-                    plusProcheDistance = distMidle;
-                    v2d_SnappedPoint2D.SetX ( ((cstop.p2d.X()+cstart.p2d.X() )/2 ) );
-                    v2d_SnappedPoint2D.SetY ( ((cstop.p2d.Y()+cstart.p2d.Y() )/2 ) );
-
-                    v2d_SnappedPoint3D.SetX ( ((cstop.cache_p3d.X()+cstart.cache_p3d.X() )/2 ) );
-                    v2d_SnappedPoint3D.SetY ( ((cstop.cache_p3d.Y()+cstart.cache_p3d.Y() )/2 ) );
-                    v2d_SnappedPoint3D.SetZ ( ((cstop.cache_p3d.Z()+cstart.cache_p3d.Z() )/2 ) );
-                    aAimante = true;
+                        v2d_SnappedPoint3D.SetX ( ((cstop.cache_p3d.X()+cstart.cache_p3d.X() )/2 ) );
+                        v2d_SnappedPoint3D.SetY ( ((cstop.cache_p3d.Y()+cstart.cache_p3d.Y() )/2 ) );
+                        v2d_SnappedPoint3D.SetZ ( ((cstop.cache_p3d.Z()+cstart.cache_p3d.Z() )/2 ) );
+                        aAimante = true;
+                    }
                 }
                 // TO DO : gérer le cas ou on voit le point milieu
             }
+
+
+
         }, primitive);
     }
 

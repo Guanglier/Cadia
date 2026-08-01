@@ -40,6 +40,8 @@ struct SketchPoint : public Identifiable{
     gp_Pnt2d p2d; // position 2D dans l'esquisse
     mutable gp_Pnt   cache_p3d; // position 3D dans l'espace de la pièce
     bool    b_Locked = false;
+    bool    b_IsVisible = true;
+    bool    b_IsSnappable = true;
 
     SketchPoint(const gp_Pnt2d& point2D) : p2d(point2D), cache_p3d(0, 0, 0) {}
     void setPoint(const gp_Pnt2d& li_Pnt2D, const gp_Ax3* li_SketchPlane = nullptr) {
@@ -196,7 +198,7 @@ private:
 public:
 
     SketchParams() : m_sketchPlane(gp_Ax3()) {
-        //initializeOriginElements();
+        initializeOriginElements();
     }
     explicit SketchParams(const gp_Ax3& plane) : m_sketchPlane(plane) {}
 

@@ -24,23 +24,51 @@
 
 void SketchParams::initializeOriginElements() {
     // 1. Point (0,0)
-    uint64_t pCenter = m_points.add(SketchPoint(gp_Pnt2d(0.0, 0.0))); // Force l'ID 0 si ton IdRegistry commence à 0
+    SketchPoint   PntCenter (gp_Pnt2d(0.0, 0.0));
+    PntCenter.b_Locked = true;
+    PntCenter.b_IsVisible = true;
+    PntCenter.b_IsSnappable = true;
+    uint64_t pCenter = m_points.add( PntCenter );
 
     // 2. Points de direction pour les axes de construction (ex: longueur visuelle de 10mm)
-    uint64_t pX = m_points.add(SketchPoint(gp_Pnt2d(10.0, 0.0)));
-    uint64_t pY = m_points.add(SketchPoint(gp_Pnt2d(0.0, 10.0)));
+    SketchPoint   PntXP (gp_Pnt2d(10.0, 0.0));
+    PntXP.b_Locked = true;
+    PntXP.b_IsVisible = false;
+    PntXP.b_IsSnappable = false;
+
+    SketchPoint   PntYP (gp_Pnt2d(0.0, 10.0));
+    PntYP.b_Locked = true;
+    PntYP.b_IsVisible = false;
+    PntYP.b_IsSnappable = false;
+
+    SketchPoint   PntXN (gp_Pnt2d(-10.0, 0.0));
+    PntXN.b_Locked = true;
+    PntXN.b_IsVisible = false;
+    PntXN.b_IsSnappable = false;
+
+    SketchPoint   PntYN (gp_Pnt2d(0.0, -10.0));
+    PntYN.b_Locked = true;
+    PntYN.b_IsVisible = false;
+    PntYN.b_IsSnappable = false;
+
+/*
+    uint64_t pXp = m_points.add( PntXP );
+    uint64_t pYp = m_points.add( PntYP );
+    uint64_t pXn = m_points.add( PntXN );
+    uint64_t pYn = m_points.add( PntYN );
 
     // 3. Lignes d'axes
-    SketchLine axisX(pCenter, pX);
+    SketchLine axisX(pXn, pXp);
     axisX.b_IsRef = true; // Indique que c'est une ligne de construction/référence
     axisX.b_Locked = true;
     // axisX.b_IsLocked = true; si tu veux l'interdire à la suppression
     m_primitiveRegistry.add(axisX); // ID 1
 
-    SketchLine axisY(pCenter, pY);
+    SketchLine axisY(pYn, pYp);
     axisY.b_IsRef = true;
     axisY.b_Locked = true;
     m_primitiveRegistry.add(axisY); // ID 2
+    */
 }
 
 
