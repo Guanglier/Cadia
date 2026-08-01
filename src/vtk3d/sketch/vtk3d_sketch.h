@@ -2,7 +2,7 @@
 
 #include "Vtk3d_abstractviewmode.h"
 #include "vtk3d_sketch_SnapperManager.h"
-#include "CAD_Operation.h"
+#include "CAD_PartOp.h"
 #include "vtk3d_sketch_Tools.h"
 
 #include <QObject>
@@ -66,14 +66,14 @@ public:
     struct{
     private:
         gp_Ax3          m_sketchPlane;  // Contient l'origine, l'axe X, Y et Z du plan
-        CadOperation*   m_Operation;
+        CadPartOp*   m_Operation;
         uint64_t        m_sketchId;
     public:
         void            SetSketchPlane (gp_Ax3 sketchPlane) { m_sketchPlane = sketchPlane; }
-        void            SetOperation (CadOperation* li_op) { m_Operation = li_op; }
+        void            SetOperation (CadPartOp* li_op) { m_Operation = li_op; }
         gp_Ax3&         GetSketchPlane_Mutable () { return m_sketchPlane; }
         const gp_Ax3&   GetSketchPlane () const { return m_sketchPlane; }
-        CadOperation*   GetOperation () const { return m_Operation; }
+        CadPartOp*   GetOperation () const { return m_Operation; }
         uint64_t        GetSketchId() const {return m_sketchId;}
         auto*           GetParams () { return std::get_if<SketchParams>(&GetOperation()->getParamsMutable()); }
     }PartRefs;
@@ -99,7 +99,7 @@ public:
     void rafraichirAffichageEsquisseInteractif();
 
     //Vtk3d_Sketch(vtk3d_MainView* view, uint64_t sketchId);
-    Vtk3d_Sketch(vtk3d_MainView* view, CadOperation* li_ptr_Operation);
+    Vtk3d_Sketch(vtk3d_MainView* view, CadPartOp* li_ptr_Operation);
 
     ~Vtk3d_Sketch();
 

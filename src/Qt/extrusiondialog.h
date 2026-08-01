@@ -2,7 +2,7 @@
 #include <QDialog>
 #include <QDoubleSpinBox>
 #include <QComboBox>
-#include "CAD_Operation.h"
+#include "CAD_PartOp.h"
 
 
 struct ExtrusionDialog_SketchRef{

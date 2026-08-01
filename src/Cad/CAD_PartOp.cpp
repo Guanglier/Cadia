@@ -1,18 +1,14 @@
 
-#include "CAD_Operation.h"
-#include "CAD_Part.h" // Indispensable ICI pour que le compilateur connaisse enfin les methodes de CAD_Part !
+#include "CAD_PartOp.h"
+#include "CAD_Part.h"
 
 // OpenCASCADE requis pour construire la geometrie
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
-#include <BRepBuilderAPI_Transform.hxx>
-#include <BRepAlgoAPI_Fuse.hxx>
-#include <BRepTools.hxx>
-#include <BRepPrimAPI_MakePrism.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
-#include <GC_MakeCircle.hxx>
+#include <BRep_Builder.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Wire.hxx>
 #include <TopoDS_Shape.hxx>
@@ -21,39 +17,12 @@
 #include <gp_Dir.hxx>
 #include <gp_Pln.hxx>
 #include <type_traits>
-#include <BRepBuilderAPI_MakeWire.hxx>
-#include <ShapeFix_Wire.hxx>
-#include <TopoDS_Wire.hxx>
+#include <TopoDS_Compound.hxx>
 
-#include <BRepAdaptor_Surface.hxx>
-#include <GeomAbs_SurfaceType.hxx> // Nécessaire pour GeomAbs_Plane
 
-/*
 
-void DiagnostiquerForme(const TopoDS_Shape& shape) {
-    BRepCheck_Analyzer analyzer(shape);
 
-    if (analyzer.IsValid()) {
-        std::cout << "=> La forme est topologiquement VALIDE." << std::endl;
-        return;
-    }
 
-    std::cerr << "=> La forme est INVALID ! Liste des erreurs :" << std::endl;
-
-    // On explore la forme pour trouver le sous-élément qui pose problème (ex: le Wire)
-    TopExp_Explorer exp(shape, TopAbs_WIRE);
-    for (; exp.More(); exp.Next()) {
-        const TopoDS_Wire& wire = TopoDS::Wire(exp.Current());
-        Handle(BRepCheck_Result) res = analyzer.Result(wire);
-
-        if (!res.IsNull() && !res->IsValid()) {
-            // Il y a une erreur sur ce wire, on liste les status
-            std::cerr << "   [Wire Error] Problème topologique détecté sur un wire." << std::endl;
-            // Note : Tu peux pousser l'analyse en inspectant les arêtes (TopAbs_EDGE) si besoin
-        }
-    }
-}
-*/
 
 SketchPoint& SketchParams::GetPointById ( uint64_t li_id){
     SketchPoint* pt = m_points.findMutable(li_id);
@@ -162,7 +131,7 @@ TopoDS_Shape CoordinateSystem::evaluate(const CAD_Part& part) const {
 }
 
 
-std::string CadOperation::getTypeName() const {
+std::string CadPartOp::getTypeName() const {
     return std::visit([](const auto& params) -> std::string {
         using T = std::decay_t<decltype(params)>;
 
@@ -186,7 +155,7 @@ std::string EBooleanOpToString(EBooleanOp type) {
 
 
 
-std::string CadOperation::getConstraintTypeString( const ConstraintType li_ConstType) const {
+std::string CadPartOp::getConstraintTypeString( const ConstraintType li_ConstType) const {
     // votre switch qui retourne un std::string ou const char*
     switch ( li_ConstType ){
         case ConstraintType::Horizontal:    return "Horizontal"; break;
@@ -200,7 +169,7 @@ std::string CadOperation::getConstraintTypeString( const ConstraintType li_Const
         default : return "??"; break;
     }
 }
-std::string CadOperation::getConstraintSubElementString( const ConstraintSubElement li_SubElmt) const {
+std::string CadPartOp::getConstraintSubElementString( const ConstraintSubElement li_SubElmt) const {
     switch ( li_SubElmt ){
     case ConstraintSubElement::Whole:           return "Whole"; break;
         case ConstraintSubElement::StartPoint:  return "StartPoint"; break;

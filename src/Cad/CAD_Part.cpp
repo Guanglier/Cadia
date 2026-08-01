@@ -31,13 +31,13 @@ CAD_Part::CAD_Part() {
 
 
 
-CadOperation* CAD_Part::trouverOperationMutable(uint64_t id) {
+CadPartOp* CAD_Part::trouverOperationMutable(uint64_t id) {
     for (auto& op : m_operationRegistry.getItemsMutable()) {
         if (op.id == id) return &op;
     }
     return nullptr;
 }
-const CadOperation* CAD_Part::trouverOperation(uint64_t id) const {
+const CadPartOp* CAD_Part::trouverOperation(uint64_t id) const {
     for (const auto& op : m_operationRegistry.getItems()) {
         if (op.id == id) return &op;
     }
@@ -47,7 +47,7 @@ const CadOperation* CAD_Part::trouverOperation(uint64_t id) const {
 // Fonction utilitaire globale ou statique
 void CAD_Part::sauvegarderOperationEnBrep(uint64_t opId, const std::string& chemin, bool exporterLocal) {
     LOG_DEBUG << "CAD_Part::sauvegarderOperationEnBrep" << std::endl;
-    const CadOperation* op = trouverOperation(opId);
+    const CadPartOp* op = trouverOperation(opId);
     if (!op) return ;
     const TopoDS_Shape& shapeAExporter = exporterLocal ? op->getLocalTopo() : op->getResultingTopo();
     if (shapeAExporter.IsNull()) {
@@ -78,10 +78,10 @@ std::ostream& operator<<(std::ostream& os, ConstraintSubElement sub) {
 }
 
 
-uint64_t CAD_Part::add_operation(CadOperation& op) {
+uint64_t CAD_Part::add_operation(CadPartOp& op) {
     return m_operationRegistry.add(std::move(op));
 }
-void CAD_Part::revaluerOperation(CadOperation& op) {
+void CAD_Part::revaluerOperation(CadPartOp& op) {
     LOG_DEBUG << "CAD_Part::revaluerOperation -> name = " << op.getName() << "\n";
     op.execute(*this, false);
 }

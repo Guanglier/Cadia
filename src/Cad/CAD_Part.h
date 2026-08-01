@@ -4,13 +4,13 @@
 
 #include <string>
 #include <vector>
-#include "CAD_Operation.h"
+#include "CAD_PartOp.h"
 
 class CAD_Part {
 private:
     std::string               m_filename = "";
     std::string               m_path = "";
-    IdRegistry<CadOperation>  m_operationRegistry;
+    IdRegistry<CadPartOp>  m_operationRegistry;
     uint64_t                  m_operation_nextId = 1;
 
     void tst_dump_tree(std::ostream& flux_out = std::cout) const;
@@ -18,8 +18,8 @@ private:
 public:
     CAD_Part();
 
-    void revaluerOperation(CadOperation& op);
-    uint64_t add_operation(CadOperation& op);
+    void revaluerOperation(CadPartOp& op);
+    uint64_t add_operation(CadPartOp& op);
 
     //TopoDS_Shape evaluerGeometrieSketch(const SketchParams& sketch);
     void tst_add_repere_origine ();
@@ -36,12 +36,12 @@ public:
     void sauvegarderOperationEnBrep(uint64_t opId, const std::string& chemin, bool exporterLocal);
     void compute_final_topo();
 
-    CadOperation* trouverOperationMutable(uint64_t id);
-    const CadOperation* trouverOperation(uint64_t id) const;
+    CadPartOp* trouverOperationMutable(uint64_t id);
+    const CadPartOp* trouverOperation(uint64_t id) const;
     //void reconstruirePlanEsquisse(SketchParams& sketch);
 
 
-    const IdRegistry<CadOperation>& getOperationRegistry() const {
+    const IdRegistry<CadPartOp>& getOperationRegistry() const {
         return m_operationRegistry;
     }
 

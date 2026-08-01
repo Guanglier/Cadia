@@ -298,7 +298,7 @@ void vtk3d_MainView::ajusterEchelleRepere() {
 }
 
 
-vtkSmartPointer<vtkAssembly> vtk3d_MainView::buildSketchAssembly(const CadOperation& op) {
+vtkSmartPointer<vtkAssembly> vtk3d_MainView::buildSketchAssembly(const CadPartOp& op) {
     auto assembly = vtkSmartPointer<vtkAssembly>::New();
 
     // 1. Récupération sûre des paramètres de la Sketch via std::get si besoin
@@ -761,8 +761,8 @@ void vtk3d_MainView::setCategoryVisibility(SelectionType type, bool visible) {
 
 void vtk3d_MainView::mode_passerModeEsquisse( uint64_t id ){
     if ( nullptr != m_currentPart ){
-        //CadOperation* opDansPart = m_currentPart->trouverOperationMutable(1);
-        CadOperation* opDansPart = m_currentPart->trouverOperationMutable(id);
+        //CadPartOp* opDansPart = m_currentPart->trouverOperationMutable(1);
+        CadPartOp* opDansPart = m_currentPart->trouverOperationMutable(id);
         if (opDansPart){
             if (m_modeActif) {
                 m_modeActif->desactiver();

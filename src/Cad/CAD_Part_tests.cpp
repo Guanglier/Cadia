@@ -162,12 +162,12 @@ void CAD_Part::tst_dump_tree_to_file (const std::string& filename){
 void CAD_Part::tst_add_empty_sketch (){
 
     //------------ construction de la sketch -------------------------------
-    CadOperation cad_op_sketch("Esquisse 04", SketchParams());
+    CadPartOp cad_op_sketch("Esquisse 04", SketchParams());
     uint64_t opId_sketch_3 = this->add_operation(cad_op_sketch);
 
 
     // 3. On récupère l'accès direct et modifiable à l'esquisse qui vit DANS le Part
-    CadOperation* opDansDocSketch = this->trouverOperationMutable(opId_sketch_3);
+    CadPartOp* opDansDocSketch = this->trouverOperationMutable(opId_sketch_3);
     if (!opDansDocSketch) return; // Sécurité
 
     auto& sketch3 = std::get<SketchParams>(opDansDocSketch->getParamsMutable());
@@ -188,12 +188,12 @@ void CAD_Part::tst_add_repere_origine() {
     origineDefaut.AxisSystem = gp::XOY();
     origineDefaut.AxisSystem.SetLocation(nouvellePosition);
 
-    CadOperation opOrigine ("Repere 01", origineDefaut) ;
+    CadPartOp opOrigine ("Repere 01", origineDefaut) ;
     opOrigine.getParamsMutable() = origineDefaut;
     uint64_t u64_id_repere = this->add_operation(opOrigine);
 
     //---- pour le test on retrouve le pointeur vers l'op avec l'id et on réévalue
-    CadOperation* opRepere = this->trouverOperationMutable(u64_id_repere);
+    CadPartOp* opRepere = this->trouverOperationMutable(u64_id_repere);
     if (!opRepere) return; // Sécurité
     revaluerOperation(*opRepere);
     opRepere->setOpacity(0.2f);
@@ -207,12 +207,12 @@ void CAD_Part::tst_add_op_sketch_rect() {
     
 
     //------------ construction de la sketch -------------------------------
-    CadOperation cad_op("Esquisse 01", SketchParams());
+    CadPartOp cad_op("Esquisse 01", SketchParams());
     uint64_t opId = this->add_operation(cad_op);
 
 
     // 3. On récupère l'accès direct et modifiable à l'esquisse qui vit DANS le Part
-    CadOperation* opDansDoc = this->trouverOperationMutable(opId);
+    CadPartOp* opDansDoc = this->trouverOperationMutable(opId);
     if (!opDansDoc) return; // Sécurité
 
     opDansDoc->setColor(0.4, 0.7, 0.4);
@@ -443,11 +443,11 @@ void CAD_Part::tst_add_op_sketch_rect() {
 }
 
 void CAD_Part::tst_add_op_extrude() {
-    CadOperation cad_op("Extrusion 01", ExtrudeParams());
+    CadPartOp cad_op("Extrusion 01", ExtrudeParams());
     uint64_t opId = this->add_operation(cad_op);
 
     // 3. On récupère l'accès direct et modifiable
-    CadOperation* opDansDoc = this->trouverOperationMutable(opId);
+    CadPartOp* opDansDoc = this->trouverOperationMutable(opId);
     if (!opDansDoc) return; // Sécurité
     auto& extrusion_param = std::get<ExtrudeParams>(opDansDoc->getParamsMutable());
 
@@ -466,12 +466,12 @@ void CAD_Part::tst_add_op_sketch_circle() {
     uint64_t u64_id_repere = 0;
 
     //------------ construction de la sketch -------------------------------
-    CadOperation cad_op("Esquisse 02", SketchParams());
+    CadPartOp cad_op("Esquisse 02", SketchParams());
     uint64_t opId = this->add_operation(cad_op);
 
 
     // 3. On récupère l'accès direct et modifiable à l'esquisse qui vit DANS le Part
-    CadOperation* opDansDoc = this->trouverOperationMutable(opId);
+    CadPartOp* opDansDoc = this->trouverOperationMutable(opId);
     if (!opDansDoc) return; // Sécurité
     opDansDoc->setColor(0.5, 0.8, 0.5);
 
@@ -496,11 +496,11 @@ void CAD_Part::tst_add_op_sketch_circle() {
 
 void CAD_Part::tst_add_op_extrude_2() {
     /*
-    CadOperation cad_op("Extrusion 02", ExtrudeParams());
+    CadPartOp cad_op("Extrusion 02", ExtrudeParams());
     uint64_t opId = this->add_operation(cad_op);
 
     // 3. On récupère l'accès direct et modifiable
-    CadOperation* opDansDoc = this->trouverOperationMutable(opId);
+    CadPartOp* opDansDoc = this->trouverOperationMutable(opId);
     if (!opDansDoc) return; // Sécurité
     auto& extrusion_param = std::get<ExtrudeParams>(opDansDoc->getParamsMutable());
     opDansDoc->setOpacity(1);
@@ -518,12 +518,12 @@ void CAD_Part::tst_add_op_extrude_2() {
 void CAD_Part::tst_add_op_step_2 (){
 /*
     //------------ construction de la sketch -------------------------------
-    CadOperation cad_op_sketch("Esquisse 03", SketchParams());
+    CadPartOp cad_op_sketch("Esquisse 03", SketchParams());
     uint64_t opId_sketch_3 = this->add_operation(cad_op_sketch);
 
 
     // 3. On récupère l'accès direct et modifiable à l'esquisse qui vit DANS le Part
-    CadOperation* opDansDocSketch = this->trouverOperationMutable(opId_sketch_3);
+    CadPartOp* opDansDocSketch = this->trouverOperationMutable(opId_sketch_3);
     if (!opDansDocSketch) return; // Sécurité
 
     auto& sketch3 = std::get<SketchParams>(opDansDocSketch->getParamsMutable());
@@ -552,11 +552,11 @@ void CAD_Part::tst_add_op_step_2 (){
     revaluerOperation(*opDansDocSketch);
 
     //----------------- extrusion ----------------------------
-    CadOperation cad_op3("Extrusion 03", ExtrudeParams());
+    CadPartOp cad_op3("Extrusion 03", ExtrudeParams());
     uint64_t opIdExtrude3 = this->add_operation(cad_op3);
 
     // 3. On récupère l'accès direct et modifiable
-    CadOperation* opDansDoc3 = this->trouverOperationMutable(opIdExtrude3);
+    CadPartOp* opDansDoc3 = this->trouverOperationMutable(opIdExtrude3);
     if (!opDansDoc3) return; // Sécurité
     auto& extrusion_param3 = std::get<ExtrudeParams>(opDansDoc3->getParamsMutable());
 

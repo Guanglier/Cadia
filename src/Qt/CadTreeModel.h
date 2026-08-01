@@ -25,7 +25,7 @@ public:
 
 private:
     // Fonctions d'icônes d'exemples (à lier avec tes ressources Qt)
-    QIcon getIconForOperation(const CadOperation& op);
+    QIcon getIconForOperation(const CadPartOp& op);
 };
 
 

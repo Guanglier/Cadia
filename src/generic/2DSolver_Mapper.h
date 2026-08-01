@@ -78,7 +78,7 @@
 #include <memory>
 #include "2DSolver_Constraints.h"
 #include "2DSolver_Solver.h"
-#include "CAD_Operation.h"
+#include "CAD_PartOp.h"
 
 // ============================================================================
 // 1. STRUCTURE POUR LE SOLVE "ONE-SHOT" (Global / Complet)

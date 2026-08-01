@@ -1,5 +1,5 @@
 
-#include "CAD_Operation.h"
+#include "CAD_PartOp.h"
 #include "CAD_Part.h" // Indispensable ICI pour que le compilateur connaisse enfin les methodes de CAD_Part !
 #include "Contours.h"
 

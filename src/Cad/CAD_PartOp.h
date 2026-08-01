@@ -295,7 +295,7 @@ using OperationParams = std::variant<SketchParams, ExtrudeParams, CoordinateSyst
 // 5. L'OPERATION DE L'ARBRE (FEATURE)
 // ==========================================
 
-class CadOperation : public Identifiable {
+class CadPartOp : public Identifiable {
 private:
     TopoDS_Shape    m_Topo_locale;          //forme isolée générée par l'opération
     TopoDS_Shape    m_Topo_resulting;       // état de la pièce après l'application de l'opération, transmise a l'étape suivante
@@ -310,7 +310,7 @@ private:
 
 
 public:
-    CadOperation(std::string name, OperationParams params)
+    CadPartOp(std::string name, OperationParams params)
         : m_customName(std::move(name)), m_params(std::move(params)) {
         m_opacity = 1.0f;
     }

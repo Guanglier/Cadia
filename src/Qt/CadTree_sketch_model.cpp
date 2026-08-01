@@ -124,7 +124,7 @@ void CadTree_SketchModel::refreshFromPart(const CAD_Part& part) {
     }
 }
 
-QIcon CadTree_SketchModel::getIconForOperation(const CadOperation& op) {
+QIcon CadTree_SketchModel::getIconForOperation(const CadPartOp& op) {
     return std::visit([](const auto& params) -> QIcon {
         using T = std::decay_t<decltype(params)>;
         if constexpr (std::is_same_v<T, CoordinateSystem>) return QIcon(":/icons/referentiel_1_opt.svg");

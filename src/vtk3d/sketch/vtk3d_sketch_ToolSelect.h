@@ -34,7 +34,7 @@
 #include <vtkCallbackCommand.h>
 #include "cad_events.h"
 
-#include "CAD_Operation.h"
+#include "CAD_PartOp.h"
 
 class Vtk3d_Sketch;
 

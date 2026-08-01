@@ -15,7 +15,7 @@
 #include <vtkPolyData.h>
 #include <vtkPolyDataMapper.h>
 
-#include "CAD_Operation.h"
+#include "CAD_PartOp.h"
 
 
 #include <variant>

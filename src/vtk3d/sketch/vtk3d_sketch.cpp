@@ -14,7 +14,7 @@
 #include "Logger.h"
 
 
-Vtk3d_Sketch::Vtk3d_Sketch(vtk3d_MainView* view, CadOperation* li_ptr_Operation)
+Vtk3d_Sketch::Vtk3d_Sketch(vtk3d_MainView* view, CadPartOp* li_ptr_Operation)
     : AbstractViewMode(view),
     m_tool(Tool_Select(this))
 {
@@ -33,7 +33,7 @@ Vtk3d_Sketch::Vtk3d_Sketch(vtk3d_MainView* view, CadOperation* li_ptr_Operation)
 
 
     if (nullptr == li_ptr_Operation) {
-        PartRefs.SetOperation( new CadOperation("Esquisse test", SketchParams() ) );
+        PartRefs.SetOperation( new CadPartOp("Esquisse test", SketchParams() ) );
     } else {
         PartRefs.SetOperation( li_ptr_Operation );
     }

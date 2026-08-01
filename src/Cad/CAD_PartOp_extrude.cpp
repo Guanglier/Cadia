@@ -1,5 +1,5 @@
 
-#include "CAD_Operation.h"
+#include "CAD_PartOp.h"
 #include "CAD_Part.h" // Indispensable ICI pour que le compilateur connaisse enfin les methodes de CAD_Part !
 
 // OpenCASCADE requis pour construire la geometrie
@@ -35,7 +35,7 @@
 TopoDS_Shape ExtrudeParams::evaluate(const CAD_Part& part) const {
     std::cout << "ExtrudeParams::evaluate\n";
 
-    const CadOperation* opEsquisse = part.trouverOperation(this->SketchId);
+    const CadPartOp* opEsquisse = part.trouverOperation(this->SketchId);
     if (!opEsquisse) {
         LOG_ERROR << "\tExtrudeParams::evaluate -> Erreur : Esquisse parente ID "
                   << this->SketchId << " introuvable." << std::endl;

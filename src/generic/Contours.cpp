@@ -2,7 +2,7 @@
 
 #include "Contours.h"
 
-//#include "CAD_Operation.h" // Conserve tes inclusions d'origine
+//#include "CAD_PartOp.h" // Conserve tes inclusions d'origine
 #include <gp_Pln.hxx>
 #include <deque>
 #include <algorithm>

@@ -55,7 +55,7 @@ void MainWindow::on_test_CreeForme(){
 
         doc.tst_add_op_step_2();
         doc.compute_final_topo();
-        //CadOperation* opDansDoc = doc.trouverOperationMutable(6);
+        //CadPartOp* opDansDoc = doc.trouverOperationMutable(6);
         m_view3d->synchroniserPart(1, doc);
         //if (opDansDoc){
         //    std::cout << "opDansDoc update  " << std::endl;
@@ -101,7 +101,7 @@ void MainWindow::on_test_ModifieForme(){
     if (ok) {
         qDebug() << "\tL'utilisateur a saisi une distance de :" << distance << "mm";
 
-        CadOperation*  opDansDoc = doc.trouverOperationMutable(6);
+        CadPartOp*  opDansDoc = doc.trouverOperationMutable(6);
         if ( !opDansDoc){
             qDebug() << "ERR : opDansDoc.\n";
             return;
@@ -139,11 +139,11 @@ void MainWindow::on_test_ModifieForme(){
 
 
             //--- mise a jour
-            CadOperation*  opDansDoc2 = doc.trouverOperationMutable(6);
+            CadPartOp*  opDansDoc2 = doc.trouverOperationMutable(6);
             doc.revaluerOperation( *opDansDoc2);
 
             //--- mise a jour
-            CadOperation*  opDansDocExtrude = doc.trouverOperationMutable(7);
+            CadPartOp*  opDansDocExtrude = doc.trouverOperationMutable(7);
             doc.revaluerOperation( *opDansDocExtrude);
             doc.compute_final_topo();
             m_view3d->synchroniserDocument(1, doc);
@@ -200,7 +200,7 @@ void MainWindow::onTreeViewOperation_clicked(const QModelIndex& index){
         uint64_t opId = idVariant.toULongLong();
         std::cout << "Id=" << opId << " ";
 
-        CadOperation*  ptr_op = doc.trouverOperationMutable (opId);
+        CadPartOp*  ptr_op = doc.trouverOperationMutable (opId);
         if (nullptr == ptr_op){
             std::cout << " -> ERR nullptr ptr_op = doc.trouverOperationMutable (opId) " << std::endl;
             return;
@@ -213,11 +213,11 @@ void MainWindow::onTreeViewOperation_clicked(const QModelIndex& index){
 
 
             //--- listing des sketch dans le Part pour les proposer à la sélection
-            const IdRegistry<CadOperation>& operation_list = doc.getOperationRegistry();
-            std::vector<CadOperation> op_list = operation_list.getItems();
+            const IdRegistry<CadPartOp>& operation_list = doc.getOperationRegistry();
+            std::vector<CadPartOp> op_list = operation_list.getItems();
             std::vector<ExtrusionDialog_SketchRef> SketchRefList;
             for (size_t i = 0; i < op_list.size(); ++i) {
-                const CadOperation& op_i = op_list[i];
+                const CadPartOp& op_i = op_list[i];
                 const OperationParams& params = op_i.getParams();
 
                 // On vérifie si l'opération courante encapsule un SketchParams, si oui on l'enregistre dans la liste.
@@ -262,7 +262,7 @@ void MainWindow::onTreeViewOperation_clicked(const QModelIndex& index){
             }
 
         }else if (auto* extrudeParams = std::get_if<SketchParams>(&ptr_op_param)) {
-            //CadOperation*  ptr_op = doc.trouverOperationMutable (opId);
+            //CadPartOp*  ptr_op = doc.trouverOperationMutable (opId);
             m_view3d->mode_passerModeEsquisse(opId);
             SetAffichage_Esquisse ();
             std::cout << " -> SketchParams ! ";
@@ -289,7 +289,7 @@ void MainWindow::onTreeShowContextMenu(const QPoint& pos) {
 
     // Extraction de l'ID stocké via ton IdRole
     int opId = index.data(CadTreeModel::IdRole).toInt();
-    CadOperation*  ptr_op = doc.trouverOperationMutable (opId);
+    CadPartOp*  ptr_op = doc.trouverOperationMutable (opId);
     if (nullptr == ptr_op){
         std::cout << " -> ERR nullptr ptr_op = doc.trouverOperationMutable (opId) " << std::endl;
     }

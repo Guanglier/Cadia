@@ -9,7 +9,7 @@
 #include <vtkCellArray.h>
 #include <vtkAssembly.h>
 #include <TopoDS_Shape.hxx>
-#include "CAD_Operation.h"
+#include "CAD_PartOp.h"
 #include <set>
 #include <variant>
 #include <type_traits>
@@ -153,7 +153,7 @@ private:
     void    updateWireframeActor(vtkActor* actor, const TopoDS_Shape& shape, const float color[3]);
     void    updateRepereDorigineActor(vtkActor* actor, const TopoDS_Shape& shape, const float color[3], float opacity);
 
-    vtkSmartPointer<vtkAssembly>    buildSketchAssembly(const CadOperation& op);     // Pour gérer l'affichage d'une sketch complète (profils + axes) via un Assembly VTK
+    vtkSmartPointer<vtkAssembly>    buildSketchAssembly(const CadPartOp& op);     // Pour gérer l'affichage d'une sketch complète (profils + axes) via un Assembly VTK
 
 
     CadResponseCallback m_onResponseCallback;
