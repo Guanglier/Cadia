@@ -363,6 +363,10 @@ bool SketchSnapperManager::alignWithExistingPoints(gp_Pnt2d& lio_Point2D, gp_Pnt
 
     // --- LA LAMBDA DE FACTORISATION ---
     auto evaluerPoint = [&](const gp_Pnt2d& pt2D, const gp_Pnt& pt3D) {
+
+        if (!snapPointsVisited_IsPointInTheList(pt2D)) return;
+
+
         // Test sur l'axe X (alignement vertical)
         double distX = std::abs(lio_Point2D.X() - pt2D.X());
         if (distX < plusProcheDistanceX) {
