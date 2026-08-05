@@ -68,9 +68,9 @@ namespace PartSketchConstraint{
 		VerticalConstraint,
 		HorizontalConstraint,
 		ParallelConstraint,
-		DistanceConstraint,
 		PerpendicularConstraint,
 		CoincidentConstraint,
+		DistanceConstraint,
 		RadiusConstraint
 	>;
 	

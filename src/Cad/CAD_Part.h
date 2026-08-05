@@ -11,10 +11,10 @@
 
 class CAD_Part {
 private:
-    std::string               m_filename = "";
-    std::string               m_path = "";
-    IdRegistry<CadPartOp>  m_operationRegistry;
-    uint64_t                  m_operation_nextId = 1;
+    std::string                 m_filename = "";
+    std::string                 m_path = "";
+    IdRegistry<CadPartOp>       m_operationRegistry;
+    uint64_t                    m_operation_nextId = 1;
 
     void tst_dump_tree(std::ostream& flux_out = std::cout) const;
 

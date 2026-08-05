@@ -94,6 +94,14 @@ qt_add_executable(Cad_IA
     src/Qt/mainwindow_slots.cpp
     src/Qt/mainwindow_CadResponses.cpp
     src/Qt/mainwindow_CadTreeView.cpp
+    src/Qt/mainwindow_ToolBarConstraints.cpp
+    src/Qt/mainwindow_ToolBarPrimitives.cpp
+    src/Qt/Dialog_SketchHelper.cpp
+    src/Qt/Dialog_SketchHelper.h
+    src/Qt/Dialog_ConstraintPopup.cpp
+    src/Qt/Dialog_ConstraintPopup.h
+    src/Qt/Dialog_SketchHelper_Popup.h
+    src/Qt/Dialog_SketchHelper_Popup.cpp
     src/Qt/mainwindow.h
     src/Qt/extrusiondialog.h
     src/Qt/extrusiondialog.cpp

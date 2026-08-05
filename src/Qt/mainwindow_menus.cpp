@@ -31,17 +31,19 @@ void MainWindow::createMenus()
     m_editMenu->addAction(m_optionsAction);
 
     //--- partie menu de TEST ----------------
-    m_editMenu = barreMenu->addMenu(tr("&Test"));
-    m_editMenu->addAction(m_TestAction_CreeForme);
+    m_TestMenu = barreMenu->addMenu(tr("&Test"));
+    m_TestMenu->addAction(m_TestAction_CreeForme);
     //m_editMenu->addAction(m_TestAction_ModifieForme);
-    m_editMenu->addAction(m_TestAction_Dump_CAD_PartToConsole);
-    m_editMenu->addAction(m_TestAction_Dump_CAD_PartToFiles);
-    m_editMenu->addAction(m_TestAction_Dump_VTK);
-    m_editMenu->addAction(m_TestAction_ModeEsquisse);
-    m_editMenu->addAction(m_TestAction_Mode3D);
-    m_editMenu->addAction(m_TestAction_ComputeTopo);
+    m_TestMenu->addAction(m_TestAction_Dump_CAD_PartToConsole);
+    m_TestMenu->addAction(m_TestAction_Dump_CAD_PartToFiles);
+    m_TestMenu->addAction(m_TestAction_Dump_VTK);
+    m_TestMenu->addAction(m_TestAction_ModeEsquisse);
+    m_TestMenu->addAction(m_TestAction_Mode3D);
+    m_TestMenu->addAction(m_TestAction_ComputeTopo);
 
 
+    m_TestMenu->addSeparator();
+    m_TestMenu->addMenu(Menus.SketchHelper.m_testSketchHelperMenu);
 
 }
 
@@ -126,7 +128,25 @@ void MainWindow::createActions()
 
 
 
+void MainWindow::CreateMenu_SketchHelper (){
 
+
+    // 1. Création des actions du sous-menu
+    Menus.SketchHelper.m_testSketchCreateAction = new QAction(tr("create"), this);
+    Menus.SketchHelper.m_testSketchCreateAction->setStatusTip(tr("Créer et initialiser le sketch helper"));
+    connect(Menus.SketchHelper.m_testSketchCreateAction, &QAction::triggered, this, &MainWindow::on_test_SketchHelperCreate); // Remplace par ta fonction slot
+
+    Menus.SketchHelper.m_testSketchUpdateAction = new QAction(tr("update value"), this);
+    Menus.SketchHelper.m_testSketchUpdateAction->setStatusTip(tr("Mettre à jour les valeurs du sketch helper"));
+    connect(Menus.SketchHelper.m_testSketchUpdateAction, &QAction::triggered, this, &MainWindow::on_test_SketchHelperUpdate); // Remplace par ta fonction slot
+
+    // 2. Création du menu parent (le sous-menu)
+    Menus.SketchHelper.m_testSketchHelperMenu = new QMenu(tr("Test sketch helper"), this);
+
+    // 3. Ajout des actions dans ce sous-menu
+    Menus.SketchHelper.m_testSketchHelperMenu->addAction(Menus.SketchHelper.m_testSketchCreateAction);
+    Menus.SketchHelper.m_testSketchHelperMenu->addAction(Menus.SketchHelper.m_testSketchUpdateAction);
+}
 
 
 

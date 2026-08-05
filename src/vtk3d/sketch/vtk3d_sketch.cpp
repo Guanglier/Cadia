@@ -393,3 +393,18 @@ void Vtk3d_Sketch::Signaler_ChangementEsquisseIHM (){
 }
 
 
+void Vtk3d_Sketch::Signaler_Selection ( std::string li_string ){
+    CADEvent_RemonterEvent(CadResponseEvent{
+        0,
+        CadEvent::Sketch::RespSelection{
+            li_string
+        }
+    });
+}
+
+
+
+
+
+
+

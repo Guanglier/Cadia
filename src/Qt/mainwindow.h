@@ -10,11 +10,14 @@
 #include "vtk3d_MainView.h"
 #include <QToolBar>
 #include <QAction>
+#include <QHBoxLayout>
 
 #include "CadTreeModel.h"
 #include "CAD_Part.h"
 //#include "vtk3d_sketch_Tools.h"
 #include "CadResponseCustomEvent.h"
+#include "Dialog_ConstraintPopup.h"
+#include "Dialog_SketchHelper_Popup.h"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -42,6 +45,10 @@ private slots:
     void on_test_ModeEsquisse ();
     void on_test_Mode3D ();
     void on_test_ComputeTopo ();
+
+    void on_test_SketchHelperUpdate ();
+    void on_test_SketchHelperCreate ();
+
     void ListeIcones ();
 
     void onTreeViewOperation_clicked(const QModelIndex& index);
@@ -73,9 +80,15 @@ private:
     void creerToolbarVisibilite();
     void createToolBars_vues ();
 
+    QHBoxLayout* TabLayout_BtnRapides;
+    void ToolbarConstraints_Setup ();
+    void ToolbarPrimitives_Setup ();
+    Dialog_ConstraintPopup* m_activeConstraintPopup = nullptr;
+
     // Les Menus principaux
     QMenu* m_fileMenu;
     QMenu* m_editMenu; // Utile pour y glisser les options en bas
+    QMenu* m_TestMenu;
 
     // La Barre d'outils principale
     QToolBar* m_mainToolBar;
@@ -149,6 +162,17 @@ private:
             }
         }Constraints;
     }Sketch;
+
+
+    struct {
+        struct {
+            QMenu* m_testSketchHelperMenu = nullptr;
+            QAction* m_testSketchCreateAction = nullptr;
+            QAction* m_testSketchUpdateAction = nullptr;
+        } SketchHelper;
+    } Menus;
+    void CreateMenu_SketchHelper ();
+    Dialog_SketchHelper_Popup* m_sketchHelperPopup = nullptr;
 
 
     void traiterReponseCad(const CadResponseEvent& resp);

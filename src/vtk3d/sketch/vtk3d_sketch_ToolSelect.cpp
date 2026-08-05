@@ -286,6 +286,8 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
 
             m_Parent->m_SolverSession.Initialize(*sketchParams);
 
+            m_Parent->Signaler_Selection( " Sélection de point" );
+
             SolverInteractiveSession::GetIndicesForHandle(*sketchParams, (uint64_t) DynamicDrag.m_activePrimitiveId, DynamicDrag.PointDrag.IndexX, DynamicDrag.PointDrag.IndexY );
 
         }
@@ -374,7 +376,7 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
                     }
                 }, *Primm);
 
-
+                m_Parent->Signaler_Selection( " Sélection de ligne" );
             }
         }
         else {
@@ -385,6 +387,8 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
                 m_Parent->GetView()->m_Chighlighter->masquerSurbrillance();
                 PrimitiveIsSelected = false;
             }
+
+            m_Parent->Signaler_Selection( "Dé-Sélection" );
         }
 
         m_Parent->GetView()->renderWindow()->Render();

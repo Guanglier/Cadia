@@ -7,6 +7,9 @@
 #include "CadTreeModel.h"
 #include <QMenu>
 #include <QAction>
+#include "Dialog_SketchHelper_Popup.h"
+#include "Dialog_SketchHelper.h"
+
 
 void MainWindow::onNewPart()
 {
@@ -180,6 +183,106 @@ void MainWindow::on_test_DumpCAD_PartToFiles (){
 }
 
 
+//========================================================================
+//      TEST sketch helper
+//========================================================================
+void MainWindow::on_test_SketchHelperCreate()
+{
+    // Si la fenêtre n'existe pas encore, on l'instancie
+    if (!m_sketchHelperPopup) {
+        m_sketchHelperPopup = new Dialog_SketchHelper_Popup(this);
+
+        // Optionnel : Gérer la fermeture pour nettoyer le pointeur proprement
+        connect(m_sketchHelperPopup, &QDialog::finished, this, [this]() {
+            m_sketchHelperPopup->deleteLater();
+            m_sketchHelperPopup = nullptr;
+        });
+
+        // Connexion des signaux de la popup vers les slots de ta MainWindow (si besoin)
+        connect(m_sketchHelperPopup, &Dialog_SketchHelper_Popup::doubleValueChanged,
+                this, [](const QString& id, double val) {
+                    qDebug() << "Valeur modifiée pour :" << id << "=" << val;
+                });
+    }
+
+    // 1. On prépare la structure de données initiale (Helper)
+    DialogSketchHelper::Helper initialHelper;
+    initialHelper.title = "Assistant d'Esquisse : Ligne";
+    initialHelper.instructionText = "Veuillez entrer la longueur et sélectionner le point cible.";
+    initialHelper.isSelectionComplete = false;
+    initialHelper.showButtonCancel = true;
+    initialHelper.showButtonReset = false; // Masque le bouton Réinitialiser par exemple
+    initialHelper.showButtonOk = true;
+    initialHelper.isButtonOkEnabled = false;
+
+    // Ajout d'un champ double (ex: distance)
+    DialogSketchHelper::ChampInputDouble champDist;
+    champDist.id = "val_distance";
+    champDist.title = "Longueur :";
+    champDist.value = 50.0;
+    champDist.b_IsFocus = true;      // Met le focus dessus
+    champDist.b_IsDisabled = false;  // Actif
+    champDist.b_IsValid = false;      // Valide au départ
+    initialHelper.champMultiple.push_back(champDist);
+
+    // Ajout d'un champ de sélection (ex: point cible)
+    DialogSketchHelper::ChampInputSelection champSel;
+    champSel.id = "sel_point";
+    champSel.title = "Point d'arrivée :";
+    champSel.IsOk = false;          // Pas encore sélectionné
+    champSel.b_IsFocus = false;
+    champSel.b_IsDisabled = true;
+    champSel.b_IsValid = false;     // Invalide -> Affichera la bordure/croix rouge
+    initialHelper.champMultiple.push_back(champSel);
+
+    // 2. On envoie les données à la popup
+    m_sketchHelperPopup->setHelperData(initialHelper);
+
+    // 3. On l'affiche (en mode non-bloquant show() pour pouvoir tester le bouton "update")
+    m_sketchHelperPopup->show();
+    m_sketchHelperPopup->raise();
+    m_sketchHelperPopup->activateWindow();
+}
+
+void MainWindow::on_test_SketchHelperUpdate()
+{
+    if (!m_sketchHelperPopup || !m_sketchHelperPopup->isVisible()) {
+        qDebug() << "La popup du Sketch Helper n'est pas ouverte ! Cliquez d'abord sur 'create'.";
+        return;
+    }
+
+    // On prépare une structure modifiée (par exemple, l'utilisateur a entré une valeur,
+    // et la sélection a maintenant réussi, rendant le champ valide)
+    DialogSketchHelper::Helper updatedHelper;
+    updatedHelper.title = "Assistant d'Esquisse : Ligne (Mis à jour)";
+    updatedHelper.instructionText = "Sélection réussie ! Vous pouvez valider.";
+    updatedHelper.isSelectionComplete = true;
+
+    // Champ double mis à jour (ex: valeur changée à 75.5)
+    DialogSketchHelper::ChampInputDouble champDist;
+    champDist.id = "val_distance";
+    champDist.title = "Longueur :";
+    champDist.value = 75.5;
+    champDist.b_IsFocus = false;
+    champDist.b_IsDisabled = false;
+    champDist.b_IsValid = true;
+    updatedHelper.champMultiple.push_back(champDist);
+
+    // Champ de sélection mis à jour (IsOk = true, b_IsValid = true -> passe en vert/normal)
+    DialogSketchHelper::ChampInputSelection champSel;
+    champSel.id = "sel_point";
+    champSel.title = "Point d'arrivée :";
+    champSel.IsOk = true;           // Maintenant sélectionné !
+    champSel.b_IsFocus = false;
+    champSel.b_IsDisabled = false;
+    champSel.b_IsValid = true;      // Devient valide (disparition de la croix rouge)
+    updatedHelper.champMultiple.push_back(champSel);
+
+    // On envoie la nouvelle structure : la popup fera son "diffing" intelligemment
+    m_sketchHelperPopup->setHelperData(updatedHelper);
+}
+
+
 
 
 //========================================================================
@@ -322,9 +425,11 @@ void MainWindow::onTreeShowContextMenu(const QPoint& pos) {
         std::cout << " -> INCONNU ! ! ";
     }
 
-
-
 }
+
+
+
+
 
 
 

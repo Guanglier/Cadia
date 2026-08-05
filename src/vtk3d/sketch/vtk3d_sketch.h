@@ -136,6 +136,7 @@ public:
     void Signaler_ChangementEsquisseIHM ();
     void Signaler_ActivationModeEsquisse();
     void Signaler_ActivationModePart ();
+    void Signaler_Selection ( std::string li_string );
 
     //- restreindre la copie et le déplacement
     Vtk3d_Sketch(const Vtk3d_Sketch&) = delete;

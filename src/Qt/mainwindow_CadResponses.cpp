@@ -56,6 +56,15 @@ void MainWindow::traiterReponseCad(const CadResponseEvent& resp) {
             break;
         }
     }
+    if (auto* status = std::get_if<CadEvent::Sketch::RespSelection>(&resp.params)) {
+        if (m_activeConstraintPopup) {
+            m_activeConstraintPopup->setSelectionStatus( QString::fromStdString(status->text)  );
+        }
+
+
+    }
+
+
 
     if ( auto* status=std::get_if<CadEvent::Part::RespGeneralSignal>(&resp.params)) {
         switch ( status->message ){

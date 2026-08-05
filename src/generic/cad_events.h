@@ -40,10 +40,12 @@ namespace CadEvent::Sketch {
     struct CmdSetPrecisionValue { double value; };
     struct CmdConstraints { CadEvent_PartSketchConstraints cmd; };
 
+    //----------- réponses ou envoi vers qt -------
     struct RespStatus { std::string text; };
     struct RespDimensions { double length; double angle; };
     struct RespChangedTool { CadEvent_SketchToolMode toolMode; };
     struct RespGeneralSignal {CadEvent_SketchGeneralMessage message; };
+    struct RespSelection { std::string text; };
 }
 
 // ============================================================================
@@ -90,6 +92,7 @@ namespace CadEvent::Core {
 }
 
 
+
 // Le super-variant qui peut transporter N'IMPORTE QUEL message de l'application
 using CadCommandParams = std::variant<
     std::monostate,
@@ -125,6 +128,7 @@ using CadResponseParams = std::variant<
     CadEvent::Sketch::RespDimensions,
     CadEvent::Sketch::RespChangedTool,
     CadEvent::Sketch::RespGeneralSignal,
+    CadEvent::Sketch::RespSelection,
 
     CadEvent::Part::RespGeneralSignal,
 
