@@ -86,88 +86,6 @@ void MainWindow::on_test_ModifieForme(){
 
     std::cout << "TEST 2  " << std::endl;
 
-    /*
-
-    // Ouvre une boîte de dialogue synchrone pour demander un entier
-    int distance = QInputDialog::getInt(
-        this,                               // Parent
-        tr("Paramètre d'extrusion"),        // Titre de la fenêtre
-        tr("Distance d'extrusion (mm) :"),  // Message / Label de consigne
-        10,                                 // Valeur par défaut
-        1,                                  // Valeur minimale
-        1000,                               // Valeur maximale
-        1,                                  // Pas de incrémentation (step)
-        &ok                                 // Pointeur pour récupérer l'état (OK ou Annuler)
-        );
-
-    // Vérification si l'utilisateur a cliqué sur OK
-    if (ok) {
-        qDebug() << "\tL'utilisateur a saisi une distance de :" << distance << "mm";
-
-        CadPartOp*  opDansDoc = doc.trouverOperationMutable(6);
-        if ( !opDansDoc){
-            qDebug() << "ERR : opDansDoc.\n";
-            return;
-        }else{
-            qDebug() << "\topDansDoc ok\n";
-        }
-        OperationParams &paramVariant = opDansDoc->getParamsMutable();
-        if (SketchParams* sketch = std::get_if<SketchParams>(&paramVariant)) {
-
-            SketchPrimitive* prim = sketch->GetPrimitiveMutable ( 1 );
-            if (prim){
-                // On vérifie si c'est bien une ligne
-                if (SketchLine* line = std::get_if<SketchLine>(prim)) {
-                    line->endPoint.SetX(60);
-                    line->endPoint.SetY(distance);
-                }else{
-                    qDebug() << "\tERR if if (SketchLine* line = std::get_if<SketchLine>(prim)) \n";
-                }
-            }else{
-                qDebug() << "\tERR n'est pas une sketch primitive : SketchPrimitive* prim = sketch->GetPrimitiveMutable ( 1 ) \n";
-            }
-
-            SketchPrimitive* prim2 = sketch->GetPrimitiveMutable ( 2 );
-            if (prim2){
-                // On vérifie si c'est bien une ligne
-                if (SketchLine* line = std::get_if<SketchLine>(prim2)) {
-                    line->startPoint.SetX(60);
-                    line->startPoint.SetY(distance);
-                }else{
-                    qDebug() << "\tERR if if (SketchLine* line = std::get_if<SketchLine>(prim)) \n";
-                }
-            }else{
-                qDebug() << "\tERR n'est pas une sketch primitive : SketchPrimitive* prim = sketch->GetPrimitiveMutable ( 1 ) \n";
-            }
-
-
-            //--- mise a jour
-            CadPartOp*  opDansDoc2 = doc.trouverOperationMutable(6);
-            doc.revaluerOperation( *opDansDoc2);
-
-            //--- mise a jour
-            CadPartOp*  opDansDocExtrude = doc.trouverOperationMutable(7);
-            doc.revaluerOperation( *opDansDocExtrude);
-            doc.compute_final_topo();
-            m_view3d->synchroniserDocument(1, doc);
-            if (opDansDocExtrude){
-                std::cout << "opDansDocExtrude update  " << std::endl;
-                //m_view3d->updateShape(  opDansDocExtrude->getResultingTopo() );
-                m_cadTreeModel->refreshFromPart(doc);
-                m_treeView->expandAll();
-            }else{
-                qDebug() << "\tERR if (opDansDocExtrude) second \n";
-            }
-
-
-        } else {
-            qWarning() << "Erreur : L'opération 6 n'est pas une Esquisse !";
-        }
-    } else {
-        qDebug() << "Saisie annulée par l'utilisateur.";
-    }
-    //doc.tst_dump_all_op_to_file();
-    */
 }
 
 void MainWindow::on_test_DumpVTK_ToConsole (){
@@ -206,14 +124,13 @@ void MainWindow::on_test_SketchHelperCreate()
     }
 
     // 1. On prépare la structure de données initiale (Helper)
-    DialogSketchHelper::Helper initialHelper;
-    initialHelper.title = "Assistant d'Esquisse : Ligne";
-    initialHelper.instructionText = "Veuillez entrer la longueur et sélectionner le point cible.";
-    initialHelper.isSelectionComplete = false;
-    initialHelper.showButtonCancel = true;
-    initialHelper.showButtonReset = false; // Masque le bouton Réinitialiser par exemple
-    initialHelper.showButtonOk = true;
-    initialHelper.isButtonOkEnabled = false;
+    m_TestUpdatedHelper.title = "Assistant d'Esquisse : Ligne";
+    m_TestUpdatedHelper.instructionText = "Veuillez entrer la longueur et sélectionner le point cible.";
+    m_TestUpdatedHelper.isSelectionComplete = false;
+    m_TestUpdatedHelper.showButtonCancel = true;
+    m_TestUpdatedHelper.showButtonReset = false; // Masque le bouton Réinitialiser par exemple
+    m_TestUpdatedHelper.showButtonOk = false;
+    m_TestUpdatedHelper.isButtonOkEnabled = false;
 
     // Ajout d'un champ double (ex: distance)
     DialogSketchHelper::ChampInputDouble champDist;
@@ -223,7 +140,7 @@ void MainWindow::on_test_SketchHelperCreate()
     champDist.b_IsFocus = true;      // Met le focus dessus
     champDist.b_IsDisabled = false;  // Actif
     champDist.b_IsValid = false;      // Valide au départ
-    initialHelper.champMultiple.push_back(champDist);
+    m_TestUpdatedHelper.champMultiple.push_back(champDist);
 
     // Ajout d'un champ de sélection (ex: point cible)
     DialogSketchHelper::ChampInputSelection champSel;
@@ -233,10 +150,10 @@ void MainWindow::on_test_SketchHelperCreate()
     champSel.b_IsFocus = false;
     champSel.b_IsDisabled = true;
     champSel.b_IsValid = false;     // Invalide -> Affichera la bordure/croix rouge
-    initialHelper.champMultiple.push_back(champSel);
+    m_TestUpdatedHelper.champMultiple.push_back(champSel);
 
     // 2. On envoie les données à la popup
-    m_sketchHelperPopup->setHelperData(initialHelper);
+    m_sketchHelperPopup->setHelperData(m_TestUpdatedHelper);
 
     // 3. On l'affiche (en mode non-bloquant show() pour pouvoir tester le bouton "update")
     m_sketchHelperPopup->show();
@@ -244,7 +161,7 @@ void MainWindow::on_test_SketchHelperCreate()
     m_sketchHelperPopup->activateWindow();
 }
 
-void MainWindow::on_test_SketchHelperUpdate()
+void MainWindow::on_test_SketchHelperUpdate_First()
 {
     if (!m_sketchHelperPopup || !m_sketchHelperPopup->isVisible()) {
         qDebug() << "La popup du Sketch Helper n'est pas ouverte ! Cliquez d'abord sur 'create'.";
@@ -253,10 +170,13 @@ void MainWindow::on_test_SketchHelperUpdate()
 
     // On prépare une structure modifiée (par exemple, l'utilisateur a entré une valeur,
     // et la sélection a maintenant réussi, rendant le champ valide)
-    DialogSketchHelper::Helper updatedHelper;
-    updatedHelper.title = "Assistant d'Esquisse : Ligne (Mis à jour)";
-    updatedHelper.instructionText = "Sélection réussie ! Vous pouvez valider.";
-    updatedHelper.isSelectionComplete = true;
+    //DialogSketchHelper::Helper updatedHelper;
+    m_TestUpdatedHelper.title = "Assistant d'Esquisse : Ligne (Mis à jour)";
+    m_TestUpdatedHelper.instructionText = "Sélection réussie ! Vous pouvez valider.";
+    m_TestUpdatedHelper.isSelectionComplete = true;
+    m_TestUpdatedHelper.showButtonOk = true;
+    m_TestUpdatedHelper.showButtonReset = true;
+    m_TestUpdatedHelper.showButtonCancel = true;
 
     // Champ double mis à jour (ex: valeur changée à 75.5)
     DialogSketchHelper::ChampInputDouble champDist;
@@ -266,7 +186,7 @@ void MainWindow::on_test_SketchHelperUpdate()
     champDist.b_IsFocus = false;
     champDist.b_IsDisabled = false;
     champDist.b_IsValid = true;
-    updatedHelper.champMultiple.push_back(champDist);
+    m_TestUpdatedHelper.champMultiple.push_back(champDist);
 
     // Champ de sélection mis à jour (IsOk = true, b_IsValid = true -> passe en vert/normal)
     DialogSketchHelper::ChampInputSelection champSel;
@@ -276,13 +196,17 @@ void MainWindow::on_test_SketchHelperUpdate()
     champSel.b_IsFocus = false;
     champSel.b_IsDisabled = false;
     champSel.b_IsValid = true;      // Devient valide (disparition de la croix rouge)
-    updatedHelper.champMultiple.push_back(champSel);
+    m_TestUpdatedHelper.champMultiple.push_back(champSel);
 
     // On envoie la nouvelle structure : la popup fera son "diffing" intelligemment
-    m_sketchHelperPopup->setHelperData(updatedHelper);
+    m_sketchHelperPopup->setHelperData(m_TestUpdatedHelper);
+
+    //m_sketchHelperPopup->updateUI ( m_TestUpdatedHelper);
 }
 
+void MainWindow::on_test_SketchHelperUpdate_Second(){
 
+}
 
 
 //========================================================================

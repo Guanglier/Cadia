@@ -36,6 +36,9 @@
 
 #include "CAD_PartOp.h"
 
+#include "vtk3d_sketch_ToolSelect__SetDimension.h"
+using Tool_Select_Subtool = std::variant<ToolSelect_SetDimension>;
+
 class Vtk3d_Sketch;
 
 struct Tool_Select  {
@@ -66,6 +69,44 @@ struct Tool_Select  {
     void CADEvent_TraiterCommande(const CadCommandEvent& event);
 
     Vtk3d_Sketch*   m_Parent = nullptr;
+
+    Tool_Select_Subtool     m_subtool;
+    void subtool_Changesubtool(){
+        std::visit([this](auto& subtool) {
+            using T = std::decay_t < decltype (subtool ) > ;
+            if ( std::is_same_v<T,ToolSelect_SetDimension> ){
+                subtool.init(this);
+            }
+        }, m_subtool);
+    }
+    void  subtool_ExecClic(){
+        std::visit([this](auto& subtool) {
+            using T = std::decay_t < decltype (subtool ) > ;
+            if ( std::is_same_v<T,ToolSelect_SetDimension> ){
+                //return subtool.GetPopupDef();
+            }
+        }, m_subtool);
+    }
+    DialogSketchHelper::Helper& subtool_GetPopupDef()
+    {
+        return std::visit([](auto& subtool) -> DialogSketchHelper::Helper& {
+            using T = std::decay_t<decltype(subtool)>;
+
+            if constexpr (std::is_same_v<T, ToolSelect_SetDimension>) {
+                return subtool.GetPopupDef();
+            }
+            // Si tu ajoutes d'autres sous-outils plus tard :
+            // else if constexpr (std::is_same_v<T, AutreSousOutil>) {
+            //     return subtool.GetPopupDef();
+            // }
+            else {
+                // Fallback de sécurité (ex: si le variant contient std::monostate par défaut)
+                static DialogSketchHelper::Helper dummyHelper;
+                return dummyHelper;
+            }
+        }, m_subtool);
+    }
+
 
 
     enum class DragMode {

@@ -290,6 +290,22 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
 
             SolverInteractiveSession::GetIndicesForHandle(*sketchParams, (uint64_t) DynamicDrag.m_activePrimitiveId, DynamicDrag.PointDrag.IndexX, DynamicDrag.PointDrag.IndexY );
 
+
+
+            subtool_Changesubtool ();
+            DialogSketchHelper::Helper  helpdlg = subtool_GetPopupDef();
+
+/*
+            //--- remontée de l'évènement vers le QT
+            if (m_Parent) {
+                // Tu construis ton événement de réponse personnalisé
+                CadResponseEvent resp;
+                resp.PartId = 0;
+                resp.params = CadEvent::Sketch::RespSendPopupDef{ helpdlg };
+                m_Parent->CADEvent_RemonterEvent(resp);
+            }
+*/
+
         }
 
 
@@ -436,11 +452,11 @@ bool Tool_Select::gererkeyPressEvent(QKeyEvent* event) {
 void Tool_Select::CADEvent_TraiterCommande(const CadCommandEvent& event){
     if (auto* cmd = std::get_if<CadEvent::Sketch::CmdConstraints>(&event.params)  ) {
         switch ( cmd->cmd ){
-        case CadEvent::Sketch::CadEvent_PartSketchConstraints::Constraint_Resolve:
+        case CadEvent::Sketch::Constraints::Constraint_Resolve:
 
             break;
 
-        case CadEvent::Sketch::CadEvent_PartSketchConstraints::Set_Vertical:
+        case CadEvent::Sketch::Constraints::Set_Vertical:
             LOG_ERROR << "Tool_Select::CADEvent_TraiterCommande : vertical !" << std::endl;
             if ( true == PrimitiveIsSelected ){
                 auto* sketchParams = m_Parent->PartRefs.GetParams();

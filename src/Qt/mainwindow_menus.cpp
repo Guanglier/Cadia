@@ -134,11 +134,18 @@ void MainWindow::CreateMenu_SketchHelper (){
     // 1. Création des actions du sous-menu
     Menus.SketchHelper.m_testSketchCreateAction = new QAction(tr("create"), this);
     Menus.SketchHelper.m_testSketchCreateAction->setStatusTip(tr("Créer et initialiser le sketch helper"));
-    connect(Menus.SketchHelper.m_testSketchCreateAction, &QAction::triggered, this, &MainWindow::on_test_SketchHelperCreate); // Remplace par ta fonction slot
+    connect(Menus.SketchHelper.m_testSketchCreateAction, &QAction::triggered, this, &MainWindow::on_test_SketchHelperCreate);
 
     Menus.SketchHelper.m_testSketchUpdateAction = new QAction(tr("update value"), this);
-    Menus.SketchHelper.m_testSketchUpdateAction->setStatusTip(tr("Mettre à jour les valeurs du sketch helper"));
-    connect(Menus.SketchHelper.m_testSketchUpdateAction, &QAction::triggered, this, &MainWindow::on_test_SketchHelperUpdate); // Remplace par ta fonction slot
+    Menus.SketchHelper.m_testSketchUpdateAction->setStatusTip(tr("Entrer 1ere distance"));
+    connect(Menus.SketchHelper.m_testSketchUpdateAction, &QAction::triggered, this, &MainWindow::on_test_SketchHelperUpdate_First);
+
+    Menus.SketchHelper.m_testSketchUpdateSecondAction = new QAction(tr("update value"), this);
+    Menus.SketchHelper.m_testSketchUpdateSecondAction->setStatusTip(tr("Entrer 1ere distance"));
+    connect(Menus.SketchHelper.m_testSketchUpdateSecondAction, &QAction::triggered, this, &MainWindow::on_test_SketchHelperUpdate_Second);
+
+
+
 
     // 2. Création du menu parent (le sous-menu)
     Menus.SketchHelper.m_testSketchHelperMenu = new QMenu(tr("Test sketch helper"), this);
@@ -146,6 +153,7 @@ void MainWindow::CreateMenu_SketchHelper (){
     // 3. Ajout des actions dans ce sous-menu
     Menus.SketchHelper.m_testSketchHelperMenu->addAction(Menus.SketchHelper.m_testSketchCreateAction);
     Menus.SketchHelper.m_testSketchHelperMenu->addAction(Menus.SketchHelper.m_testSketchUpdateAction);
+    Menus.SketchHelper.m_testSketchHelperMenu->addAction(Menus.SketchHelper.m_testSketchUpdateSecondAction);
 }
 
 

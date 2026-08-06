@@ -46,8 +46,11 @@ private slots:
     void on_test_Mode3D ();
     void on_test_ComputeTopo ();
 
-    void on_test_SketchHelperUpdate ();
+
+
     void on_test_SketchHelperCreate ();
+    void on_test_SketchHelperUpdate_First ();
+    void on_test_SketchHelperUpdate_Second ();
 
     void ListeIcones ();
 
@@ -63,6 +66,9 @@ private:
     QMdiArea* m_mdiArea;
     QTreeView* m_treeView;
     vtk3d_MainView* m_view3d;
+
+
+    DialogSketchHelper::Helper m_TestUpdatedHelper;
 
     //--- ribbon
     QTabWidget* m_ribbonTabWidget; // Le conteneur du Ruban
@@ -169,6 +175,7 @@ private:
             QMenu* m_testSketchHelperMenu = nullptr;
             QAction* m_testSketchCreateAction = nullptr;
             QAction* m_testSketchUpdateAction = nullptr;
+            QAction* m_testSketchUpdateSecondAction = nullptr;
         } SketchHelper;
     } Menus;
     void CreateMenu_SketchHelper ();

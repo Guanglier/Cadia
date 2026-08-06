@@ -184,32 +184,32 @@ void Vtk3d_Sketch::desactiver() {
 }
 
 
-inline SketchTool_mode Vtk3d_Sketch::CadEventSketchMode_To_SketchToolMode (CadEvent::Sketch::CadEvent_SketchToolMode eventMode) {
+inline SketchTool_mode Vtk3d_Sketch::CadEventSketchMode_To_ToolMode (CadEvent::Sketch::ToolMode eventMode) {
     switch (eventMode) {
-    case CadEvent::Sketch::CadEvent_SketchToolMode::Draw_line:          return SketchTool_mode::Tool_Line;
-    case CadEvent::Sketch::CadEvent_SketchToolMode::Draw_Circle:        return SketchTool_mode::Tool_CircleDraw;
-    case CadEvent::Sketch::CadEvent_SketchToolMode::Draw_RectEdges:     return SketchTool_mode::Tool_RectEdgesDraw;
-    case CadEvent::Sketch::CadEvent_SketchToolMode::Draw_RectCenter:    return SketchTool_mode::Tool_RectCenterDraw;
-    case CadEvent::Sketch::CadEvent_SketchToolMode::Select:             return SketchTool_mode::Tool_Select;
-    case CadEvent::Sketch::CadEvent_SketchToolMode::Dimensions:         return SketchTool_mode::Tool_Dimensions;
-    case CadEvent::Sketch::CadEvent_SketchToolMode::SetConstraints:     return SketchTool_mode::Tool_SetConstraints;
+    case CadEvent::Sketch::ToolMode::Draw_line:          return SketchTool_mode::Tool_Line;
+    case CadEvent::Sketch::ToolMode::Draw_Circle:        return SketchTool_mode::Tool_CircleDraw;
+    case CadEvent::Sketch::ToolMode::Draw_RectEdges:     return SketchTool_mode::Tool_RectEdgesDraw;
+    case CadEvent::Sketch::ToolMode::Draw_RectCenter:    return SketchTool_mode::Tool_RectCenterDraw;
+    case CadEvent::Sketch::ToolMode::Select:             return SketchTool_mode::Tool_Select;
+    case CadEvent::Sketch::ToolMode::Dimensions:         return SketchTool_mode::Tool_Dimensions;
+    case CadEvent::Sketch::ToolMode::SetConstraints:     return SketchTool_mode::Tool_SetConstraints;
     default: return SketchTool_mode::Tool_Select; // Valeur de repli sécurisée
     }
 }
 // Conversion de l'interne vers l'IHM (pour la confirmation)
-inline CadEvent::Sketch::CadEvent_SketchToolMode Vtk3d_Sketch::SketchToolMode_To_CadEventSketchMode(SketchTool_mode internalMode) {
+inline CadEvent::Sketch::ToolMode Vtk3d_Sketch::ToolMode_To_CadEventSketchMode(SketchTool_mode internalMode) {
     switch (internalMode) {
-    case SketchTool_mode::Tool_Line:                return CadEvent::Sketch::CadEvent_SketchToolMode::Draw_line;
-    case SketchTool_mode::Tool_CircleDraw:          return CadEvent::Sketch::CadEvent_SketchToolMode::Draw_Circle;
-    case SketchTool_mode::Tool_RectEdgesDraw:       return CadEvent::Sketch::CadEvent_SketchToolMode::Draw_RectEdges;
-    case SketchTool_mode::Tool_RectCenterDraw:      return CadEvent::Sketch::CadEvent_SketchToolMode::Draw_RectCenter;
-    case SketchTool_mode::Tool_Select:              return CadEvent::Sketch::CadEvent_SketchToolMode::Select;
-    case SketchTool_mode::Tool_Dimensions:          return CadEvent::Sketch::CadEvent_SketchToolMode::Dimensions;
-    case SketchTool_mode::Tool_SetConstraints:      return CadEvent::Sketch::CadEvent_SketchToolMode::SetConstraints;
-    default: return CadEvent::Sketch::CadEvent_SketchToolMode::Select;
+    case SketchTool_mode::Tool_Line:                return CadEvent::Sketch::ToolMode::Draw_line;
+    case SketchTool_mode::Tool_CircleDraw:          return CadEvent::Sketch::ToolMode::Draw_Circle;
+    case SketchTool_mode::Tool_RectEdgesDraw:       return CadEvent::Sketch::ToolMode::Draw_RectEdges;
+    case SketchTool_mode::Tool_RectCenterDraw:      return CadEvent::Sketch::ToolMode::Draw_RectCenter;
+    case SketchTool_mode::Tool_Select:              return CadEvent::Sketch::ToolMode::Select;
+    case SketchTool_mode::Tool_Dimensions:          return CadEvent::Sketch::ToolMode::Dimensions;
+    case SketchTool_mode::Tool_SetConstraints:      return CadEvent::Sketch::ToolMode::SetConstraints;
+    default: return CadEvent::Sketch::ToolMode::Select;
     }
 }
-std::string SketchToolMode_To_String (SketchTool_mode internalMode) {
+std::string ToolMode_To_String (SketchTool_mode internalMode) {
     switch(internalMode) {
     case SketchTool_mode::Tool_CircleDraw:          return std::string ("Outil : Tool_CircleDraw !! ") ;        break;
     case SketchTool_mode::Tool_Line:                return std::string (  "Outil : Tool_Line !! ") ;            break;
@@ -224,7 +224,7 @@ std::string SketchToolMode_To_String (SketchTool_mode internalMode) {
 
 void Vtk3d_Sketch::sketch_ActivateTool(SketchTool_mode li_tool) {
     bool    ToolSelected = false;
-    //CadEvent::Sketch::CadEvent_SketchToolMode ToolModToSendHMI = CadEvent::Sketch::CadEvent_SketchToolMode::Draw_RectCenter;
+    //CadEvent::Sketch::ToolMode ToolModToSendHMI = CadEvent::Sketch::ToolMode::Draw_RectCenter;
 
     if (m_mode != li_tool) {
         m_mode = li_tool;
@@ -271,7 +271,7 @@ void Vtk3d_Sketch::sketch_ActivateTool(SketchTool_mode li_tool) {
 
         m_SnapperManager->snapPointsVisited_Clean();
 
-        l_string = SketchToolMode_To_String ( li_tool );
+        l_string = ToolMode_To_String ( li_tool );
         CadResponseEvent resp;
         resp.PartId = 0; // id du doc
         resp.params = CadEvent::Sketch::RespStatus{
@@ -281,7 +281,7 @@ void Vtk3d_Sketch::sketch_ActivateTool(SketchTool_mode li_tool) {
 
         if ( true == ToolSelected ){
             CadResponseEvent    resp;
-            resp.params = CadEvent::Sketch::RespChangedTool{ SketchToolMode_To_CadEventSketchMode ( li_tool ) };
+            resp.params = CadEvent::Sketch::RespChangedTool{ ToolMode_To_CadEventSketchMode ( li_tool ) };
             CADEvent_RemonterEvent (resp);
         }
 
@@ -314,13 +314,13 @@ void Vtk3d_Sketch::SolveEsquisse() {
 //-----------------------------------------------------------------------
 void Vtk3d_Sketch::CADEvent_TraiterCommande(const CadCommandEvent& event) {
     if (auto* cmd = std::get_if<CadEvent::Sketch::CmdActivateTool>(&event.params)  ) {
-        sketch_ActivateTool ( CadEventSketchMode_To_SketchToolMode ( cmd->toolMode ) );
+        sketch_ActivateTool ( CadEventSketchMode_To_ToolMode ( cmd->toolMode ) );
     }
 
 
     if (auto* cmd = std::get_if<CadEvent::Sketch::CmdConstraints>(&event.params)  ) {
         switch ( cmd->cmd ){
-            case CadEvent::Sketch::CadEvent_PartSketchConstraints::Constraint_Resolve:
+            case CadEvent::Sketch::Constraints::Constraint_Resolve:
                 if ( nullptr != PartRefs.GetOperation() ){
                     PartRefs.GetOperation()->setLocaleTopoChanged(true);
                     auto *SketchParam = std::get_if<SketchParams> (&PartRefs.GetOperation()->getParamsMutable() );
@@ -334,7 +334,7 @@ void Vtk3d_Sketch::CADEvent_TraiterCommande(const CadCommandEvent& event) {
                 }
                 break;
 
-            case CadEvent::Sketch::CadEvent_PartSketchConstraints::Set_Vertical:
+            case CadEvent::Sketch::Constraints::Set_Vertical:
                 LOG_ERROR << "Vtk3d_Sketch::CADEvent_TraiterCommande : vertical !" << std::endl;
                 if ( nullptr == PartRefs.GetOperation() ){
                     LOG_ERROR << "Vtk3d_Sketch::CADEvent_TraiterCommande :  nullptr == m_Operation " << std::endl;
@@ -371,7 +371,7 @@ void Vtk3d_Sketch::Signaler_ActivationModePart (){
     CADEvent_RemonterEvent(CadResponseEvent{
         0,
         CadEvent::Part::RespGeneralSignal{
-            CadEvent::Part::CadEvent_PartGeneralMessage::Activated
+            CadEvent::Part::GeneralMessage::Activated
         }
     });
 }
@@ -379,7 +379,7 @@ void Vtk3d_Sketch::Signaler_ActivationModeEsquisse (){
     CADEvent_RemonterEvent(CadResponseEvent{
         0,
         CadEvent::Sketch::RespGeneralSignal{
-            CadEvent::Sketch::CadEvent_SketchGeneralMessage::SketchActivated
+            CadEvent::Sketch::GeneralMessage::SketchActivated
         }
     });
 }
@@ -387,7 +387,7 @@ void Vtk3d_Sketch::Signaler_ChangementEsquisseIHM (){
     CADEvent_RemonterEvent(CadResponseEvent{
         0,
         CadEvent::Sketch::RespGeneralSignal{
-            CadEvent::Sketch::CadEvent_SketchGeneralMessage::SketchChanged
+            CadEvent::Sketch::GeneralMessage::SketchChanged
         }
     });
 }

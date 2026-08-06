@@ -56,6 +56,7 @@ void Dialog_SketchHelper_Popup::setHelperData(const DialogSketchHelper::Helper& 
         buildUI(newHelper);
     } else {
         updateUI(newHelper);
+
     }
 
     m_currentHelper = newHelper;

@@ -6,6 +6,7 @@
 #include <variant>
 #include <functional>
 #include <cstdint>
+#include "Dialog_SketchHelper.h"
 
 // ============================================================================
 // 1. MODULE ESQUISSE (SKETCH)
@@ -14,7 +15,7 @@ namespace CadEvent::Sketch {
 
 
 
-    enum class CadEvent_SketchToolMode{
+    enum class ToolMode{
         Draw_line,
         Draw_Circle,
         Draw_RectEdges,
@@ -23,40 +24,42 @@ namespace CadEvent::Sketch {
         Dimensions,
         SetConstraints
     };
-    enum class CadEvent_SketchGeneralMessage{
+    enum class GeneralMessage{
         SketchChanged,
         SketchActivated
     };
-    enum class CadEvent_PartSketchConstraints{
+    enum class Constraints{
         Constraint_Resolve,
         Set_Vertical,
-        Set_Horizontal
+        Set_Horizontal,
+        Set_Dimension
     };
     struct CmdActivateTool {
-        CadEvent_SketchToolMode toolMode;
+        ToolMode toolMode;
         int sub_mode = 0;
     };
     struct CmdCancel {};
     struct CmdSetPrecisionValue { double value; };
-    struct CmdConstraints { CadEvent_PartSketchConstraints cmd; };
+    struct CmdConstraints { Constraints cmd; };
 
     //----------- réponses ou envoi vers qt -------
     struct RespStatus { std::string text; };
     struct RespDimensions { double length; double angle; };
-    struct RespChangedTool { CadEvent_SketchToolMode toolMode; };
-    struct RespGeneralSignal {CadEvent_SketchGeneralMessage message; };
+    struct RespChangedTool { ToolMode toolMode; };
+    struct RespGeneralSignal {GeneralMessage message; };
     struct RespSelection { std::string text; };
+    struct RespSendPopupDef { DialogSketchHelper::Helper popup_def;};
 }
 
 // ============================================================================
 // 2. MODULE PART
 // ============================================================================
 namespace CadEvent::Part {
-    enum class CadEvent_PartGeneralMessage{
+    enum class GeneralMessage{
         Activated
     };
 
-    struct RespGeneralSignal {CadEvent_PartGeneralMessage message; };
+    struct RespGeneralSignal {GeneralMessage message; };
 }
 
 // ============================================================================
@@ -129,6 +132,7 @@ using CadResponseParams = std::variant<
     CadEvent::Sketch::RespChangedTool,
     CadEvent::Sketch::RespGeneralSignal,
     CadEvent::Sketch::RespSelection,
+    CadEvent::Sketch::RespSendPopupDef,
 
     CadEvent::Part::RespGeneralSignal,
 

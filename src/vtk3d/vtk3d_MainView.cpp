@@ -803,7 +803,7 @@ void vtk3d_MainView::CADEvent_TraiterCommande(const CadCommandEvent& event) {
 
 void vtk3d_MainView::CADEvent_RemonterEvent(const CadResponseEvent& event){
     // On exécute le callback donné par Qt s'il existe
-    if (m_onResponseCallback) {
+    if (m_onResponseCallback ) {
         m_onResponseCallback(event);
     }
 }

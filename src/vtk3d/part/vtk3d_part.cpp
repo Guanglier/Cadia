@@ -254,7 +254,7 @@ void Vtk3d_Part::Signaler_ActivationModePart (){
     CADEvent_RemonterEvent(CadResponseEvent{
         0,
         CadEvent::Part::RespGeneralSignal{
-            CadEvent::Part::CadEvent_PartGeneralMessage::Activated
+            CadEvent::Part::GeneralMessage::Activated
         }
     });
 }

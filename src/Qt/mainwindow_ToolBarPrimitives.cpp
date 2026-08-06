@@ -30,7 +30,7 @@ void MainWindow::ToolbarPrimitives_Setup (){
     connect(Sketch.Tool.actSelect, &QAction::triggered, this, [this](bool checked) {
         CadCommandEvent evt;
         evt.params = CadEvent::Sketch::CmdActivateTool{
-            CadEvent::Sketch::CadEvent_SketchToolMode::Select
+            CadEvent::Sketch::ToolMode::Select
         };
         m_view3d->CADEvent_TraiterCommande(evt);
     });
@@ -42,7 +42,7 @@ void MainWindow::ToolbarPrimitives_Setup (){
     connect(Sketch.Tool.actLine, &QAction::triggered, this, [this](bool checked) {
         CadCommandEvent evt;
         evt.params = CadEvent::Sketch::CmdActivateTool{
-            CadEvent::Sketch::CadEvent_SketchToolMode::Draw_line
+            CadEvent::Sketch::ToolMode::Draw_line
         };
         // Tu envoies la commande à ta vue 3D (qui la fera descendre vers l'outil)
         m_view3d->CADEvent_TraiterCommande(evt);
@@ -54,7 +54,7 @@ void MainWindow::ToolbarPrimitives_Setup (){
     connect(Sketch.Tool.actCircle, &QAction::triggered, this, [this]() {
         CadCommandEvent evt;
         evt.params = CadEvent::Sketch::CmdActivateTool{
-            CadEvent::Sketch::CadEvent_SketchToolMode::Draw_Circle
+            CadEvent::Sketch::ToolMode::Draw_Circle
         };
         m_view3d->CADEvent_TraiterCommande(evt);
     });
@@ -65,7 +65,7 @@ void MainWindow::ToolbarPrimitives_Setup (){
     connect(Sketch.Tool.actRectCenter, &QAction::triggered, this, [this]() {
         CadCommandEvent evt;
         evt.params = CadEvent::Sketch::CmdActivateTool{
-            CadEvent::Sketch::CadEvent_SketchToolMode::Draw_RectCenter
+            CadEvent::Sketch::ToolMode::Draw_RectCenter
         };
         m_view3d->CADEvent_TraiterCommande(evt);
     });
@@ -76,7 +76,7 @@ void MainWindow::ToolbarPrimitives_Setup (){
     connect(Sketch.Tool.actRectCorners, &QAction::triggered, this, [this]() {
         CadCommandEvent evt;
         evt.params = CadEvent::Sketch::CmdActivateTool{
-            CadEvent::Sketch::CadEvent_SketchToolMode::Draw_RectEdges
+            CadEvent::Sketch::ToolMode::Draw_RectEdges
         };
         m_view3d->CADEvent_TraiterCommande(evt);
     });

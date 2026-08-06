@@ -14,22 +14,22 @@ void MainWindow::traiterReponseCad(const CadResponseEvent& resp) {
             Sketch.Constraints.uncheck_all();
 
         switch(status->toolMode){
-        case CadEvent::Sketch::CadEvent_SketchToolMode::Draw_line:
+        case CadEvent::Sketch::ToolMode::Draw_line:
             Sketch.Tool.actLine->setChecked(true);
             break;
-        case CadEvent::Sketch::CadEvent_SketchToolMode::Draw_Circle:
+        case CadEvent::Sketch::ToolMode::Draw_Circle:
             Sketch.Tool.actCircle->setChecked(true);
             break;
-        case CadEvent::Sketch::CadEvent_SketchToolMode::Draw_RectEdges:
+        case CadEvent::Sketch::ToolMode::Draw_RectEdges:
             Sketch.Tool.actRectCorners->setChecked(true);
             break;
-        case CadEvent::Sketch::CadEvent_SketchToolMode::Draw_RectCenter:
+        case CadEvent::Sketch::ToolMode::Draw_RectCenter:
             Sketch.Tool.actRectCenter->setChecked(true);
             break;
-        case CadEvent::Sketch::CadEvent_SketchToolMode::Select:
+        case CadEvent::Sketch::ToolMode::Select:
             Sketch.Tool.actSelect->setChecked(true);
             break;
-        case CadEvent::Sketch::CadEvent_SketchToolMode::SetConstraints:
+        case CadEvent::Sketch::ToolMode::SetConstraints:
             Sketch.Constraints.actConstHorizontal->setChecked(true);
             break;
         default:
@@ -41,12 +41,12 @@ void MainWindow::traiterReponseCad(const CadResponseEvent& resp) {
     if (auto* status = std::get_if<CadEvent::Sketch::RespGeneralSignal>(&resp.params)) {
         switch ( status->message ){
 
-        case CadEvent::Sketch::CadEvent_SketchGeneralMessage::SketchChanged:
+        case CadEvent::Sketch::GeneralMessage::SketchChanged:
             m_cadTreeModel->m_DisplaySolids = false;
             m_cadTreeModel->m_DisplaySketchDetails = true;
             TreeView_Cfg_SketchView ();
             break;
-        case CadEvent::Sketch::CadEvent_SketchGeneralMessage::SketchActivated:
+        case CadEvent::Sketch::GeneralMessage::SketchActivated:
             m_cadTreeModel->m_DisplaySolids = false;
             m_cadTreeModel->m_DisplaySketchDetails = true;
             TreeView_Cfg_SketchView ();
@@ -60,15 +60,40 @@ void MainWindow::traiterReponseCad(const CadResponseEvent& resp) {
         if (m_activeConstraintPopup) {
             m_activeConstraintPopup->setSelectionStatus( QString::fromStdString(status->text)  );
         }
-
-
     }
 
+    if (auto* status = std::get_if<CadEvent::Sketch::RespSendPopupDef>(&resp.params)) {
 
+        DialogSketchHelper::Helper popup_def = status->popup_def;
+
+
+        // 3. On l'affiche (en mode non-bloquant show() pour pouvoir tester le bouton "update")
+        // Si la fenêtre n'existe pas encore, on l'instancie
+        if (!m_sketchHelperPopup) {
+            m_sketchHelperPopup = new Dialog_SketchHelper_Popup(this);
+
+            // Optionnel : Gérer la fermeture pour nettoyer le pointeur proprement
+            connect(m_sketchHelperPopup, &QDialog::finished, this, [this]() {
+                m_sketchHelperPopup->deleteLater();
+                m_sketchHelperPopup = nullptr;
+            });
+
+            // Connexion des signaux de la popup vers les slots de ta MainWindow (si besoin)
+            connect(m_sketchHelperPopup, &Dialog_SketchHelper_Popup::doubleValueChanged,
+                    this, [](const QString& id, double val) {
+                        qDebug() << "Valeur modifiée pour :" << id << "=" << val;
+                    });
+        }
+        m_sketchHelperPopup->setHelperData(popup_def);
+
+        m_sketchHelperPopup->show();
+        m_sketchHelperPopup->raise();
+        m_sketchHelperPopup->activateWindow();
+    }
 
     if ( auto* status=std::get_if<CadEvent::Part::RespGeneralSignal>(&resp.params)) {
         switch ( status->message ){
-            case CadEvent::Part::CadEvent_PartGeneralMessage::Activated:
+            case CadEvent::Part::GeneralMessage::Activated:
                 TreeView_Cfg_PartView();
                 break;
             default:

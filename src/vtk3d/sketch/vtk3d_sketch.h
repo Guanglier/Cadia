@@ -131,8 +131,8 @@ public:
 
     void CADEvent_TraiterCommande(const CadCommandEvent& event) override ;
     void CADEvent_RemonterEvent(const CadResponseEvent& event);    // Méthode centrale de remontée
-    inline SketchTool_mode CadEventSketchMode_To_SketchToolMode (CadEvent::Sketch::CadEvent_SketchToolMode eventMode);
-    inline CadEvent::Sketch::CadEvent_SketchToolMode SketchToolMode_To_CadEventSketchMode(SketchTool_mode internalMode);
+    inline SketchTool_mode CadEventSketchMode_To_ToolMode (CadEvent::Sketch::ToolMode eventMode);
+    inline CadEvent::Sketch::ToolMode ToolMode_To_CadEventSketchMode(SketchTool_mode internalMode);
     void Signaler_ChangementEsquisseIHM ();
     void Signaler_ActivationModeEsquisse();
     void Signaler_ActivationModePart ();

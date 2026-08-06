@@ -30,8 +30,8 @@ void MainWindow::ToolbarConstraints_Setup (){
     connect(Sketch.Constraints.actConstHorizontal, &QAction::triggered, this, [this](bool checked) {
         CadCommandEvent evt;
         evt.params = CadEvent::Sketch::CmdActivateTool{
-            CadEvent::Sketch::CadEvent_SketchToolMode::SetConstraints,
-            (int)CadEvent::Sketch::CadEvent_PartSketchConstraints::Set_Horizontal
+            CadEvent::Sketch::ToolMode::SetConstraints,
+            (int)CadEvent::Sketch::Constraints::Set_Horizontal
         };
         m_view3d->CADEvent_TraiterCommande(evt);
     });
@@ -41,7 +41,7 @@ void MainWindow::ToolbarConstraints_Setup (){
     connect(Sketch.Constraints.actConstVertical, &QAction::triggered, this, [this](bool checked) {
         CadCommandEvent evt;
         evt.params = CadEvent::Sketch::CmdConstraints{
-            CadEvent::Sketch::CadEvent_PartSketchConstraints::Set_Vertical
+            CadEvent::Sketch::Constraints::Set_Vertical
         };
         m_view3d->CADEvent_TraiterCommande(evt);
     });
@@ -50,7 +50,7 @@ void MainWindow::ToolbarConstraints_Setup (){
     connect(Sketch.Constraints.actConstPerpendicular, &QAction::triggered, this, [this](bool checked) {
         //CadCommandEvent evt;
         //evt.params = CadEvent::Sketch::CmdActivateTool{
-        //    CadEvent::Sketch::CadEvent_SketchToolMode::Select
+        //    CadEvent::Sketch::ToolMode::Select
         //};
         //m_view3d->CADEvent_TraiterCommande(evt);
     });
@@ -59,15 +59,14 @@ void MainWindow::ToolbarConstraints_Setup (){
     Sketch.Constraints.actConstDistance = barConstraints->addAction(QIcon(":/icons/sketch_constraint_distance.svg"), tr("Line"));
     Sketch.Constraints.actConstDistance->setToolTip(tr("Distance constraint"));
     connect(Sketch.Constraints.actConstDistance, &QAction::triggered, this, [this](bool checked) {
+        CadCommandEvent evt;
+        evt.params = CadEvent::Sketch::CmdActivateTool{
+            CadEvent::Sketch::ToolMode::SetConstraints,
+            (int)CadEvent::Sketch::Constraints::Set_Dimension
+        };
+        m_view3d->CADEvent_TraiterCommande(evt);
 
-        // 1. Activer le mode outil de distance dans le contrôleur 3D
-        // CadCommandEvent evt;
-        // evt.params = CadEvent::Sketch::CmdActivateTool{
-        //     CadEvent::Sketch::CadEvent_SketchToolMode::SetConstraints,
-        //     ()
-        // };
-        // m_view3d->CADEvent_TraiterCommande(evt);
-
+/*
         // 2. Instancier la popup générique
         m_activeConstraintPopup = new Dialog_ConstraintPopup(ConstraintPanelType::Distance, this);
         m_activeConstraintPopup->setAttribute(Qt::WA_DeleteOnClose);
@@ -75,13 +74,13 @@ void MainWindow::ToolbarConstraints_Setup (){
         connect(m_activeConstraintPopup, &Dialog_ConstraintPopup::constraintCancelled, this, [this]() {
             CadCommandEvent cancelEvt;
             cancelEvt.params = CadEvent::Sketch::CmdActivateTool{
-                CadEvent::Sketch::CadEvent_SketchToolMode::Select, 0
+                CadEvent::Sketch::ToolMode::Select, 0
             };
             m_view3d->CADEvent_TraiterCommande(cancelEvt);
         });
 
         m_activeConstraintPopup->show();
-
+*/
 
     });
 
@@ -93,7 +92,7 @@ void MainWindow::ToolbarConstraints_Setup (){
     connect(Sketch.Constraints.actConstParallel, &QAction::triggered, this, [this](bool checked) {
         //CadCommandEvent evt;
         //evt.params = CadEvent::Sketch::CmdActivateTool{
-        //    CadEvent::Sketch::CadEvent_SketchToolMode::Select
+        //    CadEvent::Sketch::ToolMode::Select
         //};
         //m_view3d->CADEvent_TraiterCommande(evt);
     });
@@ -103,7 +102,7 @@ void MainWindow::ToolbarConstraints_Setup (){
     connect(Sketch.Constraints.actConstResolve, &QAction::triggered, this, [this](bool checked) {
         CadCommandEvent evt;
         evt.params = CadEvent::Sketch::CmdConstraints{
-            CadEvent::Sketch::CadEvent_PartSketchConstraints::Constraint_Resolve
+            CadEvent::Sketch::Constraints::Constraint_Resolve
         };
         m_view3d->CADEvent_TraiterCommande(evt);
     });
