@@ -60,8 +60,10 @@ private:
 
 
     //------------ mode de fonctionnement --------------------
-    SketchTool_mode m_mode = SketchTool_mode::Tool_Select;
-    Tooltype    m_tool;
+    //SketchTool_mode m_mode = SketchTool_mode::Tool_Select;
+    CadEvent::Sketch::ToolMode      m_ToolMode;
+    CadEvent::Sketch::Tool_SubMode  m_ToolSubmode;
+    Tooltype                        m_tool;
 
 
     void rafraichirGeometrie(SketchParams* sketchParams);
@@ -121,7 +123,7 @@ public:
     bool gererMouseRelease(QMouseEvent* event) override;
     bool gererWheelEvent(QWheelEvent* event) override;
 
-    void sketch_ActivateTool ( SketchTool_mode li_tool, CadEvent::Sketch::Tool_SubMode li_submode );
+    void sketch_ActivateTool ( CadEvent::Sketch::ToolMode li_tool, CadEvent::Sketch::Tool_SubMode li_submode );
 
     void keyPressEvent(QKeyEvent* event) override;
 
@@ -141,8 +143,9 @@ public:
 
     void CADEvent_TraiterCommande(const CadCommandEvent& event) override ;
     void CADEvent_RemonterEvent(const CadResponseEvent& event);    // Méthode centrale de remontée
-    inline SketchTool_mode CadEventSketchMode_To_ToolMode (CadEvent::Sketch::ToolMode eventMode);
-    inline CadEvent::Sketch::ToolMode ToolMode_To_CadEventSketchMode(SketchTool_mode internalMode);
+    //inline SketchTool_mode CadEventSketchMode_To_ToolMode (CadEvent::Sketch::ToolMode eventMode);
+    //inline CadEvent::Sketch::ToolMode ToolMode_To_CadEventSketchMode(SketchTool_mode internalMode);
+    inline std::string ToolMode_To_String (CadEvent::Sketch::ToolMode li_internalMode, CadEvent::Sketch::Tool_SubMode li_submode);
     void Signaler_ChangementEsquisseIHM ();
     void Signaler_ActivationModeEsquisse();
     void Signaler_ActivationModePart ();
