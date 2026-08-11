@@ -25,7 +25,7 @@ void MainWindow::traiterReponseCad(const CadResponseEvent& resp) {
                 if (auto* substatus = std::get_if<CadEvent::Sketch::RectangleSubMode>(&status->sub_mode)) {
                     switch ( *substatus ){
                         case CadEvent::Sketch::RectangleSubMode::ByCenter:
-                        Sketch.Tool.actRectCenter->setChecked(true);
+                            Sketch.Tool.actRectCenter->setChecked(true);
                             break;
                         case CadEvent::Sketch::RectangleSubMode::ByEdges:
                             Sketch.Tool.actRectCorners->setChecked(true);
@@ -37,16 +37,8 @@ void MainWindow::traiterReponseCad(const CadResponseEvent& resp) {
                 }else{
                     LOG_ERROR << "MainWindow::traiterReponseCad -> CadEvent::Sketch::ToolMode::Draw_Rectangle -> switch default "<< std::endl;
                 }
-
-
-                Sketch.Tool.actRectCorners->setChecked(true);
                 break;
-            // case CadEvent::Sketch::ToolMode::Draw_RectEdges:
-            //     Sketch.Tool.actRectCorners->setChecked(true);
-            //     break;
-            // case CadEvent::Sketch::ToolMode::Draw_RectCenter:
-            //     Sketch.Tool.actRectCenter->setChecked(true);
-            //     break;
+
             case CadEvent::Sketch::ToolMode::Select:
                 Sketch.Tool.actSelect->setChecked(true);
                 break;
