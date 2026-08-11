@@ -10,9 +10,12 @@
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkInteractorStyleImage.h>
+#include <vtkPointData.h>
 #include "2DSolver_Mapper.h"
 #include "Logger.h"
 
+#undef LOCAL_LOG_LEVEL
+#define LOCAL_LOG_LEVEL LogLevel::Debug
 
 Vtk3d_Sketch::Vtk3d_Sketch(vtk3d_MainView* view, CadPartOp* li_ptr_Operation)
     : AbstractViewMode(view),
@@ -80,8 +83,8 @@ Vtk3d_Sketch::~Vtk3d_Sketch() {
         if (m_ActorSketchDisplay) {
             m_view->getRenderer()->RemoveActor(m_ActorSketchDisplay);
         }
-        if (m_ActorSquareOfPrim) {
-            m_view->getRenderer()->RemoveActor(m_ActorSquareOfPrim);
+        if (m_ActorPointsOfPrim) {
+            m_view->getRenderer()->RemoveActor(m_ActorPointsOfPrim);
         }
         if (m_constraintsDisplayActor) {
             m_view->getRenderer()->RemoveActor(m_constraintsDisplayActor);
@@ -167,8 +170,8 @@ void Vtk3d_Sketch::desactiver() {
     if (m_view ) {
         //vtkCamera* camera = m_view->getRenderer()->GetActiveCamera();
 
-        if (m_ActorSquareOfPrim) {
-			m_ActorSquareOfPrim->SetVisibility(false);
+        if (m_ActorPointsOfPrim) {
+            m_ActorPointsOfPrim->SetVisibility(false);
 		}
         if (m_constraintsDisplayActor) {
             m_constraintsDisplayActor->SetVisibility(false);
@@ -184,7 +187,7 @@ void Vtk3d_Sketch::desactiver() {
 }
 
 
-inline SketchTool_mode Vtk3d_Sketch::CadEventSketchMode_To_ToolMode (CadEvent::Sketch::ToolMode eventMode) {
+inline SketchTool_mode Vtk3d_Sketch::CadEventSketchMode_To_ToolMode (CadEvent::Sketch::ToolMode eventMode ) {
     switch (eventMode) {
     case CadEvent::Sketch::ToolMode::Draw_line:          return SketchTool_mode::Tool_Line;
     case CadEvent::Sketch::ToolMode::Draw_Circle:        return SketchTool_mode::Tool_CircleDraw;
@@ -211,20 +214,19 @@ inline CadEvent::Sketch::ToolMode Vtk3d_Sketch::ToolMode_To_CadEventSketchMode(S
 }
 std::string ToolMode_To_String (SketchTool_mode internalMode) {
     switch(internalMode) {
-    case SketchTool_mode::Tool_CircleDraw:          return std::string ("Outil : Tool_CircleDraw !! ") ;        break;
-    case SketchTool_mode::Tool_Line:                return std::string (  "Outil : Tool_Line !! ") ;            break;
+    case SketchTool_mode::Tool_CircleDraw:          return std::string ( "Outil : Tool_CircleDraw !! ") ;        break;
+    case SketchTool_mode::Tool_Line:                return std::string ( "Outil : Tool_Line !! ") ;            break;
     case SketchTool_mode::Tool_RectCenterDraw:      return std::string ( "Outil : Tool_RectCenterDraw !! ") ;   break;
     case SketchTool_mode::Tool_RectEdgesDraw:       return std::string ( "Outil : Tool_RectEdgesDraw !! ") ;    break;
-    case SketchTool_mode::Tool_Select:              return std::string ("Outil : Tool_Select !! " );            break;
+    case SketchTool_mode::Tool_Select:              return std::string ( "Outil : Tool_Select !! " );            break;
     case SketchTool_mode::Tool_SetConstraints:      return std::string ( "Outil : Tool_SetConstraints !! ") ;   break;
     case SketchTool_mode::Tool_Dimensions:          return std::string ( "Outil : Tool_Dimensions !! ") ;       break;
-    default:                                        return std::string ("ERREUR  sketch_ActivateTool") ;        break;
+    default:                                        return std::string ( "ERREUR  sketch_ActivateTool") ;        break;
     }
 }
 
-void Vtk3d_Sketch::sketch_ActivateTool(SketchTool_mode li_tool) {
+void Vtk3d_Sketch::sketch_ActivateTool(SketchTool_mode li_tool, CadEvent::Sketch::Tool_SubMode li_submode) {
     bool    ToolSelected = false;
-    //CadEvent::Sketch::ToolMode ToolModToSendHMI = CadEvent::Sketch::ToolMode::Draw_RectCenter;
 
     if (m_mode != li_tool) {
         m_mode = li_tool;
@@ -281,7 +283,7 @@ void Vtk3d_Sketch::sketch_ActivateTool(SketchTool_mode li_tool) {
 
         if ( true == ToolSelected ){
             CadResponseEvent    resp;
-            resp.params = CadEvent::Sketch::RespChangedTool{ ToolMode_To_CadEventSketchMode ( li_tool ) };
+            resp.params = CadEvent::Sketch::RespChangedTool{ ToolMode_To_CadEventSketchMode ( li_tool ), li_submode };
             CADEvent_RemonterEvent (resp);
         }
 
@@ -309,15 +311,125 @@ void Vtk3d_Sketch::SolveEsquisse() {
 }
 
 
+// y mettre event->position().x() dans screenX etc
+PickResult Vtk3d_Sketch::PickerGetPickedElement(int screenX, int screenY){
+
+    PickResult  l_result;
+    l_result.id = -1;
+    l_result.type = PickResult::TargetType::None;
+
+
+
+    double dpr = GetView()->devicePixelRatioF();
+    int x = static_cast<int>(screenX * dpr);
+    int y = static_cast<int>(screenY * dpr);
+    int vtkY = (GetView()->height() * dpr) - y;
+
+    auto cellPicker = vtkSmartPointer<vtkCellPicker>::New();
+    double pixelsTarget = 4.0;
+    int* winSize = GetView()->getRenderer()->GetSize();
+    if (winSize[0] > 0 && winSize[1] > 0) {
+        double minWinSize = (winSize[0] < winSize[1]) ? winSize[0] : winSize[1];
+        cellPicker->SetTolerance(pixelsTarget / minWinSize);
+    }
+
+    bool wasTubeOn = m_ActorSketchDisplay->GetProperty()->GetRenderLinesAsTubes();
+    if (wasTubeOn) {
+        m_ActorSketchDisplay->GetProperty()->RenderLinesAsTubesOff();
+    }
+
+    vtkIdType cellId = -1;
+    vtkActor* pickedActor = nullptr;
+
+    // --- PRIORITÉ 1 : Tester les POINTS (les carrés) ---
+    cellPicker->PickFromListOn();
+    cellPicker->AddPickList(m_ActorPointsOfPrim);
+
+    if (cellPicker->Pick(x, vtkY, 0, GetView()->getRenderer())) {
+        pickedActor = cellPicker->GetActor();
+        cellId = cellPicker->GetCellId();
+    }
+
+
+    gp_Pnt2d startPoint2D;
+    gp_Pnt startPoint3D;
+    if (!calculerIntersectionSourisSurPlan(screenX, screenY, startPoint2D, startPoint3D)){
+        LOG_ERROR << " Vtk3d_Sketch::PickerGetPickedElement: calculerIntersectionSourisSurPlan pas d intersection " << std::endl;
+        return l_result;
+    }
+    l_result.Clicked_Point2D = startPoint2D;
+    l_result.Clicked_Point3D = startPoint3D;
+
+    // --- PRIORITÉ 2 : Si on n'a pas touché de poignée, tester L'ESQUISSE GLOBALE (les lignes) ---
+    if (!pickedActor) {
+        cellPicker->PickFromListOff();
+        cellPicker->AddPickList(m_ActorSketchDisplay);
+        if (cellPicker->Pick(x, vtkY, 0, GetView()->getRenderer())) {
+            pickedActor = cellPicker->GetActor();
+            cellId = cellPicker->GetCellId();
+        }
+    }
+
+
+
+    // CAS 1 : On a cliqué sur un point
+    if (pickedActor && pickedActor == m_ActorPointsOfPrim) {
+        vtkIdType VtkPointId = cellPicker->GetPointId();
+        if (VtkPointId == -1) {
+            LOG_ERROR << "Vtk3d_Sketch::PickerGetPickedElement -> VtkPointId == -1" << std::endl;
+            return l_result;
+        }
+        auto mapper = vtkPolyDataMapper::SafeDownCast(m_ActorPointsOfPrim->GetMapper());
+        auto polyData = mapper ? vtkPolyData::SafeDownCast(mapper->GetInput()) : nullptr;
+        if (!polyData) {
+            LOG_ERROR << "Vtk3d_Sketch::PickerGetPickedElement -> polyData est nullptr" << std::endl;
+            return l_result;
+        }
+        auto edgeIdArray = vtkIntArray::SafeDownCast(polyData->GetPointData()->GetArray("OpenCascadeEdgeID"));
+
+        int edgeId = edgeIdArray->GetValue(VtkPointId);
+        l_result.id = edgeId;
+        l_result.type = PickResult::TargetType::Point;
+        LOG_INFO << " Vtk3d_Sketch::PickerGetPickedElement: Clic point id=" << l_result.id << std::endl;
+    }
+
+
+    // CAS 2 : On a cliqué DIRECTEMENT SUR LA LIGNE
+    else if (pickedActor && pickedActor == m_ActorSketchDisplay) {
+        vtkPolyData* polyData = vtkPolyData::SafeDownCast(m_ActorSketchDisplay->GetMapper()->GetInput());
+
+        if (polyData && cellId != -1) {
+            auto* edgeIdsArray = vtkIntArray::SafeDownCast(polyData->GetCellData()->GetArray("OpenCascadeEdgeID"));
+            l_result.sourcePolyData = polyData;
+
+            if (!edgeIdsArray || cellId >= edgeIdsArray->GetNumberOfValues()) {
+                LOG_ERROR << " Vtk3d_Sketch::PickerGetPickedElement:  cellId invalide ou edgeIdsArray null " << std::endl;
+                return l_result; // Ou return; selon la fonction
+            }
+            l_result.id = edgeIdsArray->GetValue(cellId);
+            l_result.type = PickResult::TargetType::Primitive;
+            LOG_INFO << " Vtk3d_Sketch::PickerGetPickedElement: Clic ligne id=" << l_result.id << std::endl;
+        }
+    }
+    else {
+        LOG_INFO << " Vtk3d_Sketch::PickerGetPickedElement: Clic vide " << std::endl;
+        l_result.type = PickResult::TargetType::None;
+    }
+    return l_result;
+
+}
+
+
+
 //-----------------------------------------------------------------------
 //      Traiter la commande envoyée par l'IHM
 //-----------------------------------------------------------------------
 void Vtk3d_Sketch::CADEvent_TraiterCommande(const CadCommandEvent& event) {
     if (auto* cmd = std::get_if<CadEvent::Sketch::CmdActivateTool>(&event.params)  ) {
-        sketch_ActivateTool ( CadEventSketchMode_To_ToolMode ( cmd->toolMode ) );
+        sketch_ActivateTool ( CadEventSketchMode_To_ToolMode ( cmd->toolMode ), cmd->sub_mode );
     }
 
-
+/*
     if (auto* cmd = std::get_if<CadEvent::Sketch::CmdConstraints>(&event.params)  ) {
         switch ( cmd->cmd ){
             case CadEvent::Sketch::Constraints::Constraint_Resolve:
@@ -351,8 +463,7 @@ void Vtk3d_Sketch::CADEvent_TraiterCommande(const CadCommandEvent& event) {
         }
         return;
     }
-
-
+*/
 
 }
 

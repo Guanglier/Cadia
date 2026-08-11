@@ -8,7 +8,7 @@
  * Il gère deux modes d'utilisation principaux :
  * 1. Le mode "OneShot" (résolution globale en une passe avec diagnostics complets).
  * 2. Le mode "InteractiveSession" (résolution incrémentale en temps réel lors du déplacement
- *    de poignées de géométrie par la souris à 60 FPS).
+ *    de points de géométrie par la souris à 60 FPS).
  */
 
 #include "2DSolver_Mapper.h"

@@ -117,13 +117,13 @@ void Vtk3d_Sketch::rafraichirAffichageEsquisseInteractif() {
     pts->Modified();
     geomPolyData->Modified();
 
-    // Idem pour les poignées (m_ActorSquareOfPrim) si elles affichent les sommets :
-    if (m_ActorSquareOfPrim && m_ActorSquareOfPrim->GetMapper()) {
+    // Idem pour les points (m_ActorPointsOfPrim) si elles affichent les sommets :
+    if (m_ActorPointsOfPrim && m_ActorPointsOfPrim->GetMapper()) {
         auto squarePolyData = vtkPolyData::SafeDownCast(
-            vtkPolyDataMapper::SafeDownCast(m_ActorSquareOfPrim->GetMapper())->GetInput()
+            vtkPolyDataMapper::SafeDownCast(m_ActorPointsOfPrim->GetMapper())->GetInput()
             );
         if (squarePolyData && squarePolyData->GetPoints()) {
-            // Mettre à jour les positions des carrés de poignées ici aussi
+            // Mettre à jour les positions des carrés de points ici aussi
             squarePolyData->GetPoints()->Modified();
             squarePolyData->Modified();
         }
@@ -243,7 +243,7 @@ void Vtk3d_Sketch::rafraichirPoignees(SketchParams* sketchParams) {
 
     // 3. Gestion du cas où aucune poignée n'est à afficher
     if (pointsHandles->GetNumberOfPoints() == 0) {
-        if (m_ActorSquareOfPrim) m_ActorSquareOfPrim->VisibilityOff();
+        if (m_ActorPointsOfPrim) m_ActorPointsOfPrim->VisibilityOff();
         return;
     }
 
@@ -273,25 +273,25 @@ void Vtk3d_Sketch::rafraichirPoignees(SketchParams* sketchParams) {
     glyphFilter->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, "DistanceToCamera");
     glyphFilter->SetColorModeToColorByScalar();
 
-    if (!m_ActorSquareOfPrim) {
-        m_ActorSquareOfPrim = vtkSmartPointer<vtkActor>::New();
+    if (!m_ActorPointsOfPrim) {
+        m_ActorPointsOfPrim = vtkSmartPointer<vtkActor>::New();
         auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
         mapper->ScalarVisibilityOff();
-        m_ActorSquareOfPrim->SetPickable(true);
-        m_ActorSquareOfPrim->SetMapper(mapper);
-        m_ActorSquareOfPrim->GetProperty()->SetColor(1.0, 50.0 / 255.0, 50.0 / 255.0);
-        m_view->getRenderer()->AddActor(m_ActorSquareOfPrim);
+        m_ActorPointsOfPrim->SetPickable(true);
+        m_ActorPointsOfPrim->SetMapper(mapper);
+        m_ActorPointsOfPrim->GetProperty()->SetColor(1.0, 50.0 / 255.0, 50.0 / 255.0);
+        m_view->getRenderer()->AddActor(m_ActorPointsOfPrim);
     }
 
     // 7. Mise à jour du Mapper
-    if (auto mapper = vtkPolyDataMapper::SafeDownCast(m_ActorSquareOfPrim->GetMapper())) {
+    if (auto mapper = vtkPolyDataMapper::SafeDownCast(m_ActorPointsOfPrim->GetMapper())) {
         mapper->SetInputConnection(glyphFilter->GetOutputPort());
         mapper->ScalarVisibilityOff();
         mapper->Modified();
     }
 
-    if (m_ActorSquareOfPrim) {
-        m_ActorSquareOfPrim->VisibilityOn();
+    if (m_ActorPointsOfPrim) {
+        m_ActorPointsOfPrim->VisibilityOn();
     }
 }
 

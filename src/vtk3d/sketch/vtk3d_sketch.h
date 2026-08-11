@@ -23,6 +23,16 @@ class vtk3d_MainView;
 class QMouseEvent;
 
 
+struct PickResult {
+    enum class TargetType { None, Point, Primitive };
+    TargetType type = TargetType::None;
+    int id = -1;             // ID du point ou ID de l'edge/primitive
+    //vtkActor* actor = nullptr;
+    gp_Pnt2d Clicked_Point2D;
+    gp_Pnt Clicked_Point3D;
+    vtkPolyData* sourcePolyData = nullptr;
+};
+
 
 
 
@@ -80,7 +90,7 @@ public:
 
 
     vtkSmartPointer<vtkActor>       m_ActorSketchDisplay = nullptr;
-    vtkSmartPointer<vtkActor>       m_ActorSquareOfPrim = nullptr;    // pour les carrés des lignes
+    vtkSmartPointer<vtkActor>       m_ActorPointsOfPrim = nullptr;    // pour les carrés des lignes
 
     vtk3d_Sketch_Render_Cotations*       m_Cotation;
     vtk3d_Sketch_Render_Cotations*       m_Cotation2;
@@ -111,7 +121,7 @@ public:
     bool gererMouseRelease(QMouseEvent* event) override;
     bool gererWheelEvent(QWheelEvent* event) override;
 
-    void sketch_ActivateTool ( SketchTool_mode li_tool );
+    void sketch_ActivateTool ( SketchTool_mode li_tool, CadEvent::Sketch::Tool_SubMode li_submode );
 
     void keyPressEvent(QKeyEvent* event) override;
 
@@ -143,6 +153,9 @@ public:
     Vtk3d_Sketch& operator=(const Vtk3d_Sketch&) = delete;
     Vtk3d_Sketch(Vtk3d_Sketch&&) = delete;
     Vtk3d_Sketch& operator=(Vtk3d_Sketch&&) = delete;
+
+
+    PickResult PickerGetPickedElement(int screenX, int screenY);
 
 };
 

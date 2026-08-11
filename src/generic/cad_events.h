@@ -28,24 +28,32 @@ namespace CadEvent::Sketch {
         SketchChanged,
         SketchActivated
     };
-    enum class Constraints{
-        Constraint_Resolve,
-        Set_Vertical,
-        Set_Horizontal,
-        Set_Dimension
-    };
+
+
+    enum class LineSubMode { TwoPoints, Normal, Tangent };
+    enum class CircleSubMode { CenterPoint };
+    enum class ConstraintSubMode { Horizontal, Vertical, Parallel, Perpendicular, Distance };
+    using Tool_SubMode = std::variant<
+        std::monostate, // Pour les outils sans sous-mode
+        LineSubMode,
+        CircleSubMode,
+        ConstraintSubMode
+        >;
+
+    //--------- commandes : QT vers couches inférieures ----------------
     struct CmdActivateTool {
         ToolMode toolMode;
-        int sub_mode = 0;
+        Tool_SubMode sub_mode;
     };
     struct CmdCancel {};
     struct CmdSetPrecisionValue { double value; };
-    struct CmdConstraints { Constraints cmd; };
+    //struct CmdConstraints { Constraints cmd; };
 
-    //----------- réponses ou envoi vers qt -------
+
+    //----------- réponses ou envoi vers QT -------
     struct RespStatus { std::string text; };
     struct RespDimensions { double length; double angle; };
-    struct RespChangedTool { ToolMode toolMode; };
+    struct RespChangedTool { ToolMode toolMode;  Tool_SubMode sub_mode;};
     struct RespGeneralSignal {GeneralMessage message; };
     struct RespSelection { std::string text; };
     struct RespSendPopupDef { DialogSketchHelper::Helper popup_def;};
@@ -103,11 +111,12 @@ using CadCommandParams = std::variant<
     CadEvent::Core::CmdRecomputeModel,
     CadEvent::Core::CmdUndo,
     CadEvent::Core::CmdRedo,
+
     // Sketch
     CadEvent::Sketch::CmdActivateTool,
     CadEvent::Sketch::CmdCancel,
     CadEvent::Sketch::CmdSetPrecisionValue,
-    CadEvent::Sketch::CmdConstraints,
+
 
     // Assembly
     CadEvent::Assembly::CmdInsertComponent,
@@ -122,24 +131,26 @@ struct CadCommandEvent {
     CadCommandParams params;
 };
 
+
+
+
 // Le super-variant remontant
 using CadResponseParams = std::variant<
     std::monostate,
-    CadEvent::Core::RespProgress,
+    CadEvent::Core::RespProgress,           // progression d'une opération en cours
 
-    CadEvent::Sketch::RespStatus,
+    CadEvent::Sketch::RespStatus,           // affichage dans la barre de statuts d'un message
     CadEvent::Sketch::RespDimensions,
-    CadEvent::Sketch::RespChangedTool,
+    CadEvent::Sketch::RespChangedTool,      //l'outil actif a été changé
     CadEvent::Sketch::RespGeneralSignal,
     CadEvent::Sketch::RespSelection,
     CadEvent::Sketch::RespSendPopupDef,
 
-    CadEvent::Part::RespGeneralSignal,
+    CadEvent::Part::RespGeneralSignal
 
-    CadEvent::Assembly::RespMateFailed,
 
-    CadEvent::Drawing::RespOutdatedViews
 >;
+
 
 struct CadResponseEvent {
     uint64_t PartId = 0;

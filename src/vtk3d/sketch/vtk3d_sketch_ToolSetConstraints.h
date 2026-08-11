@@ -3,7 +3,7 @@
 
 #include <QMouseEvent>
 #include "cad_events.h"
-
+#include "Dialog_SketchHelper_Popup.h"
 
 class Vtk3d_Sketch;
 
@@ -37,6 +37,11 @@ struct Tool_SetConstraints  {
     void CADEvent_TraiterCommande(const CadCommandEvent& event);
 
     Vtk3d_Sketch*   m_Parent = nullptr;
+
+
+private:
+    DialogSketchHelper::Helper m_ToolHelper;
+    void popup_create ();
 };
 
 

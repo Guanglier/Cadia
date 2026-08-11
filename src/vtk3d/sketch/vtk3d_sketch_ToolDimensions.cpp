@@ -251,11 +251,11 @@ bool Tool_Dimensions::gererMousePress(QMouseEvent* event) {
         vtkIdType cellId = -1;
         vtkActor* pickedActor = nullptr;
 
-        // on va d'abord activer la liste de pick pour traiter les m_ActorSquareOfPrim seulement, et si rien
+        // on va d'abord activer la liste de pick pour traiter les m_ActorPointsOfPrim seulement, et si rien
         // n'est trouvé alors on désactive la liste et on pick tout ce qu'on trouve. le pb était que
-        // le pick prenait les lignes et non le m_ActorSquareOfPrim
+        // le pick prenait les lignes et non le m_ActorPointsOfPrim
         cellPicker->PickFromListOn();
-        cellPicker->AddPickList(m_Parent->m_ActorSquareOfPrim); // On restreint UNIQUEMENT aux carrés
+        cellPicker->AddPickList(m_Parent->m_ActorPointsOfPrim); // On restreint UNIQUEMENT aux carrés
 
         if (cellPicker->Pick(x, vtkY, 0, m_Parent->GetView()->getRenderer())) {
             pickedActor = cellPicker->GetActor();
@@ -286,7 +286,7 @@ bool Tool_Dimensions::gererMousePress(QMouseEvent* event) {
                   << " | CellID: " << cellId << std::endl;
 #endif
 
-        if (pickedActor && pickedActor == m_Parent->m_ActorSquareOfPrim) {
+        if (pickedActor && pickedActor == m_Parent->m_ActorPointsOfPrim) {
             // ATTENTION : C'est ici que réside l'astuce !
             // Au lieu de demander le PointId de l'acteur, on demande le PointId du GLYPHE d'origine.
             // VTK remonte automatiquement l'arbre du pipeline.
@@ -295,7 +295,7 @@ bool Tool_Dimensions::gererMousePress(QMouseEvent* event) {
             if (originalPointId != -1) {
                 // 3. On récupère les données associées au point d'origine
                 // (Le mapper ou l'actor fournit le polydata final qui contient la structure du Glyph)
-                auto mapper = vtkPolyDataMapper::SafeDownCast(m_Parent->m_ActorSquareOfPrim->GetMapper());
+                auto mapper = vtkPolyDataMapper::SafeDownCast(m_Parent->m_ActorPointsOfPrim->GetMapper());
                 auto polyData = vtkPolyData::SafeDownCast(mapper->GetInput());
 
                 if (polyData) {

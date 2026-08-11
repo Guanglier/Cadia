@@ -294,13 +294,13 @@ void Vtk3d_Sketch::keyPressEvent(QKeyEvent* event) {
 #endif
         return;
     }
-
-    if (event->key() == Qt::Key_S) sketch_ActivateTool(SketchTool_mode::Tool_Select);
-    if (event->key() == Qt::Key_L) sketch_ActivateTool(SketchTool_mode::Tool_Line);
-    if (event->key() == Qt::Key_C) sketch_ActivateTool(SketchTool_mode::Tool_CircleDraw);
-    if (event->key() == Qt::Key_R) sketch_ActivateTool(SketchTool_mode::Tool_RectEdgesDraw);
-    if (event->key() == Qt::Key_T) sketch_ActivateTool(SketchTool_mode::Tool_RectCenterDraw);
-    if (event->key() == Qt::Key_D) sketch_ActivateTool(SketchTool_mode::Tool_Dimensions);
+/*
+    if (event->key() == Qt::Key_S) sketch_ActivateTool(SketchTool_mode::Tool_Select, 0);
+    if (event->key() == Qt::Key_L) sketch_ActivateTool(SketchTool_mode::Tool_Line, 0);
+    if (event->key() == Qt::Key_C) sketch_ActivateTool(SketchTool_mode::Tool_CircleDraw, 0);
+    if (event->key() == Qt::Key_R) sketch_ActivateTool(SketchTool_mode::Tool_RectEdgesDraw, 0);
+    if (event->key() == Qt::Key_T) sketch_ActivateTool(SketchTool_mode::Tool_RectCenterDraw, 0);
+    if (event->key() == Qt::Key_D) sketch_ActivateTool(SketchTool_mode::Tool_Dimensions, 0);
 
 
     if (event->key() == Qt::Key_M){
@@ -316,7 +316,7 @@ void Vtk3d_Sketch::keyPressEvent(QKeyEvent* event) {
 
         }
     }
-
+*/
 
 }
 

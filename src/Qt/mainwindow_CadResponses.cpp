@@ -11,30 +11,31 @@ void MainWindow::traiterReponseCad(const CadResponseEvent& resp) {
     }
     if (auto* status = std::get_if<CadEvent::Sketch::RespChangedTool>(&resp.params)) {
         Sketch.Tool.uncheck_all();
-            Sketch.Constraints.uncheck_all();
+        Sketch.Constraints.uncheck_all();
 
-        switch(status->toolMode){
-        case CadEvent::Sketch::ToolMode::Draw_line:
-            Sketch.Tool.actLine->setChecked(true);
-            break;
-        case CadEvent::Sketch::ToolMode::Draw_Circle:
-            Sketch.Tool.actCircle->setChecked(true);
-            break;
-        case CadEvent::Sketch::ToolMode::Draw_RectEdges:
-            Sketch.Tool.actRectCorners->setChecked(true);
-            break;
-        case CadEvent::Sketch::ToolMode::Draw_RectCenter:
-            Sketch.Tool.actRectCenter->setChecked(true);
-            break;
-        case CadEvent::Sketch::ToolMode::Select:
-            Sketch.Tool.actSelect->setChecked(true);
-            break;
-        case CadEvent::Sketch::ToolMode::SetConstraints:
-            Sketch.Constraints.actConstHorizontal->setChecked(true);
-            break;
-        default:
-            this->statusBar()->showMessage( "err CadEvent::Sketch::RespChangedTool" );
-            break;
+        switch(status->toolMode)
+        {
+            case CadEvent::Sketch::ToolMode::Draw_line:
+                Sketch.Tool.actLine->setChecked(true);
+                break;
+            case CadEvent::Sketch::ToolMode::Draw_Circle:
+                Sketch.Tool.actCircle->setChecked(true);
+                break;
+            case CadEvent::Sketch::ToolMode::Draw_RectEdges:
+                Sketch.Tool.actRectCorners->setChecked(true);
+                break;
+            case CadEvent::Sketch::ToolMode::Draw_RectCenter:
+                Sketch.Tool.actRectCenter->setChecked(true);
+                break;
+            case CadEvent::Sketch::ToolMode::Select:
+                Sketch.Tool.actSelect->setChecked(true);
+                break;
+            case CadEvent::Sketch::ToolMode::SetConstraints:
+                Sketch.Constraints.actConstHorizontal->setChecked(true);
+                break;
+            default:
+                this->statusBar()->showMessage( "err CadEvent::Sketch::RespChangedTool" );
+                break;
         }
     }
 

@@ -31,28 +31,32 @@ void MainWindow::ToolbarConstraints_Setup (){
         CadCommandEvent evt;
         evt.params = CadEvent::Sketch::CmdActivateTool{
             CadEvent::Sketch::ToolMode::SetConstraints,
-            (int)CadEvent::Sketch::Constraints::Set_Horizontal
+            CadEvent::Sketch::Tool_SubMode{ CadEvent::Sketch::ConstraintSubMode::Horizontal}
         };
         m_view3d->CADEvent_TraiterCommande(evt);
     });
+
 
     Sketch.Constraints.actConstVertical = barConstraints->addAction(QIcon(":/icons/sketch_constraint_vertical.svg"), tr("Line"));
     Sketch.Constraints.actConstVertical->setToolTip(tr("Vertical constraint"));
     connect(Sketch.Constraints.actConstVertical, &QAction::triggered, this, [this](bool checked) {
         CadCommandEvent evt;
-        evt.params = CadEvent::Sketch::CmdConstraints{
-            CadEvent::Sketch::Constraints::Set_Vertical
+        evt.params = CadEvent::Sketch::CmdActivateTool{
+            CadEvent::Sketch::ToolMode::SetConstraints,
+            CadEvent::Sketch::Tool_SubMode{ CadEvent::Sketch::ConstraintSubMode::Vertical}
         };
         m_view3d->CADEvent_TraiterCommande(evt);
     });
+
     Sketch.Constraints.actConstPerpendicular = barConstraints->addAction(QIcon(":/icons/sketch_constraint_perpendicular.svg"), tr("Line"));
     Sketch.Constraints.actConstPerpendicular->setToolTip(tr("Perpendicular constraint"));
     connect(Sketch.Constraints.actConstPerpendicular, &QAction::triggered, this, [this](bool checked) {
-        //CadCommandEvent evt;
-        //evt.params = CadEvent::Sketch::CmdActivateTool{
-        //    CadEvent::Sketch::ToolMode::Select
-        //};
-        //m_view3d->CADEvent_TraiterCommande(evt);
+        CadCommandEvent evt;
+        evt.params = CadEvent::Sketch::CmdActivateTool{
+            CadEvent::Sketch::ToolMode::SetConstraints,
+            CadEvent::Sketch::Tool_SubMode{ CadEvent::Sketch::ConstraintSubMode::Perpendicular}
+        };
+        m_view3d->CADEvent_TraiterCommande(evt);
     });
 
     //------------- DISTANCE -----------------------------
@@ -62,26 +66,9 @@ void MainWindow::ToolbarConstraints_Setup (){
         CadCommandEvent evt;
         evt.params = CadEvent::Sketch::CmdActivateTool{
             CadEvent::Sketch::ToolMode::SetConstraints,
-            (int)CadEvent::Sketch::Constraints::Set_Dimension
+            CadEvent::Sketch::Tool_SubMode{ CadEvent::Sketch::ConstraintSubMode::Distance}
         };
         m_view3d->CADEvent_TraiterCommande(evt);
-
-/*
-        // 2. Instancier la popup générique
-        m_activeConstraintPopup = new Dialog_ConstraintPopup(ConstraintPanelType::Distance, this);
-        m_activeConstraintPopup->setAttribute(Qt::WA_DeleteOnClose);
-
-        connect(m_activeConstraintPopup, &Dialog_ConstraintPopup::constraintCancelled, this, [this]() {
-            CadCommandEvent cancelEvt;
-            cancelEvt.params = CadEvent::Sketch::CmdActivateTool{
-                CadEvent::Sketch::ToolMode::Select, 0
-            };
-            m_view3d->CADEvent_TraiterCommande(cancelEvt);
-        });
-
-        m_activeConstraintPopup->show();
-*/
-
     });
 
 
@@ -90,15 +77,17 @@ void MainWindow::ToolbarConstraints_Setup (){
     Sketch.Constraints.actConstParallel = barConstraints->addAction(QIcon(":/icons/sketch_constraint_parallel.svg"), tr("Line"));
     Sketch.Constraints.actConstParallel->setToolTip(tr("Parallel constraint"));
     connect(Sketch.Constraints.actConstParallel, &QAction::triggered, this, [this](bool checked) {
-        //CadCommandEvent evt;
-        //evt.params = CadEvent::Sketch::CmdActivateTool{
-        //    CadEvent::Sketch::ToolMode::Select
-        //};
-        //m_view3d->CADEvent_TraiterCommande(evt);
+        CadCommandEvent evt;
+        evt.params = CadEvent::Sketch::CmdActivateTool{
+            CadEvent::Sketch::ToolMode::SetConstraints,
+            CadEvent::Sketch::Tool_SubMode{ CadEvent::Sketch::ConstraintSubMode::Parallel}
+        };
+        m_view3d->CADEvent_TraiterCommande(evt);
     });
 
     Sketch.Constraints.actConstResolve = barConstraints->addAction(QIcon(":/icons/sketch_constraint_resolve.svg"), tr("Line"));
     Sketch.Constraints.actConstResolve->setToolTip(tr("Resolve constraint"));
+    /*
     connect(Sketch.Constraints.actConstResolve, &QAction::triggered, this, [this](bool checked) {
         CadCommandEvent evt;
         evt.params = CadEvent::Sketch::CmdConstraints{
@@ -106,7 +95,7 @@ void MainWindow::ToolbarConstraints_Setup (){
         };
         m_view3d->CADEvent_TraiterCommande(evt);
     });
-
+*/
 
 
     Sketch.Tool.configure_all();
