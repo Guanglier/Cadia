@@ -191,14 +191,13 @@ void Vtk3d_Sketch::desactiver() {
 
 inline std::string Vtk3d_Sketch::ToolMode_To_String (CadEvent::Sketch::ToolMode li_internalMode, CadEvent::Sketch::Tool_SubMode li_submode) {
     switch(li_internalMode) {
-    case CadEvent::Sketch::ToolMode::Draw_Circle:          return std::string ( "Outil : Tool_CircleDraw !! ") ;        break;
-    case CadEvent::Sketch::ToolMode::Draw_line:                return std::string ( "Outil : Tool_Line !! ") ;            break;
-    case CadEvent::Sketch::ToolMode::Draw_RectCenter:      return std::string ( "Outil : Tool_RectCenterDraw !! ") ;   break;
-    case CadEvent::Sketch::ToolMode::Draw_RectEdges:       return std::string ( "Outil : Tool_RectEdgesDraw !! ") ;    break;
-    case CadEvent::Sketch::ToolMode::Select:              return std::string ( "Outil : Tool_Select !! " );            break;
-    case CadEvent::Sketch::ToolMode::SetConstraints:      return std::string ( "Outil : Tool_SetConstraints !! ") ;   break;
-    case CadEvent::Sketch::ToolMode::Dimensions:          return std::string ( "Outil : Tool_Dimensions !! ") ;       break;
-    default:                                        return std::string ( "ERREUR  sketch_ActivateTool") ;        break;
+        case CadEvent::Sketch::ToolMode::Draw_Circle:         return std::string ( "Outil : Tool_CircleDraw !! ") ;        break;
+        case CadEvent::Sketch::ToolMode::Draw_line:           return std::string ( "Outil : Tool_Line !! ") ;            break;
+        case CadEvent::Sketch::ToolMode::Draw_Rectangle:      return std::string ( "Outil : Draw_Rectangle !! ") ;   break;
+        case CadEvent::Sketch::ToolMode::Select:              return std::string ( "Outil : Tool_Select !! " );            break;
+        case CadEvent::Sketch::ToolMode::SetConstraints:      return std::string ( "Outil : Tool_SetConstraints !! ") ;   break;
+        case CadEvent::Sketch::ToolMode::Dimensions:          return std::string ( "Outil : Tool_Dimensions !! ") ;       break;
+        default:                                              return std::string ( "ERREUR  sketch_ActivateTool") ;        break;
     }
 }
 
@@ -226,14 +225,17 @@ void Vtk3d_Sketch::sketch_ActivateTool(CadEvent::Sketch::ToolMode li_tool, CadEv
                 m_tool = Tool_LineDraw{this};
                 ToolSelected = true;
                 break;
-            case CadEvent::Sketch::ToolMode::Draw_RectCenter:
-                m_tool = Tool_RectCenterDraw{this};
-                ToolSelected = true;
+            //case CadEvent::Sketch::ToolMode::Draw_RectCenter:
+            //    m_tool = Tool_RectCenterDraw{this};
+            //    ToolSelected = true;
+            //    break;
+            case CadEvent::Sketch::ToolMode::Draw_Rectangle:
                 break;
-            case CadEvent::Sketch::ToolMode::Draw_RectEdges:
-                m_tool = Tool_RectEdgesDraw{this};
-                ToolSelected = true;
-                break;
+
+            ////case CadEvent::Sketch::ToolMode::Draw_RectEdges:
+            ////    m_tool = Tool_RectEdgesDraw{this};
+            ////    ToolSelected = true;
+            ////    break;
             case CadEvent::Sketch::ToolMode::Select:
                 m_tool = Tool_Select{this};
                 ToolSelected = true;

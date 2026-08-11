@@ -21,12 +21,32 @@ void MainWindow::traiterReponseCad(const CadResponseEvent& resp) {
             case CadEvent::Sketch::ToolMode::Draw_Circle:
                 Sketch.Tool.actCircle->setChecked(true);
                 break;
-            case CadEvent::Sketch::ToolMode::Draw_RectEdges:
+            case CadEvent::Sketch::ToolMode::Draw_Rectangle:
+                if (auto* substatus = std::get_if<CadEvent::Sketch::RectangleSubMode>(&status->sub_mode)) {
+                    switch ( *substatus ){
+                        case CadEvent::Sketch::RectangleSubMode::ByCenter:
+                        Sketch.Tool.actRectCenter->setChecked(true);
+                            break;
+                        case CadEvent::Sketch::RectangleSubMode::ByEdges:
+                            Sketch.Tool.actRectCorners->setChecked(true);
+                            break;
+                        default:
+                            LOG_ERROR << "MainWindow::traiterReponseCad -> CadEvent::Sketch::ToolMode::Draw_Rectangle -> switch -> substatus -> default "<< std::endl;
+                            break;
+                    }
+                }else{
+                    LOG_ERROR << "MainWindow::traiterReponseCad -> CadEvent::Sketch::ToolMode::Draw_Rectangle -> switch default "<< std::endl;
+                }
+
+
                 Sketch.Tool.actRectCorners->setChecked(true);
                 break;
-            case CadEvent::Sketch::ToolMode::Draw_RectCenter:
-                Sketch.Tool.actRectCenter->setChecked(true);
-                break;
+            // case CadEvent::Sketch::ToolMode::Draw_RectEdges:
+            //     Sketch.Tool.actRectCorners->setChecked(true);
+            //     break;
+            // case CadEvent::Sketch::ToolMode::Draw_RectCenter:
+            //     Sketch.Tool.actRectCenter->setChecked(true);
+            //     break;
             case CadEvent::Sketch::ToolMode::Select:
                 Sketch.Tool.actSelect->setChecked(true);
                 break;

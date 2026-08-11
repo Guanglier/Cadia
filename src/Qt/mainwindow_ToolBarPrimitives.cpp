@@ -65,7 +65,8 @@ void MainWindow::ToolbarPrimitives_Setup (){
     connect(Sketch.Tool.actRectCenter, &QAction::triggered, this, [this]() {
         CadCommandEvent evt;
         evt.params = CadEvent::Sketch::CmdActivateTool{
-            CadEvent::Sketch::ToolMode::Draw_RectCenter
+            CadEvent::Sketch::ToolMode::Draw_Rectangle,
+            CadEvent::Sketch::Tool_SubMode{CadEvent::Sketch::RectangleSubMode::ByCenter}
         };
         m_view3d->CADEvent_TraiterCommande(evt);
     });
@@ -76,7 +77,8 @@ void MainWindow::ToolbarPrimitives_Setup (){
     connect(Sketch.Tool.actRectCorners, &QAction::triggered, this, [this]() {
         CadCommandEvent evt;
         evt.params = CadEvent::Sketch::CmdActivateTool{
-            CadEvent::Sketch::ToolMode::Draw_RectEdges
+            CadEvent::Sketch::ToolMode::Draw_Rectangle,
+            CadEvent::Sketch::Tool_SubMode{CadEvent::Sketch::RectangleSubMode::ByEdges}
         };
         m_view3d->CADEvent_TraiterCommande(evt);
     });

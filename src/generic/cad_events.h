@@ -18,8 +18,9 @@ namespace CadEvent::Sketch {
     enum class ToolMode{
         Draw_line,
         Draw_Circle,
-        Draw_RectEdges,
-        Draw_RectCenter,
+        //Draw_RectEdges,
+        //Draw_RectCenter,
+        Draw_Rectangle,
         Select,
         Dimensions,
         SetConstraints
@@ -33,9 +34,11 @@ namespace CadEvent::Sketch {
     enum class LineSubMode { TwoPoints, Normal, Tangent };
     enum class CircleSubMode { CenterPoint };
     enum class ConstraintSubMode { Horizontal, Vertical, Parallel, Perpendicular, Distance };
+    enum class RectangleSubMode { ByEdges, ByCenter };
     using Tool_SubMode = std::variant<
         std::monostate, // Pour les outils sans sous-mode
         LineSubMode,
+        RectangleSubMode,
         CircleSubMode,
         ConstraintSubMode
         >;

@@ -29,6 +29,8 @@
 #include <variant>
 #include "Logger.h"
 
+
+#undef LOCAL_LOG_LEVEL
 #define LOCAL_LOG_LEVEL ::LogLevel::Info
 
 
