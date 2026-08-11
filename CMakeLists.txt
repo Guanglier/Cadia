@@ -132,14 +132,10 @@ qt_add_executable(Cad_IA
     src/vtk3d/sketch/vtk3d_sketch_ToolLine.cpp
     src/vtk3d/sketch/vtk3d_sketch_ToolSelect.h
     src/vtk3d/sketch/vtk3d_sketch_ToolSelect.cpp
-    src/vtk3d/sketch/vtk3d_sketch_ToolSelect__SetDimension.h
-    src/vtk3d/sketch/vtk3d_sketch_ToolSelect__SetDimension.cpp
     src/vtk3d/sketch/vtk3d_sketch_ToolCircle.h
     src/vtk3d/sketch/vtk3d_sketch_ToolCircle.cpp
-    src/vtk3d/sketch/vtk3d_sketch_ToolRectEdges.h
-    src/vtk3d/sketch/vtk3d_sketch_ToolRectEdges.cpp
-    src/vtk3d/sketch/vtk3d_sketch_ToolRectCenter.h
-    src/vtk3d/sketch/vtk3d_sketch_ToolRectCenter.cpp
+    src/vtk3d/sketch/vtk3d_sketch_ToolRectangle.h
+    src/vtk3d/sketch/vtk3d_sketch_ToolRectangle.cpp
     src/vtk3d/sketch/vtk3d_sketch_ToolDimensions.cpp
     src/vtk3d/sketch/vtk3d_sketch_ToolDimensions.h
     src/vtk3d/sketch/vtk3d_sketch_ToolSetConstraints.cpp

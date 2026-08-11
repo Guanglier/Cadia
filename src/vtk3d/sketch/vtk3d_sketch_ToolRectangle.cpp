@@ -169,19 +169,12 @@ bool Tool_Rectangle::RectByEdge_gererMouseMove(QMouseEvent* event) {
     }
 
     auto* manager = common.m_Parent->getSnapperManager();
-
-    if (! rect_edges.m_isDrawingRect) {
-        // 🟩 CAS 1 : Aimantation libre sur la grille avant le premier coin
-        //manager->appliqueContraintes2D({0,0,0}, currentPoint3D, false, false);
-        // m_Cotation1_DistDesc.pntStop = currentPoint3D;
-        // m_Cotation2_bDescriptorDefined = true;
-        // m_Cotation1_currentDimensionDescriptor.data = m_Cotation1_DistDesc;
-        // DimensionEngine::GeometryResult Cot1_geoResult = DimensionEngine::ComputeGeometry(m_Parent->GetSketchPlane(), m_Cotation1_currentDimensionDescriptor);
-        // m_Parent->m_Cotation2->DessinerCotationDepuisResultat(m_Parent->GetSketchPlane(), Cot1_geoResult);
-
+	
+    if (! rect_edges.m_isDrawingRect) {	// Aimantation libre sur la grille avant le premier coin
+        
     }
     else {
-        // 🟦 CAS 2 : Calcul et mise à jour des 4 coins du rectangle élastique
+        // Calcul et mise à jour des 4 coins du rectangle élastique
         //manager->appliqueContraintes2D(m_startPoint3D, currentPoint3D, true, true);
         rect_edges.m_Cotation1_DistDesc.pntStop = currentPoint3D;
         rect_edges.m_Cotation2_bDescriptorDefined = true;
@@ -216,7 +209,7 @@ bool Tool_Rectangle::RectByCenter_gererMouseMove(QMouseEvent* event) {
     auto* manager = common.m_Parent->getSnapperManager();
 
     if (rect_center.m_drawStep == 0) {
-        // 🟩 RECHERCHE DU CENTRE
+        // RECHERCHE DU CENTRE
         //manager->appliqueContraintes2D({0,0,0}, currentPoint3D, false, false);
     }
     else if (rect_center.m_drawStep == 1) {
