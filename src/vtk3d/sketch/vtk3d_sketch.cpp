@@ -207,7 +207,7 @@ inline std::string Vtk3d_Sketch::ToolMode_To_String (CadEvent::Sketch::ToolMode 
 void Vtk3d_Sketch::sketch_ActivateTool(CadEvent::Sketch::ToolMode li_tool, CadEvent::Sketch::Tool_SubMode li_submode) {
     bool    ToolSelected = false;
 
-    if (m_ToolMode != li_tool) {
+    // if (m_ToolMode != li_tool) {
         m_ToolMode = li_tool;
 
         std::visit([](auto& activeTool) {
@@ -265,7 +265,7 @@ void Vtk3d_Sketch::sketch_ActivateTool(CadEvent::Sketch::ToolMode li_tool, CadEv
         std::visit([li_submode](auto& activeTool) {
             activeTool.activate( li_submode );
         }, m_tool);
-    }
+    //}
 }
 
 
