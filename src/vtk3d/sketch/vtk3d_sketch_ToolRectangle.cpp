@@ -10,7 +10,7 @@
 #include <vtkProperty.h>
 #include <iostream>
 #include <cmath>
-
+#include "Logger.h"
 
 
 
@@ -18,7 +18,7 @@
 //─────────────────────────────────────────────────────────────────────
 //               ACTIVATION
 //─────────────────────────────────────────────────────────────────────
-void Tool_Rectangle::activate() {
+void Tool_Rectangle::activate(const CadEvent::Sketch::Tool_SubMode& submode) {
     rect_center.m_drawStep = 0;
     rect_edges.m_startPoint3D = gp_Pnt(0, 0, 0);
     rect_edges.m_isDrawingRect = false;
@@ -57,6 +57,14 @@ void Tool_Rectangle::activate() {
 
     common.m_Parent->GetView()->getRenderer()->AddActor(common.m_rectActor);
 
+    if ( nullptr == std::get_if<CadEvent::Sketch::RectangleSubMode> (&submode) ){
+        LOG_ERROR << "Tool_Rectangle::activate getif submode invalide " << std::endl;
+        common.m_SubMode = CadEvent::Sketch::RectangleSubMode::ByCenter;
+    }else{
+        common.m_SubMode = submode;
+    }
+
+
 
 }
 
@@ -72,19 +80,28 @@ void Tool_Rectangle::desactivate() {
 //     fin de dessin du rectangle
 //─────────────────────────────────────────────────────────────────────
 void Tool_Rectangle::EndDrawRectangle() {
-    switch ( common.m_SubMode )
-    {
-        case CadEvent::Sketch::RectangleSubMode::ByCenter:
-            if (rect_center.m_drawStep > 0) {
-                rect_center.m_drawStep = 0;
+
+    std::visit([this](auto&& submode) {
+        using T = std::decay_t<decltype(submode)>;
+
+        if constexpr (std::is_same_v<T, CadEvent::Sketch::RectangleSubMode>) {
+            switch (submode) {
+            case CadEvent::Sketch::RectangleSubMode::ByCenter:
+                if (rect_center.m_drawStep > 0) {
+                    rect_center.m_drawStep = 0;
+                }
+                break;
+            case CadEvent::Sketch::RectangleSubMode::ByEdges:
+                if (rect_edges.m_isDrawingRect) {
+                    rect_edges.m_isDrawingRect = false;
+                }
+                break;
             }
-            break;
-        case CadEvent::Sketch::RectangleSubMode::ByEdges:
-            if (rect_edges.m_isDrawingRect) {
-                rect_edges.m_isDrawingRect = false;
-            }
-            break;
-    };
+        }
+        // Si le variant contient autre chose (ex: std::monostate ou un autre type d'outil), il ne fait rien
+    }, common.m_SubMode);
+
+
     common.m_rectActor->SetVisibility(false);
     auto* manager = common.m_Parent->getSnapperManager();
     manager->masquerFeedback();
@@ -119,12 +136,22 @@ void Tool_Rectangle::ajusterEchelleElements( double li_echelle){
 //─────────────────────────────────────────────────────────────────────
 bool Tool_Rectangle::gererMouseMove(QMouseEvent* event) {
 
-    if ( CadEvent::Sketch::RectangleSubMode::ByCenter == common.m_SubMode )
-    {
-        RectByCenter_gererMouseMove ( event );
-    }else if (CadEvent::Sketch::RectangleSubMode::ByEdges == common.m_SubMode ){
-        RectByEdge_gererMouseMove (event);
-    }
+    std::visit([this,event](auto&& submode) {
+        using T = std::decay_t<decltype(submode)>;
+
+        if constexpr (std::is_same_v<T, CadEvent::Sketch::RectangleSubMode>) {
+            switch (submode) {
+            case CadEvent::Sketch::RectangleSubMode::ByCenter:
+                RectByCenter_gererMouseMove ( event );
+                break;
+            case CadEvent::Sketch::RectangleSubMode::ByEdges:
+                RectByEdge_gererMouseMove (event);
+                break;
+            }
+        }
+        // Si le variant contient autre chose (ex: std::monostate ou un autre type d'outil), il ne fait rien
+    }, common.m_SubMode);
+
     common.m_Parent->GetView()->renderWindow()->Render();
     return true;
 }
@@ -339,6 +366,73 @@ void Tool_Rectangle::RectByEdge_Cotation2_Configure (gp_Pnt liMousePos3D){
 //               MOUSE  PRESS
 //─────────────────────────────────────────────────────────────────────
 bool Tool_Rectangle::gererMousePress(QMouseEvent* event) {
+
+    std::visit([this,event](auto&& submode) {
+        using T = std::decay_t<decltype(submode)>;
+
+        if constexpr (std::is_same_v<T, CadEvent::Sketch::RectangleSubMode>) {
+            switch (submode) {
+            case CadEvent::Sketch::RectangleSubMode::ByCenter:
+                RectByCenter_gererMousePress (event);
+                break;
+            case CadEvent::Sketch::RectangleSubMode::ByEdges:
+                RectByEdges_gererMousePress (event);
+                break;
+            }
+        }
+        // Si le variant contient autre chose (ex: std::monostate ou un autre type d'outil), il ne fait rien
+    }, common.m_SubMode);
+
+    common.m_Parent->GetView()->renderWindow()->Render();
+    return true;
+}
+
+
+bool Tool_Rectangle::RectByEdges_gererMousePress(QMouseEvent* event) {
+    gp_Pnt2d currentPoint2D;
+
+    if (event->button() != Qt::LeftButton) return false;
+
+    auto* manager = common.m_Parent->getSnapperManager();
+
+    if (! rect_edges.m_isDrawingRect) {
+        // 🟩 PREMIER CLIC : Premier coin de la boîte
+        rect_edges.m_isDrawingRect = true;
+        //m_RectStart2D.SetCoord(static_cast<double>(event->x()), static_cast<double>(event->y())  );
+
+        if (common.m_Parent->calculerIntersectionSourisSurPlan(event->x(), event->y(), rect_edges.m_RectStart2D, rect_edges.m_startPoint3D)) {
+            //manager->appliqueContraintes2D({0,0,0}, m_startPoint3D, false, false);
+
+            // Initialisation de l'élastique à plat sur le point d'ancrage
+            for (int i = 0; i < 5; ++i) {
+                common.m_rectPoints->SetPoint(i, rect_edges.m_startPoint3D.X(), rect_edges.m_startPoint3D.Y(), rect_edges.m_startPoint3D.Z());
+            }
+            common.m_rectPoints->Modified();
+
+            rect_edges.m_point1_3D = rect_edges.m_startPoint3D;
+            common.m_rectActor->SetVisibility(true);
+            common.m_Parent->GetView()->renderWindow()->Render();
+            RectByEdge_Cotation1_Configure ( rect_edges.m_startPoint3D );
+            RectByEdge_Cotation2_Configure ( rect_edges.m_startPoint3D );
+
+        }
+        return true;
+    }
+    else {
+        // 🟦 DEUXIÈME CLIC : Coin diagonal opposé, validation géométrique
+
+        if (common.m_Parent->calculerIntersectionSourisSurPlan(event->x(), event->y(), rect_edges.m_RectEnd2D, rect_edges.m_point2_3D)) {
+            AddRectangleToOp(rect_edges.m_RectStart2D, rect_edges.m_RectEnd2D);
+            common.m_Parent->rafraichirAffichageEsquisse();
+            common.m_Parent->Signaler_ChangementEsquisseIHM ();
+        }
+
+        EndDrawRectangle();
+        return true;
+    }
+}
+
+bool Tool_Rectangle::RectByCenter_gererMousePress(QMouseEvent* event) {
     gp_Pnt2d clickedPoint2D;
 
     if (event->button() != Qt::LeftButton) return false;
@@ -350,125 +444,72 @@ bool Tool_Rectangle::gererMousePress(QMouseEvent* event) {
         return false;
     }
 
+    if (rect_center.m_drawStep == 0) {
+        // 🟩 CLIC 1 : Fixation du centre
+        //manager->appliqueContraintes2D({0,0,0}, clickedPoint3D, false, false);
+        rect_center.m_centerPoint3D = clickedPoint3D;
+        rect_center.m_centerPoint2D = clickedPoint2D;
 
-
-    if ( CadEvent::Sketch::RectangleSubMode::ByCenter == common.m_SubMode )
-    {
-
-
-
-        if (rect_center.m_drawStep == 0) {
-            // 🟩 CLIC 1 : Fixation du centre
-            //manager->appliqueContraintes2D({0,0,0}, clickedPoint3D, false, false);
-            rect_center.m_centerPoint3D = clickedPoint3D;
-            rect_center.m_centerPoint2D = clickedPoint2D;
-
-            rect_center.m_drawStep = 1;
-            common.m_rectActor->SetVisibility(true);
-        }
-        else if (rect_center.m_drawStep == 1) {
-            // 🟦 CLIC 2 : Fixation de la Largeur et de l'Angle
-            //manager->appliqueContraintes2D(m_centerPoint3D, clickedPoint3D, true, true);
-            rect_center.m_widthPoint3D = clickedPoint3D;
-            rect_center.m_widthPoint2D = clickedPoint2D;
-            rect_center.m_drawStep = 2;
-
-            gp_Vec TmpVect ( rect_center.m_centerPoint3D, rect_center.m_widthPoint3D );
-            gp_Pnt pntExtremiteOpposee = rect_center.m_centerPoint3D.Translated(-TmpVect);
-            RectByCenter_Cotation_Configure ( pntExtremiteOpposee  );
-
-        }
-        else if (rect_center.m_drawStep == 2) {
-            // 🟨 CLIC 3 : Fixation de la Hauteur et Envoi final au modèle CAO
-            //manager->appliqueContraintes2D(m_widthPoint3D, clickedPoint3D, true, true);
-            rect_center.m_heightPoint3D = clickedPoint3D;
-            rect_center.m_heightPoint2D = clickedPoint2D;
-
-            common.m_Parent->m_Cotation->masquerEtVider();
-            common.m_Parent->m_Cotation2->masquerEtVider();
-
-            // Récupération des coordonnées des sommets calculées dans le vtkPoints
-            double p0[3], p1[3], p2[3], p3[3];
-            common.m_rectPoints->GetPoint(0, p0);
-            common.m_rectPoints->GetPoint(1, p1);
-            common.m_rectPoints->GetPoint(2, p2);
-            common.m_rectPoints->GetPoint(3, p3);
-
-            gp_Pln plan(common.m_Parent->PartRefs.GetSketchPlane());
-
-            gp_Pnt p0_3d(p0[0], p0[1], p0[2]);
-            gp_Pnt p1_3d(p1[0], p1[1], p1[2]);
-            gp_Pnt p2_3d(p2[0], p2[1], p2[2]);
-            gp_Pnt p3_3d(p3[0], p3[1], p3[2]);
-
-            double u = 0.0, v = 0.0;
-
-            ElSLib::Parameters(plan, p0_3d, u, v);
-            gp_Pnt2d Pnt_A(u, v);
-
-            ElSLib::Parameters(plan, p1_3d, u, v);
-            gp_Pnt2d Pnt_B(u, v);
-
-            ElSLib::Parameters(plan, p2_3d, u, v);
-            gp_Pnt2d Pnt_C(u, v);
-
-            ElSLib::Parameters(plan, p3_3d, u, v);
-            gp_Pnt2d Pnt_D(u, v);
-
-            AddCenterRectangleToOp(Pnt_A, Pnt_B, Pnt_C, Pnt_D );
-
-            common.m_Parent->rafraichirAffichageEsquisse();
-            EndDrawRectangle();
-            common.m_Parent->Signaler_ChangementEsquisseIHM ();
-        }
-    }else if (CadEvent::Sketch::RectangleSubMode::ByEdges == common.m_SubMode ){
-        gp_Pnt2d currentPoint2D;
-
-        if (event->button() != Qt::LeftButton) return false;
-
-        auto* manager = common.m_Parent->getSnapperManager();
-
-        if (! rect_edges.m_isDrawingRect) {
-            // 🟩 PREMIER CLIC : Premier coin de la boîte
-            rect_edges.m_isDrawingRect = true;
-            //m_RectStart2D.SetCoord(static_cast<double>(event->x()), static_cast<double>(event->y())  );
-
-            if (common.m_Parent->calculerIntersectionSourisSurPlan(event->x(), event->y(), rect_edges.m_RectStart2D, rect_edges.m_startPoint3D)) {
-                //manager->appliqueContraintes2D({0,0,0}, m_startPoint3D, false, false);
-
-                // Initialisation de l'élastique à plat sur le point d'ancrage
-                for (int i = 0; i < 5; ++i) {
-                    common.m_rectPoints->SetPoint(i, rect_edges.m_startPoint3D.X(), rect_edges.m_startPoint3D.Y(), rect_edges.m_startPoint3D.Z());
-                }
-                common.m_rectPoints->Modified();
-
-                rect_edges.m_point1_3D = rect_edges.m_startPoint3D;
-                common.m_rectActor->SetVisibility(true);
-                common.m_Parent->GetView()->renderWindow()->Render();
-                RectByEdge_Cotation1_Configure ( rect_edges.m_startPoint3D );
-                RectByEdge_Cotation2_Configure ( rect_edges.m_startPoint3D );
-
-            }
-            return true;
-        }
-        else {
-            // 🟦 DEUXIÈME CLIC : Coin diagonal opposé, validation géométrique
-
-            if (common.m_Parent->calculerIntersectionSourisSurPlan(event->x(), event->y(), rect_edges.m_RectEnd2D, rect_edges.m_point2_3D)) {
-                AddRectangleToOp(rect_edges.m_RectStart2D, rect_edges.m_RectEnd2D);
-                common.m_Parent->rafraichirAffichageEsquisse();
-                common.m_Parent->Signaler_ChangementEsquisseIHM ();
-            }
-
-            EndDrawRectangle();
-            return true;
-        }
+        rect_center.m_drawStep = 1;
+        common.m_rectActor->SetVisibility(true);
     }
-    common.m_Parent->GetView()->renderWindow()->Render();
-    return true;
+    else if (rect_center.m_drawStep == 1) {
+        // 🟦 CLIC 2 : Fixation de la Largeur et de l'Angle
+        //manager->appliqueContraintes2D(m_centerPoint3D, clickedPoint3D, true, true);
+        rect_center.m_widthPoint3D = clickedPoint3D;
+        rect_center.m_widthPoint2D = clickedPoint2D;
+        rect_center.m_drawStep = 2;
+
+        gp_Vec TmpVect ( rect_center.m_centerPoint3D, rect_center.m_widthPoint3D );
+        gp_Pnt pntExtremiteOpposee = rect_center.m_centerPoint3D.Translated(-TmpVect);
+        RectByCenter_Cotation_Configure ( pntExtremiteOpposee  );
+
+    }
+    else if (rect_center.m_drawStep == 2) {
+        // 🟨 CLIC 3 : Fixation de la Hauteur et Envoi final au modèle CAO
+        //manager->appliqueContraintes2D(m_widthPoint3D, clickedPoint3D, true, true);
+        rect_center.m_heightPoint3D = clickedPoint3D;
+        rect_center.m_heightPoint2D = clickedPoint2D;
+
+        common.m_Parent->m_Cotation->masquerEtVider();
+        common.m_Parent->m_Cotation2->masquerEtVider();
+
+        // Récupération des coordonnées des sommets calculées dans le vtkPoints
+        double p0[3], p1[3], p2[3], p3[3];
+        common.m_rectPoints->GetPoint(0, p0);
+        common.m_rectPoints->GetPoint(1, p1);
+        common.m_rectPoints->GetPoint(2, p2);
+        common.m_rectPoints->GetPoint(3, p3);
+
+        gp_Pln plan(common.m_Parent->PartRefs.GetSketchPlane());
+
+        gp_Pnt p0_3d(p0[0], p0[1], p0[2]);
+        gp_Pnt p1_3d(p1[0], p1[1], p1[2]);
+        gp_Pnt p2_3d(p2[0], p2[1], p2[2]);
+        gp_Pnt p3_3d(p3[0], p3[1], p3[2]);
+
+        double u = 0.0, v = 0.0;
+
+        ElSLib::Parameters(plan, p0_3d, u, v);
+        gp_Pnt2d Pnt_A(u, v);
+
+        ElSLib::Parameters(plan, p1_3d, u, v);
+        gp_Pnt2d Pnt_B(u, v);
+
+        ElSLib::Parameters(plan, p2_3d, u, v);
+        gp_Pnt2d Pnt_C(u, v);
+
+        ElSLib::Parameters(plan, p3_3d, u, v);
+        gp_Pnt2d Pnt_D(u, v);
+
+        AddCenterRectangleToOp(Pnt_A, Pnt_B, Pnt_C, Pnt_D );
+
+        common.m_Parent->rafraichirAffichageEsquisse();
+        EndDrawRectangle();
+        common.m_Parent->Signaler_ChangementEsquisseIHM ();
+    }
+
 }
-
-
 
 
 

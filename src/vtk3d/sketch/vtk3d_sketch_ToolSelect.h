@@ -46,7 +46,7 @@ struct Tool_Select  {
         m_Parent = parent;
     }
 
-    void activate();
+    void activate( const CadEvent::Sketch::Tool_SubMode& submode );
     void desactivate();
 
     bool keyPressEvent(QKeyEvent* event) ;

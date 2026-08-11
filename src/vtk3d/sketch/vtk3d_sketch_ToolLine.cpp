@@ -20,7 +20,7 @@
 //─────────────────────────────────────────────────────────────────────
 //               ACTIVATION
 //─────────────────────────────────────────────────────────────────────
-void Tool_LineDraw::activate () {
+void Tool_LineDraw::activate ( const CadEvent::Sketch::Tool_SubMode& submode ) {
     m_startPoint3D = gp_Pnt(0, 0, 0) ;
     m_isDrawingLigne = false;
 

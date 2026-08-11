@@ -225,17 +225,10 @@ void Vtk3d_Sketch::sketch_ActivateTool(CadEvent::Sketch::ToolMode li_tool, CadEv
                 m_tool = Tool_LineDraw{this};
                 ToolSelected = true;
                 break;
-            //case CadEvent::Sketch::ToolMode::Draw_RectCenter:
-            //    m_tool = Tool_RectCenterDraw{this};
-            //    ToolSelected = true;
-            //    break;
             case CadEvent::Sketch::ToolMode::Draw_Rectangle:
+                m_tool = Tool_Rectangle{this};
+                ToolSelected = true;
                 break;
-
-            ////case CadEvent::Sketch::ToolMode::Draw_RectEdges:
-            ////    m_tool = Tool_RectEdgesDraw{this};
-            ////    ToolSelected = true;
-            ////    break;
             case CadEvent::Sketch::ToolMode::Select:
                 m_tool = Tool_Select{this};
                 ToolSelected = true;
@@ -269,8 +262,8 @@ void Vtk3d_Sketch::sketch_ActivateTool(CadEvent::Sketch::ToolMode li_tool, CadEv
             CADEvent_RemonterEvent (resp);
         }
 
-        std::visit([](auto& activeTool) {
-            activeTool.activate();
+        std::visit([li_submode](auto& activeTool) {
+            activeTool.activate( li_submode );
         }, m_tool);
     }
 }

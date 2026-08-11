@@ -12,7 +12,7 @@
 //─────────────────────────────────────────────────────────────────────
 //               ACTIVATION
 //─────────────────────────────────────────────────────────────────────
-void Tool_CircleDraw::activate() {
+void Tool_CircleDraw::activate( const CadEvent::Sketch::Tool_SubMode& submode ) {
     m_centerPoint3D.SetX( 0.0);
     m_centerPoint3D.SetY( 0.0);
     m_centerPoint3D.SetZ( 0.0);

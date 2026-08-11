@@ -20,7 +20,7 @@ constexpr int TOLERANCE_CLIC = 10;
 #undef LOCAL_LOG_LEVEL
 #define LOCAL_LOG_LEVEL LogLevel::Debug
 
-void Tool_Select::activate() {
+void Tool_Select::activate( const CadEvent::Sketch::Tool_SubMode& submode ) {
     // TODO: Implémenter l'activation de l'outil
 }
 

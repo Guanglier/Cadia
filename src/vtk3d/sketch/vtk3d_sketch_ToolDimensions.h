@@ -69,7 +69,7 @@ struct Tool_Dimensions  {
     vtkSmartPointer<vtkPolyData>    m_linePolyData;
     vtkSmartPointer<vtkActor>       m_lineActor;
 
-    void activate();
+    void activate( const CadEvent::Sketch::Tool_SubMode& submode );
     void desactivate();
 
     bool keyPressEvent(QKeyEvent* event) ;

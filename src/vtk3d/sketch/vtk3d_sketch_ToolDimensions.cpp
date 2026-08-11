@@ -17,7 +17,7 @@ constexpr int TOLERANCE_CLIC = 10;
 
 // --- Placeholders pour développements futurs ---
 
-void Tool_Dimensions::activate() {
+void Tool_Dimensions::activate( const CadEvent::Sketch::Tool_SubMode& submode ) {
     std::cout<<"Tool_Dimensions -> activate" <<std::endl;
     CotationStrRef.ref_defined = false;
 

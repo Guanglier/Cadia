@@ -28,16 +28,22 @@ struct Tool_Rectangle {
         common.m_Parent = parent;
     }
 
-    void activate();
+    void activate( const CadEvent::Sketch::Tool_SubMode& submode );
     void desactivate();
 
     bool keyPressEvent(QKeyEvent* event);
     bool gererWheelEvent(QWheelEvent* event);
+
     bool gererMouseMove(QMouseEvent* event);
     bool RectByEdge_gererMouseMove(QMouseEvent* event);
     bool RectByCenter_gererMouseMove(QMouseEvent* event);
-    bool gererMouseRelease(QMouseEvent* event);
+
     bool gererMousePress(QMouseEvent* event);
+    bool RectByEdges_gererMousePress(QMouseEvent* event);
+    bool RectByCenter_gererMousePress(QMouseEvent* event);
+
+    bool gererMouseRelease(QMouseEvent* event);
+
     bool gererkeyPressEvent(QKeyEvent* event);
 
     void EndDrawRectangle();
@@ -67,7 +73,7 @@ struct Tool_Rectangle {
 		vtkSmartPointer<vtkActor>     m_rectActor;
         vtkSmartPointer<vtkActor> m_snapPointActor;
         Vtk3d_Sketch* m_Parent = nullptr;
-        CadEvent::Sketch::RectangleSubMode    m_SubMode = CadEvent::Sketch::RectangleSubMode::ByCenter;
+        CadEvent::Sketch::Tool_SubMode    m_SubMode = CadEvent::Sketch::RectangleSubMode::ByCenter;
 	}common;
 	
 	struct {

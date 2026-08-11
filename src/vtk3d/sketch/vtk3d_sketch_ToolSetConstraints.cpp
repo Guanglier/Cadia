@@ -17,7 +17,7 @@ void Tool_SetConstraints::ajusterEchelleElements ( double li_echelle ){
 
 }
 
-void Tool_SetConstraints::activate() {
+void Tool_SetConstraints::activate( const CadEvent::Sketch::Tool_SubMode& submode ) {
     // TODO: Implémenter l'activation de l'outil
 }
 
