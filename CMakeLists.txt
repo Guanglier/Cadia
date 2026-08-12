@@ -160,6 +160,7 @@ qt_add_executable(Cad_IA
     src/generic/Contours_tests.cpp
     src/generic/Contours_tests.h
     src/generic/cad_events.h
+    src/generic/cad_events.cpp
     src/generic/2DSolver_Constraints.h
     src/generic/2DSolver_Mapper.cpp
     src/generic/2DSolver_Mapper.h

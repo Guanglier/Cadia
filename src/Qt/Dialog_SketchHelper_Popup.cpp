@@ -52,12 +52,11 @@ Dialog_SketchHelper_Popup::Dialog_SketchHelper_Popup(QWidget* parent)
 
 void Dialog_SketchHelper_Popup::setHelperData(const DialogSketchHelper::Helper& newHelper)
 {
-    if (m_widgetMap.isEmpty() || m_currentHelper.champMultiple.size() != newHelper.champMultiple.size()) {
+    //if (m_widgetMap.isEmpty() || m_currentHelper.champMultiple.size() != newHelper.champMultiple.size()) {
         buildUI(newHelper);
-    } else {
-        updateUI(newHelper);
-
-    }
+    //} else {
+   //     updateUI(newHelper);
+   // }
 
     m_currentHelper = newHelper;
 }
@@ -119,9 +118,9 @@ void Dialog_SketchHelper_Popup::buildUI(const DialogSketchHelper::Helper& helper
 
                 QLabel* label = new QLabel(champ.title, container);
                 QLineEdit* lineEdit = new QLineEdit(container);
-                lineEdit->setReadOnly(true);
-                lineEdit->setText(champ.IsOk ? "Sélectionné [OK]" : "En attente de sélection...");
+                lineEdit->setText(  champ.field_text );
                 lineEdit->setProperty("field_id", champ.id);
+                lineEdit->setReadOnly(true);
 
                 hLayout->addWidget(label);
                 hLayout->addWidget(lineEdit);
@@ -143,7 +142,7 @@ void Dialog_SketchHelper_Popup::buildUI(const DialogSketchHelper::Helper& helper
         }, champVariant);
     }
 }
-
+/*
 void Dialog_SketchHelper_Popup::updateUI(const DialogSketchHelper::Helper& newHelper)
 {
     m_lblTitle->setText(newHelper.title);
@@ -183,7 +182,7 @@ void Dialog_SketchHelper_Popup::updateUI(const DialogSketchHelper::Helper& newHe
         }, champVariant);
     }
 }
-
+*/
 void Dialog_SketchHelper_Popup::applyAttributes(QWidget* widget, const DialogSketchHelper::AttributsChamps& attrs)
 {
     QLineEdit* lineEdit = qobject_cast<QLineEdit*>(widget);
@@ -203,16 +202,30 @@ void Dialog_SketchHelper_Popup::applyAttributes(QWidget* widget, const DialogSke
         }
     } else if (attrs.b_IsValid) {
         lineEdit->setStyleSheet("QLineEdit { border: 2px solid #2ecc71; border-radius: 4px; background-color: #f4fcf7; }");
-        lineEdit->clear();
+        //lineEdit->clear();
     } else {
         lineEdit->setStyleSheet("");
-        lineEdit->clear();
+        //lineEdit->clear();
     }
 }
 
 
 void Dialog_SketchHelper_Popup::clickedCancel (void){
 
+
+
+    CadCommandEvent evt;
+    evt.params = CadEvent::Sketch::CmdActivateTool{
+        CadEvent::Sketch::ToolMode::SetConstraints,
+        CadEvent::Sketch::Tool_SubMode{ CadEvent::Sketch::ConstraintSubMode::Horizontal}
+    };
+    m_view3d->CADEvent_TraiterCommande(evt);
+
+//case CadEvent::Sketch::CmdPopupToolBtnClicked::Btn_Cancel:
+//    break;
+//case CadEvent::Sketch::CmdPopupToolBtnClicked::Btn_OK:
+//    break;
+//case CadEvent::Sketch::CmdPopupToolBtnClicked::Btn_Reset:
 }
 void Dialog_SketchHelper_Popup::clickedReset (void){
 

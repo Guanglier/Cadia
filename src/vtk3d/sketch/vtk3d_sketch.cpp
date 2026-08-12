@@ -403,6 +403,12 @@ void Vtk3d_Sketch::CADEvent_TraiterCommande(const CadCommandEvent& event) {
     if (auto* cmd = std::get_if<CadEvent::Sketch::CmdActivateTool>(&event.params)  ) {
         sketch_ActivateTool (  cmd->toolMode , cmd->sub_mode );
     }
+    else{
+        std::visit([event](auto& activeTool) {
+            activeTool.CADEvent_TraiterCommande(event);
+        }, m_tool);
+    }
+
 
 /*
     if (auto* cmd = std::get_if<CadEvent::Sketch::CmdConstraints>(&event.params)  ) {

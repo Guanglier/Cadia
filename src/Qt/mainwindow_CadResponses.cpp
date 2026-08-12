@@ -43,7 +43,28 @@ void MainWindow::traiterReponseCad(const CadResponseEvent& resp) {
                 Sketch.Tool.actSelect->setChecked(true);
                 break;
             case CadEvent::Sketch::ToolMode::SetConstraints:
-                Sketch.Constraints.actConstHorizontal->setChecked(true);
+                if ( auto* substatus = std::get_if<CadEvent::Sketch::ConstraintSubMode>(&status->sub_mode)){
+                    switch ( *substatus){
+                        case CadEvent::Sketch::ConstraintSubMode::Horizontal:
+                            Sketch.Constraints.actConstHorizontal->setChecked(true);
+                            break;
+                        case CadEvent::Sketch::ConstraintSubMode::Vertical:
+                            Sketch.Constraints.actConstVertical->setChecked(true);
+                            break;
+                        case CadEvent::Sketch::ConstraintSubMode::Parallel:
+                            Sketch.Constraints.actConstParallel->setChecked(true);
+                            break;
+                        case CadEvent::Sketch::ConstraintSubMode::Perpendicular:
+                            Sketch.Constraints.actConstPerpendicular->setChecked(true);
+                            break;
+                        case CadEvent::Sketch::ConstraintSubMode::Distance:
+                            Sketch.Constraints.actConstDistance->setChecked(true);
+                            break;
+                    };
+                }else{
+                    LOG_ERROR << "MainWindow::traiterReponseCad -> CadEvent::Sketch::ToolMode::SetConstraints -> switch default "<< std::endl;
+                }
+
                 break;
             default:
                 this->statusBar()->showMessage( "err CadEvent::Sketch::RespChangedTool" );

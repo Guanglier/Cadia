@@ -18,8 +18,6 @@ namespace CadEvent::Sketch {
     enum class ToolMode{
         Draw_line,
         Draw_Circle,
-        //Draw_RectEdges,
-        //Draw_RectCenter,
         Draw_Rectangle,
         Select,
         Dimensions,
@@ -34,6 +32,7 @@ namespace CadEvent::Sketch {
     enum class LineSubMode { TwoPoints, Normal, Tangent };
     enum class CircleSubMode { CenterPoint };
     enum class ConstraintSubMode { Horizontal, Vertical, Parallel, Perpendicular, Distance };
+    std::string CadEvent_Sketch_ConstraintSubmode_To_String ( ConstraintSubMode li_submode) ;
     enum class RectangleSubMode { ByEdges, ByCenter };
     using Tool_SubMode = std::variant<
         std::monostate, // Pour les outils sans sous-mode
@@ -50,8 +49,8 @@ namespace CadEvent::Sketch {
     };
     struct CmdCancel {};
     struct CmdSetPrecisionValue { double value; };
-    //struct CmdConstraints { Constraints cmd; };
-
+    enum class CmdPopupToolBtnClicked { Btn_Cancel, Btn_Reset, Btn_OK };
+    struct CmdPopupTool { CmdPopupToolBtnClicked btn; };
 
     //----------- réponses ou envoi vers QT -------
     struct RespStatus { std::string text; };
@@ -61,6 +60,8 @@ namespace CadEvent::Sketch {
     struct RespSelection { std::string text; };
     struct RespSendPopupDef { DialogSketchHelper::Helper popup_def;};
 }
+
+
 
 // ============================================================================
 // 2. MODULE PART
@@ -72,6 +73,9 @@ namespace CadEvent::Part {
 
     struct RespGeneralSignal {GeneralMessage message; };
 }
+
+
+
 
 // ============================================================================
 // 2. MODULE ASSEMBLAGE (ASSEMBLY)
@@ -106,8 +110,8 @@ namespace CadEvent::Core {
 }
 
 
-
-// Le super-variant qui peut transporter N'IMPORTE QUEL message de l'application
+//---------------------------------------------------------------------------
+// commandes depuis QT vers les couches inférieures
 using CadCommandParams = std::variant<
     std::monostate,
     // Core
@@ -119,11 +123,13 @@ using CadCommandParams = std::variant<
     CadEvent::Sketch::CmdActivateTool,
     CadEvent::Sketch::CmdCancel,
     CadEvent::Sketch::CmdSetPrecisionValue,
+    CadEvent::Sketch::CmdPopupTool,
 
 
     // Assembly
     CadEvent::Assembly::CmdInsertComponent,
     CadEvent::Assembly::CmdAddMate,
+
     // Drawing
     CadEvent::Drawing::CmdInsertView,
     CadEvent::Drawing::CmdAddAutoDimensions
@@ -137,7 +143,7 @@ struct CadCommandEvent {
 
 
 
-// Le super-variant remontant
+// Le super-variant remontant vers QT
 using CadResponseParams = std::variant<
     std::monostate,
     CadEvent::Core::RespProgress,           // progression d'une opération en cours
@@ -163,6 +169,9 @@ struct CadResponseEvent {
 // Callbacks globaux
 using CadCommandCallback  = std::function<void(const CadCommandEvent&)>;
 using CadResponseCallback = std::function<void(const CadResponseEvent&)>;
+
+
+
 
 
 

@@ -25,6 +25,7 @@ namespace DialogSketchHelper{
 	struct ChampInputSelection : public AttributsChamps{
 		QString id;             // Identifiant unique (ex: "sel_point1", "sel_line2")
 		QString title;          // Libellé affiché (ex: "Premier point :")
+        QString field_text;     // texte affiché dans la zone de sélection du champ
 		bool    IsOk = false;   // Vrai si l'élément a été sélectionné
 	};
 
