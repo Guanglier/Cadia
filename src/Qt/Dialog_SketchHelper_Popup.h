@@ -29,6 +29,7 @@ signals:
     // Signaux pour remonter les actions à ton outil / moteur
     void doubleValueChanged(const QString& id, double val);
     void fieldClicked(const QString& id);
+    void OnClickedButton ( int li_button);
 
 private:
     void buildUI(const DialogSketchHelper::Helper& helper);

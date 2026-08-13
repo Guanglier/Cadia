@@ -211,27 +211,13 @@ void Dialog_SketchHelper_Popup::applyAttributes(QWidget* widget, const DialogSke
 
 
 void Dialog_SketchHelper_Popup::clickedCancel (void){
-
-
-
-    CadCommandEvent evt;
-    evt.params = CadEvent::Sketch::CmdActivateTool{
-        CadEvent::Sketch::ToolMode::SetConstraints,
-        CadEvent::Sketch::Tool_SubMode{ CadEvent::Sketch::ConstraintSubMode::Horizontal}
-    };
-    m_view3d->CADEvent_TraiterCommande(evt);
-
-//case CadEvent::Sketch::CmdPopupToolBtnClicked::Btn_Cancel:
-//    break;
-//case CadEvent::Sketch::CmdPopupToolBtnClicked::Btn_OK:
-//    break;
-//case CadEvent::Sketch::CmdPopupToolBtnClicked::Btn_Reset:
+    emit OnClickedButton(0);
 }
 void Dialog_SketchHelper_Popup::clickedReset (void){
-
+    emit OnClickedButton(1);
 }
 void Dialog_SketchHelper_Popup::clickedOk (void){
-
+    emit OnClickedButton(2);
 }
 
 

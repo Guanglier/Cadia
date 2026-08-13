@@ -51,10 +51,6 @@ bool Tool_SetConstraints::gererMouseMove(QMouseEvent* event) {
 // --- Implémentations actives ---
 
 bool Tool_SetConstraints::gererMouseRelease(QMouseEvent* event) {
-    data.first_element.PrimitiveIsSelected = false;
-    //m_b_MouseLIsPressed = false;
-    data.first_element.m_SelectedPrimitiveId = -1;
-
 
     return false;
 }
@@ -107,7 +103,6 @@ bool Tool_SetConstraints::gererMousePress(QMouseEvent* event) {
                 if constexpr( std::is_same_v<T,SketchLine>)
                 {
                     m_Parent->Signaler_Selection( " Sélection de ligne" );
-
                     if( ConcretePrim.b_Locked == true ){
                         LOG_INFO << "Tool_Select::gererMousePress(QMouseEvent* event) -> ligne LOCKED Id=" << l_PickerResult.id << std::endl;
                         return;
@@ -154,18 +149,8 @@ bool Tool_SetConstraints::gererkeyPressEvent(QKeyEvent* event) {
 
 void Tool_SetConstraints::CADEvent_TraiterCommande(const CadCommandEvent& event){
     if (auto* cmd = std::get_if<CadEvent::Sketch::CmdPopupTool>(&event.params)  ) {
-        switch ( cmd->btn ){
-        case CadEvent::Sketch::CmdPopupToolBtnClicked::Btn_Cancel:
-            break;
-        case CadEvent::Sketch::CmdPopupToolBtnClicked::Btn_OK:
-            break;
-        case CadEvent::Sketch::CmdPopupToolBtnClicked::Btn_Reset:
-            resetSelection();
-            break;
-        }
+        popup_StateMachineOnBtnClicked ( cmd->btn);
     }
-
-    //PartSketchConstraint::SketchConstraint
 }
 
 void Tool_SetConstraints::resetSelection() {
@@ -283,7 +268,83 @@ void Tool_SetConstraints::popup_sendpopup(){
     m_Parent->CADEvent_RemonterEvent (l_event);
 }
 
+void Tool_SetConstraints::popup_StateMachineOnBtnClicked ( CadEvent::Sketch::CmdPopupToolBtnClicked li_btn){
+    std::string  l_string = "";
 
+    switch ( li_btn ){
+        case CadEvent::Sketch::CmdPopupToolBtnClicked::Btn_Cancel:
+            //std::cout<< "Tool_SetConstraints::CADEvent_TraiterCommande : Btn_Cancel" << std::endl;
+            break;
+        case CadEvent::Sketch::CmdPopupToolBtnClicked::Btn_OK:
+            //std::cout<< "Tool_SetConstraints::CADEvent_TraiterCommande : Btn_OK" << std::endl;
+            if ( 2 == data.select_state )
+            {
+
+                auto* sketchParams = m_Parent->PartRefs.GetParams();
+                if (!sketchParams) return;
+                switch ( m_mode ){
+                case CadEvent::Sketch::ConstraintSubMode::Horizontal:{
+                    PartSketchConstraint::SketchConstraint ConstHori;
+                    ConstHori.data = PartSketchConstraint::HorizontalConstraint{{
+                            m_Parent->PartRefs.GetSketchId(),           // operationId (TEST BUG ATTENTION)
+                            (uint64_t) data.first_element.m_SelectedPrimitiveId,
+                            PartSketchConstraint::SubElement::Whole
+                        }
+                    };
+                    sketchParams->addConstraint(ConstHori, l_string);
+                    update_esquisse ();
+                    resetSelection();
+                    break;
+                };
+                case CadEvent::Sketch::ConstraintSubMode::Vertical:{
+                    PartSketchConstraint::SketchConstraint vert1;
+                    vert1.data = PartSketchConstraint::VerticalConstraint{{
+                            m_Parent->PartRefs.GetSketchId(),           // operationId (TEST BUG ATTENTION)
+                            (uint64_t) data.first_element.m_SelectedPrimitiveId,
+                            PartSketchConstraint::SubElement::Whole
+                        }
+                    };
+                    sketchParams->addConstraint(vert1, l_string);
+                    update_esquisse ();
+                    resetSelection();
+                    break;
+                };
+                case CadEvent::Sketch::ConstraintSubMode::Parallel:
+                case CadEvent::Sketch::ConstraintSubMode::Perpendicular:
+
+                    break;
+
+                case CadEvent::Sketch::ConstraintSubMode::Distance:
+
+                    break;
+                };
+
+
+            }
+            break;
+        case CadEvent::Sketch::CmdPopupToolBtnClicked::Btn_Reset:
+            //std::cout<< "Tool_SetConstraints::CADEvent_TraiterCommande : Btn_Reset" << std::endl;
+            resetSelection();
+            break;
+    }
+}
+
+
+
+void Tool_SetConstraints::update_esquisse () {
+    auto* sketchParams = m_Parent->PartRefs.GetParams();
+    if (!sketchParams){
+        LOG_ERROR << "Tool_SetConstraints::popup_StateMachineOnBtnClicked !sketchParams" << std::endl;
+        return;
+    }else{
+        m_Parent->m_SolverSession.Initialize(*sketchParams);
+        m_Parent->m_SolverSession.Step(*sketchParams);
+        m_Parent->GetView()->m_Chighlighter->masquerSurbrillance();
+        m_Parent->rafraichirAffichageEsquisse();
+        m_Parent->Signaler_ChangementEsquisseIHM ();
+        LOG_ERROR << "OK Tool_SetConstraints::popup_StateMachineOnBtnClicked" << std::endl;
+    }
+}
 
 void Tool_SetConstraints::popup_StateMachine (int selectedId, const QString& typeName) {
     switch (data.select_state) {

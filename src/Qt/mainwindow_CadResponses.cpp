@@ -117,6 +117,28 @@ void MainWindow::traiterReponseCad(const CadResponseEvent& resp) {
                     this, [](const QString& id, double val) {
                         qDebug() << "Valeur modifiée pour :" << id << "=" << val;
                     });
+            connect(m_sketchHelperPopup, &Dialog_SketchHelper_Popup::OnClickedButton,
+                    this, [this](const int li_button)
+                    {
+                        std::cout << "Valeur modifiée pour :" << li_button << std::endl;
+                        CadCommandEvent evt;
+
+                        switch ( li_button){
+                            case 0:
+                                evt.params = CadEvent::Sketch::CmdPopupTool{  CadEvent::Sketch::CmdPopupToolBtnClicked{CadEvent::Sketch::CmdPopupToolBtnClicked::Btn_Cancel} };
+                                break;
+                            case 1:
+                                evt.params = CadEvent::Sketch::CmdPopupTool{  CadEvent::Sketch::CmdPopupToolBtnClicked{CadEvent::Sketch::CmdPopupToolBtnClicked::Btn_Reset} };
+                                break;
+                            case 2:
+                                evt.params = CadEvent::Sketch::CmdPopupTool{  CadEvent::Sketch::CmdPopupToolBtnClicked{CadEvent::Sketch::CmdPopupToolBtnClicked::Btn_OK} };
+                                break;
+                            default:
+                                evt.params = CadEvent::Sketch::CmdPopupTool{  CadEvent::Sketch::CmdPopupToolBtnClicked{CadEvent::Sketch::CmdPopupToolBtnClicked::Btn_Cancel} };
+                                break;
+                        }
+                        this->m_view3d->CADEvent_TraiterCommande(evt);
+                    });
         }
         m_sketchHelperPopup->setHelperData(popup_def);
 

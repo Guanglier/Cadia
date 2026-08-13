@@ -212,9 +212,10 @@ public:
     const std::vector<SketchPoint>& getPoints()const { return m_points.getItems(); }
 
     uint64_t    addPrimitive(SketchPrimitive primitive) { return m_primitiveRegistry.add(std::move(primitive)); }
-    uint64_t    addConstraint(PartSketchConstraint::SketchConstraint constraint);
+    uint64_t    addConstraint(PartSketchConstraint::SketchConstraint constraint, std::string& lo_Message );
     void        loadPrimitive(SketchPrimitive primitive) { m_primitiveRegistry.load(std::move(primitive)); }
     void        loadConstraint(PartSketchConstraint::SketchConstraint constraint) { m_constraintRegistry.load(std::move(constraint)); }
+
 
     uint64_t addLine ( gp_Pnt2d li_PntStart2d, gp_Pnt2d li_PntStop2d );
     uint64_t addCircle ( gp_Pnt2d li_PntCenter2d, double radius);

@@ -224,7 +224,7 @@ void CAD_Part::tst_add_repere_origine() {
 }
 
 void CAD_Part::tst_add_op_sketch_rect() {
-
+    std::string l_string;
     
 
     //------------ construction de la sketch -------------------------------
@@ -261,13 +261,13 @@ void CAD_Part::tst_add_op_sketch_rect() {
     hor1.data = PartSketchConstraint::HorizontalConstraint{
         {opId, l2_id, PartSketchConstraint::SubElement::Whole}
     };
-    sketch.addConstraint(hor1);
+    sketch.addConstraint(hor1, l_string);
 
     PartSketchConstraint::SketchConstraint hor2;
     hor2.data = PartSketchConstraint::HorizontalConstraint{
         {opId, l4_id, PartSketchConstraint::SubElement::Whole}
     };
-    sketch.addConstraint(hor2);
+    sketch.addConstraint(hor2, l_string);
 
 
 

@@ -29,6 +29,7 @@ struct Tool_SetConstraints  {
     void ajusterEchelleElements( double li_echelle);
     void CADEvent_TraiterCommande(const CadCommandEvent& event);
     void resetSelection ();
+    void update_esquisse ();
 
     //bool    m_b_MouseLIsPressed = false;
     //QPoint     m_MouseclickStartPosition;
@@ -59,6 +60,7 @@ private:
     void popup_sendpopup ();
     void popup_StateMachine ();
     void popup_StateMachine (int selectedId, const QString& typeName);
+    void popup_StateMachineOnBtnClicked ( CadEvent::Sketch::CmdPopupToolBtnClicked li_btn);
 };
 
 

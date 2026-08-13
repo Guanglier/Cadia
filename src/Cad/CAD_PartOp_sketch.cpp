@@ -264,15 +264,102 @@ TopoDS_Shape SketchParams::evaluate(const CAD_Part& part) const {
  * @param constraint [Entrée] La contrainte à ajouter.
  * @return uint64_t L'identifiant (ID) de la contrainte (existante ou nouvellement créée).
  */
-uint64_t SketchParams::addConstraint(PartSketchConstraint::SketchConstraint constraint) {
-    // Vérification des doublons via getItems()
-    // for (const auto& existingConstraint : m_constraintRegistry.getItems()) {
-    //     if (existingConstraint.isEquivalentTo(constraint)) {
-    //         // Un doublon existe déjà, on retourne son ID existant sans l'ajouter en double
-    //         return existingConstraint.id;
-    //     }
-    // }
+template <typename T, typename = std::void_t<>>
+struct has_ref : std::false_type {};
 
-    // Sinon, ajout normal via le registre
-    return m_constraintRegistry.add(std::move(constraint));
+template <typename T>
+struct has_ref<T, std::void_t<decltype(T::ref)>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool has_ref_v = has_ref<T>::value;
+uint64_t SketchParams::addConstraint(PartSketchConstraint::SketchConstraint constraint, std::string& lo_Message) {
+    // 1. Vérification des doublons stricts via getItems()
+    for (const auto& existingConstraint : m_constraintRegistry.getItems()) {
+
+        if (existingConstraint == constraint) {
+            lo_Message = "Constraint already exists (duplicate ignored).";
+            return existingConstraint.id;
+        }
+
+        // 2. Vérification des incompatibilités sémantiques (ex: Horizontal vs Vertical)
+        bool conflict = false;
+
+        std::visit([&](const auto& newC)
+        {
+            using NewT = std::decay_t<decltype(newC)>;
+
+            std::visit([&](const auto& existC)
+            {
+                using ExistT = std::decay_t<decltype(existC)>;
+
+                //----------- verifier si on veut injecter une contrainte verticale alors qu'il y a deja une horizontale, et vice versa
+                PartSketchConstraint::RefGeometry ref_new;
+                PartSketchConstraint::RefGeometry ref_exist;
+                bool refNew_type = false, refExist_type = false;
+                if constexpr (std::is_same_v<NewT, PartSketchConstraint::HorizontalConstraint> ||  std::is_same_v<NewT, PartSketchConstraint::VerticalConstraint> ){
+                    ref_new = newC.ref;
+                    refNew_type = true;
+                }
+                if constexpr (std::is_same_v<ExistT, PartSketchConstraint::HorizontalConstraint> || std::is_same_v<ExistT, PartSketchConstraint::VerticalConstraint>){
+                    ref_exist = existC.ref;
+                    refExist_type = true;
+                }
+                if ( true == refExist_type && true == refNew_type ){
+                    if ( ref_new == ref_exist){
+                        conflict = true;
+                    }
+                }
+
+                if constexpr( std::is_same_v<NewT, PartSketchConstraint::DistanceConstraint>){
+                    if constexpr ( std::is_same_v<ExistT, PartSketchConstraint::DistanceConstraint> ){
+                        if ((newC.ref1 == existC.ref1 && newC.ref2 == existC.ref2) ||
+                            (newC.ref1 == existC.ref2 && newC.ref2 == existC.ref1)) {
+                            conflict = true;
+                        }
+                    }
+                }
+
+
+            }, existingConstraint.data);
+
+        }, constraint.data);
+
+        if (conflict) {
+            lo_Message = "Incompatible constraint: an orthogonal constraint already exists on this entity.";
+            return 0;
+        }
+    }
+
+    // 3. Sinon, ajout normal via le registre
+    uint64_t newId = m_constraintRegistry.add(std::move(constraint));
+    lo_Message = "Constraint successfully added. (id=" + std::to_string(newId) + ")";
+    return newId;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
