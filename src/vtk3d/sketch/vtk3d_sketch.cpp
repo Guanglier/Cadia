@@ -394,6 +394,20 @@ PickResult Vtk3d_Sketch::PickerGetPickedElement(int screenX, int screenY){
 
 }
 
+vtkPolyData* Vtk3d_Sketch::TrouverPolyDataParCible(PickResult::TargetType type) {
+    if (type == PickResult::TargetType::Primitive) {
+        if (m_ActorSketchDisplay && m_ActorSketchDisplay->GetMapper()) {
+            return vtkPolyData::SafeDownCast(m_ActorSketchDisplay->GetMapper()->GetInput());
+        }
+    }
+    else if (type == PickResult::TargetType::Point) {
+        if (m_ActorPointsOfPrim && m_ActorPointsOfPrim->GetMapper()) {
+            return vtkPolyData::SafeDownCast(m_ActorPointsOfPrim->GetMapper()->GetInput());
+        }
+    }
+    return nullptr;
+}
+
 
 
 //-----------------------------------------------------------------------

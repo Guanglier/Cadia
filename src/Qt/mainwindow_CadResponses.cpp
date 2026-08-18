@@ -115,12 +115,12 @@ void MainWindow::traiterReponseCad(const CadResponseEvent& resp) {
             // Connexion des signaux de la popup vers les slots de ta MainWindow (si besoin)
             connect(m_sketchHelperPopup, &Dialog_SketchHelper_Popup::doubleValueChanged,
                     this, [](const QString& id, double val) {
-                        qDebug() << "Valeur modifiée pour :" << id << "=" << val;
+                        qDebug() << "MainWindow::traiterReponseCadValeur modifiée pour :" << id << "=" << val;
                     });
             connect(m_sketchHelperPopup, &Dialog_SketchHelper_Popup::OnClickedButton,
                     this, [this](const int li_button)
                     {
-                        std::cout << "Valeur modifiée pour :" << li_button << std::endl;
+                        std::cout << "MainWindow::traiterReponseCadValeur modifiée pour :" << li_button << std::endl;
                         CadCommandEvent evt;
 
                         switch ( li_button){
@@ -153,7 +153,7 @@ void MainWindow::traiterReponseCad(const CadResponseEvent& resp) {
                 TreeView_Cfg_PartView();
                 break;
             default:
-                LOG_ERROR << "if ( auto* status=std::get_if<CadEvent::Solid::RespGeneralSignal>(&resp.params)) "<< std::endl;
+                LOG_ERROR << "MainWindow::traiterReponseCad if ( auto* status=std::get_if<CadEvent::Solid::RespGeneralSignal>(&resp.params)) "<< std::endl;
                 break;
             }
     }

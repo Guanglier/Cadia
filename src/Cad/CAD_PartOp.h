@@ -227,10 +227,11 @@ public:
 
 
     SketchPoint& GetPointById ( uint64_t li_id);
+    int removeUnusedPoints();
 
     SketchPrimitive* GetPrimitiveMutable(uint64_t id) {    return m_primitiveRegistry.findMutable(id); }
 
-    void removePrimitive(uint64_t idASupprimer);
+    bool removePrimitive(uint64_t idASupprimer);
     void recomputeGeometry3D() const {
         for (const auto& point : getPoints()) {
             point.Update3D(m_sketchPlane);

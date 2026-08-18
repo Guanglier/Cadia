@@ -5,6 +5,15 @@
 #include "cad_events.h"
 #include "Dialog_SketchHelper_Popup.h"
 #include "cad_events.h"
+//#include "vtk3d_sketch.h"
+
+
+
+
+
+
+
+
 
 class Vtk3d_Sketch;
 
@@ -13,6 +22,7 @@ struct Tool_SetConstraints  {
     Tool_SetConstraints(Vtk3d_Sketch* parent)  {
         m_Parent = parent;
     }
+
 
     CadEvent::Sketch::ConstraintSubMode       m_mode = CadEvent::Sketch::ConstraintSubMode::Horizontal;
 
@@ -45,6 +55,8 @@ struct Tool_SetConstraints  {
             int     m_SelectedPrimitiveId = -1;
             bool    PrimitiveIsSelected = false;
         }second_element;
+        //PickResult  FirstElement;
+        //PickResult  SecondElement;
     }data;
 
 
@@ -62,9 +74,6 @@ private:
     void popup_StateMachine (int selectedId, const QString& typeName);
     void popup_StateMachineOnBtnClicked ( CadEvent::Sketch::CmdPopupToolBtnClicked li_btn);
 };
-
-
-
 
 
 

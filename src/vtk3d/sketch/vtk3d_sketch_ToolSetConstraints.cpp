@@ -71,6 +71,7 @@ bool Tool_SetConstraints::gererMousePress(QMouseEvent* event) {
         default:
             break;
         case PickResult::TargetType::Point:{
+            LOG_ERROR << " Tool_Select::gererMousePress: Primm = POINT id=" << l_PickerResult.id << std::endl;
             break;
         };
 
@@ -209,7 +210,7 @@ void Tool_SetConstraints::popup_create(){
     champFirstRef.b_IsValid = false;      // Valide au départ
 
 
-    DialogSketchHelper::ChampInputSelection champSel;
+
 
     switch ( m_mode ){
         case CadEvent::Sketch::ConstraintSubMode::Horizontal:
@@ -227,7 +228,7 @@ void Tool_SetConstraints::popup_create(){
     m_ToolHelper.champMultiple.push_back(champFirstRef);
 
 
-
+    DialogSketchHelper::ChampInputSelection SecondChamp;
     // SECOND champ
     switch ( m_mode ){
         case CadEvent::Sketch::ConstraintSubMode::Horizontal:
@@ -235,26 +236,49 @@ void Tool_SetConstraints::popup_create(){
             break;
         case CadEvent::Sketch::ConstraintSubMode::Parallel:
         case CadEvent::Sketch::ConstraintSubMode::Perpendicular:
-            champSel.id = "sel_point";
-            champSel.title = "Ligne";
-            champSel.IsOk = false;          // Pas encore sélectionné
-            champSel.b_IsFocus = false;
-            champSel.b_IsDisabled = true;
-            champSel.b_IsValid = false;     // Invalide -> Affichera la bordure/croix rouge
-            m_ToolHelper.champMultiple.push_back(champSel);
+            SecondChamp.id = "sel_point";
+            SecondChamp.title = "Ligne";
+            SecondChamp.IsOk = false;          // Pas encore sélectionné
+            SecondChamp.b_IsFocus = false;
+            SecondChamp.b_IsDisabled = true;
+            SecondChamp.b_IsValid = false;     // Invalide -> Affichera la bordure/croix rouge
+            champFirstRef.field_text = "Ligne ou point (sélectionner)";
+            m_ToolHelper.champMultiple.push_back(SecondChamp);
             break;
 
         case CadEvent::Sketch::ConstraintSubMode::Distance:
-            champSel.id = "sel_point";
-            champSel.title = "Point ou ligne :";
-            champSel.IsOk = false;          // Pas encore sélectionné
-            champSel.b_IsFocus = false;
-            champSel.b_IsDisabled = true;
-            champSel.b_IsValid = false;     // Invalide -> Affichera la bordure/croix rouge
-            m_ToolHelper.champMultiple.push_back(champSel);
+            SecondChamp.id = "sel_point";
+            SecondChamp.title = "Point ou ligne :";
+            SecondChamp.IsOk = false;          // Pas encore sélectionné
+            SecondChamp.b_IsFocus = false;
+            SecondChamp.b_IsDisabled = true;
+            SecondChamp.b_IsValid = false;     // Invalide -> Affichera la bordure/croix rouge
+            champFirstRef.field_text = "Ligne ou point (sélectionner)";
+            m_ToolHelper.champMultiple.push_back(SecondChamp);
             break;
     };
 
+
+    // 3e champ
+    DialogSketchHelper::ChampInputDouble TroisiemeChampDistance;
+
+    switch ( m_mode ){
+        case CadEvent::Sketch::ConstraintSubMode::Horizontal:
+        case CadEvent::Sketch::ConstraintSubMode::Vertical:
+        case CadEvent::Sketch::ConstraintSubMode::Parallel:
+        case CadEvent::Sketch::ConstraintSubMode::Perpendicular:
+            break;
+
+        case CadEvent::Sketch::ConstraintSubMode::Distance:
+            TroisiemeChampDistance.id = "sel_value";
+            TroisiemeChampDistance.title = "Valeur :";
+            TroisiemeChampDistance.b_IsFocus = false;
+            TroisiemeChampDistance.b_IsDisabled = true;
+            TroisiemeChampDistance.b_IsValid = true;
+            TroisiemeChampDistance.value = 15.0;
+            m_ToolHelper.champMultiple.push_back(TroisiemeChampDistance);
+            break;
+    };
 
 }
 
@@ -334,7 +358,7 @@ void Tool_SetConstraints::popup_StateMachineOnBtnClicked ( CadEvent::Sketch::Cmd
 void Tool_SetConstraints::update_esquisse () {
     auto* sketchParams = m_Parent->PartRefs.GetParams();
     if (!sketchParams){
-        LOG_ERROR << "Tool_SetConstraints::popup_StateMachineOnBtnClicked !sketchParams" << std::endl;
+        LOG_INFO << "Tool_SetConstraints::popup_StateMachineOnBtnClicked !sketchParams" << std::endl;
         return;
     }else{
         m_Parent->m_SolverSession.Initialize(*sketchParams);
@@ -342,11 +366,13 @@ void Tool_SetConstraints::update_esquisse () {
         m_Parent->GetView()->m_Chighlighter->masquerSurbrillance();
         m_Parent->rafraichirAffichageEsquisse();
         m_Parent->Signaler_ChangementEsquisseIHM ();
-        LOG_ERROR << "OK Tool_SetConstraints::popup_StateMachineOnBtnClicked" << std::endl;
+        LOG_INFO << "OK Tool_SetConstraints::popup_StateMachineOnBtnClicked" << std::endl;
     }
 }
 
 void Tool_SetConstraints::popup_StateMachine (int selectedId, const QString& typeName) {
+
+
     switch (data.select_state) {
     case 0: // --- ÉTAPE 1 : Sélection du premier élément ---
     {
@@ -374,7 +400,7 @@ void Tool_SetConstraints::popup_StateMachine (int selectedId, const QString& typ
                 if (auto* sel2 = std::get_if<DialogSketchHelper::ChampInputSelection>(&m_ToolHelper.champMultiple[1])) {
                     sel2->b_IsDisabled = false; // On l'active
                     sel2->b_IsFocus = true;    // On met le focus dessus
-                    sel2->field_text = "Sélectionner le 2e élément...";
+                    sel2->field_text = "Ligne ou point";
                 }
             }
             m_ToolHelper.instructionText = "Veuillez sélectionner le second élément.";
@@ -404,19 +430,38 @@ void Tool_SetConstraints::popup_StateMachine (int selectedId, const QString& typ
                 sel2->b_IsFocus = false;
             }
         }
-
-        // Tout est complet, on active le bouton OK
         data.select_state = 2;
-        m_ToolHelper.isButtonOkEnabled = true;
-        m_ToolHelper.instructionText = "Sélection complète. Cliquez sur OK.";
+
+        if ( m_mode == CadEvent::Sketch::ConstraintSubMode::Distance) {
+            if (m_ToolHelper.champMultiple.size() > 1) {
+                if (auto* sel3 = std::get_if<DialogSketchHelper::ChampInputDouble>(&m_ToolHelper.champMultiple[2])) {
+                    sel3->b_IsValid = true;
+                    sel3->b_IsFocus = true;
+                    sel3->value = 123.56;
+                    sel3->b_IsDisabled = false;
+                }
+            }
+        }else{
+            // Tout est complet, on active le bouton OK
+            m_ToolHelper.isButtonOkEnabled = true;
+            m_ToolHelper.instructionText = "Sélection complète. Cliquez sur OK.";
+        }
         popup_sendpopup();
     }
     break;
 
+    case 2:
+        break;
+
     default:
         break;
     }
+
+
 }
+
+
+
 
 
 

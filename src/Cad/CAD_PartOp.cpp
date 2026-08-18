@@ -19,6 +19,7 @@
 #include <type_traits>
 #include <TopoDS_Compound.hxx>
 #include "Logger.h"
+#include <unordered_set>
 
 
 
@@ -81,22 +82,92 @@ SketchPoint& SketchParams::GetPointById ( uint64_t li_id){
     // 2. Gestion d'erreur si l'ID n'existe pas (par exemple, lancer une exception)
     throw std::runtime_error("Point ID non trouvé dans le registre !");
 }
-void SketchParams::removePrimitive(uint64_t idASupprimer) {
 
-    // 1. Vérifier si la primitive est verrouillée
-    const auto* primPtr = GetPrimitiveMutable(idASupprimer);
-    if (primPtr) {
-        bool isLocked = std::visit([](const auto& arg) { return arg.b_Locked; }, *primPtr);
-        if (isLocked) {
-            LOG_WARN << "Impossible de supprimer la primitive ID " << idASupprimer << " : elle est verrouillée." << std::endl;
-            return; // On annule la suppression
-        }
+// --------------------------------------------------------------------------------------------
+// @brief Supprime de l'esquisse tous les points qui ne sont référencés par aucune primitive.
+// @return int Le nombre de points orphelins supprimés.
+// --------------------------------------------------------------------------------------------
+int SketchParams::removeUnusedPoints() {
+    auto& points = m_points.getItemsMutable();
+    const auto& primitives = m_primitiveRegistry.getItems();
+
+    // 1. Collecter tous les IDs de points actuellement référencés par les primitives restantes
+    std::unordered_set<uint64_t> referencedPointIds;
+
+    for (const auto& prim : primitives) {
+        std::visit([&referencedPointIds](const auto& p) {
+            using T = std::decay_t<decltype(p)>;
+            if constexpr (std::is_same_v<T, SketchLine>) {
+                referencedPointIds.insert(p.startPointId);
+                referencedPointIds.insert(p.stopPointId);
+            }
+            else if constexpr (std::is_same_v<T, SketchCircle>) {
+                referencedPointIds.insert(p.centerPointId);
+            }
+            else if constexpr (std::is_same_v<T, SketchArc>) {
+                referencedPointIds.insert(p.startPointId);
+                referencedPointIds.insert(p.midPointId);
+                referencedPointIds.insert(p.endPointId);
+            }
+        }, prim);
     }
 
+    // 2. Supprimer les points qui ne sont dans aucune primitive (et non verrouillés)
+    size_t initialSize = points.size();
 
+    points.erase(
+        std::remove_if(points.begin(), points.end(), [&referencedPointIds](const SketchPoint& pt) {
+            // Si le point est verrouillé, on évite de le supprimer automatiquement
+            if (pt.b_Locked) {
+                return false;
+            }
+            // S'il n'est pas dans la liste des points référencés, on le supprime
+            return referencedPointIds.find(pt.id) == referencedPointIds.end();
+        }),
+        points.end()
+        );
+
+    int removedCount = static_cast<int>(initialSize - points.size());
+    if (removedCount > 0) {
+        LOG_DEBUG << "SketchParams::removeUnusedPoints : " << removedCount << " point(s) orphelin(s) supprimé(s)." << std::endl;
+    }
+
+    return removedCount;
+}
+
+
+
+
+//---------------------------------------------------------------------------------------------
+// @brief Supprime une primitive géométrique et nettoie toutes les contraintes associées.
+//
+// @param idASupprimer L'identifiant unique (ID) de la primitive à supprimer.
+// @return true Si la primitive a été trouvée, non verrouillée et supprimée avec succès.
+// @return false Si la primitive n'existe pas, est verrouillée, ou si la suppression a échoué.
+//---------------------------------------------------------------------------------------------
+bool SketchParams::removePrimitive(uint64_t idASupprimer) {
+    // 1. Vérifier si la primitive existe dans le registre
+    const auto* primPtr = GetPrimitiveMutable(idASupprimer);
+    if (!primPtr) {
+        LOG_WARN << "Impossible de supprimer la primitive ID " << idASupprimer << " : elle n'existe pas." << std::endl;
+        return false;
+    }
+
+    // 2. Vérifier si la primitive est verrouillée pour empêcher sa suppression
+    bool isLocked = std::visit([](const auto& arg) { return arg.b_Locked; }, *primPtr);
+    if (isLocked) {
+        LOG_WARN << "Impossible de supprimer la primitive ID " << idASupprimer << " : elle est verrouillée." << std::endl;
+        return false; // On annule la suppression
+    }
+
+    // 3. Effectuer la suppression effective de la primitive dans le registre
     m_primitiveRegistry.remove(idASupprimer);
+
+
+    // 4. Récupérer la liste des contraintes pour purger celles liées à cette primitive
     auto& constraints = m_constraintRegistry.getItemsMutable();
 
+    // Utilisation du pattern erase-remove pour nettoyer les contraintes obsolètes
     constraints.erase(
         std::remove_if(constraints.begin(), constraints.end(), [idASupprimer](const PartSketchConstraint::SketchConstraint& c) {
             return std::visit([idASupprimer](const auto& ct) {
@@ -106,16 +177,16 @@ void SketchParams::removePrimitive(uint64_t idASupprimer) {
                               std::is_same_v<T, PartSketchConstraint::DistanceConstraint> ||
                               std::is_same_v<T, PartSketchConstraint::PerpendicularConstraint> ||
                               std::is_same_v<T, PartSketchConstraint::CoincidentConstraint>) {
-                    // Contraintes avec ref1 et ref2
+                    // Contraintes impliquant deux références (ref1 et ref2)
                     return ct.ref1.primitiveId == idASupprimer || ct.ref2.primitiveId == idASupprimer;
                 }
                 else if constexpr (std::is_same_v<T, PartSketchConstraint::VerticalConstraint> ||
                                    std::is_same_v<T, PartSketchConstraint::HorizontalConstraint>) {
-                    // Contraintes avec une seule référence nommée ref
+                    // Contraintes impliquant une seule référence nommée 'ref'
                     return ct.ref.primitiveId == idASupprimer;
                 }
                 else if constexpr (std::is_same_v<T, PartSketchConstraint::RadiusConstraint>) {
-                    // Contrainte Radius avec une seule référence nommée ref1
+                    // Contrainte de rayon impliquant une référence unique nommée 'ref1'
                     return ct.ref1.primitiveId == idASupprimer;
                 }
                 return false;
@@ -123,6 +194,10 @@ void SketchParams::removePrimitive(uint64_t idASupprimer) {
         }),
         constraints.end()
         );
+
+    removeUnusedPoints();
+
+    return true; // Suppression et nettoyage effectués avec succès
 }
 
 bool SketchParams::removePoint(uint64_t li_id) {

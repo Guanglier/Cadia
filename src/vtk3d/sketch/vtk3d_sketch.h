@@ -27,7 +27,6 @@ struct PickResult {
     enum class TargetType { None, Point, Primitive };
     TargetType type = TargetType::None;
     int id = -1;             // ID du point ou ID de l'edge/primitive
-    //vtkActor* actor = nullptr;
     gp_Pnt2d Clicked_Point2D;
     gp_Pnt Clicked_Point3D;
     vtkPolyData* sourcePolyData = nullptr;
@@ -159,6 +158,7 @@ public:
 
 
     PickResult PickerGetPickedElement(int screenX, int screenY);
+
 
 };
 
