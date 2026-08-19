@@ -472,14 +472,14 @@ void Vtk3d_Sketch::rafraichirContraintesGeometriques(SketchParams* sketchParams)
             uint64_t targetId = 0;
             if constexpr (std::is_same_v<T, PartSketchConstraint::HorizontalConstraint> ||
                           std::is_same_v<T, PartSketchConstraint::VerticalConstraint>) {
-                targetId = c.ref.primitiveId;
+                targetId = c.ref.Id;
             }
             else if constexpr (std::is_same_v<T, PartSketchConstraint::PerpendicularConstraint> ||
                                std::is_same_v<T, PartSketchConstraint::DistanceConstraint> ||
                                std::is_same_v<T, PartSketchConstraint::ParallelConstraint> ||
                                std::is_same_v<T, PartSketchConstraint::CoincidentConstraint> ||
                                std::is_same_v<T, PartSketchConstraint::RadiusConstraint>) {
-                targetId = c.ref1.primitiveId;
+                targetId = c.ref1.Id;
             }
 
             auto* primitiveVariant = sketchParams->GetPrimitiveMutable(targetId);
@@ -505,7 +505,7 @@ void Vtk3d_Sketch::rafraichirContraintesGeometriques(SketchParams* sketchParams)
                     pointsVertical->InsertNextPoint(glyphPos);
                 }
                 else if constexpr (std::is_same_v<T, PartSketchConstraint::PerpendicularConstraint>) {
-                    uint64_t targetId2 = c.ref2.primitiveId;
+                    uint64_t targetId2 = c.ref2.Id;
                     auto* primitiveVariant2 = sketchParams->GetPrimitiveMutable(targetId2);
 
                     if (primitiveVariant2) {

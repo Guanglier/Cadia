@@ -44,23 +44,24 @@
  * @return std::string Représentation textuelle de la référence (ex: "Line #1 (Start)").
  */
 std::string Solver2D_Mapper::formatRef(const SketchParams& sketch, const PartSketchConstraint::RefGeometry& ref) {
-    if (ref.primitiveId == 0 && ref.subElement == PartSketchConstraint::SubElement::Whole) {
+    if (ref.Id == 0 && ref.subElement == PartSketchConstraint::SubElement::Whole) {
         // Au cas où c'est une ref nulle / non assignée
         return "None";
     }
 
     std::string subStr = "";
     switch (ref.subElement) {
-        case PartSketchConstraint::SubElement::StartPoint: subStr = "Start"; break;
-        case PartSketchConstraint::SubElement::EndPoint:   subStr = "End"; break;
         case PartSketchConstraint::SubElement::CenterPoint:     subStr = "Center"; break;
         case PartSketchConstraint::SubElement::Whole:      subStr = "Whole"; break;
-        default:                               subStr = "Unknown"; break;
+        default:                               subStr = "Unknown";
+            std::cout << "ERROR std::string Solver2D_Mapper::formatRef" << std::endl;
+            std::cerr << "ERROR std::string Solver2D_Mapper::formatRef" << std::endl;
+            break;
     }
 
     // Récupération du type de primitive pour le contexte
     std::string typeStr = "Prim";
-    if (const auto* prim = const_cast<SketchParams&>(sketch).GetPrimitiveMutable(ref.primitiveId)) {
+    if (const auto* prim = const_cast<SketchParams&>(sketch).GetPrimitiveMutable(ref.Id)) {
         std::visit([&](auto& concrete) {
             using T = std::decay_t<decltype(concrete)>;
             if constexpr (std::is_same_v<T, SketchLine>)   typeStr = "Line";
@@ -68,7 +69,7 @@ std::string Solver2D_Mapper::formatRef(const SketchParams& sketch, const PartSke
         }, *prim);
     }
 
-    return typeStr + " #" + std::to_string(ref.primitiveId) + " (" + subStr + ")";
+    return typeStr + " #" + std::to_string(ref.Id) + " (" + subStr + ")";
 }
 
 
@@ -82,9 +83,9 @@ std::string Solver2D_Mapper::formatRef(const SketchParams& sketch, const PartSke
  * @return gp_Pnt2d* Pointeur vers le point 2D, ou nullptr en cas d'erreur.
  */
 gp_Pnt2d* Solver2D_Mapper::getPointPointerFromRef(SketchParams& sketch, const PartSketchConstraint::RefGeometry& ref) {
-    //if (ref.primitiveId == 0) return nullptr;
+    //if (ref.Id == 0) return nullptr;
 
-    SketchPrimitive* prim = sketch.GetPrimitiveMutable(ref.primitiveId);
+    SketchPrimitive* prim = sketch.GetPrimitiveMutable(ref.Id);
     if (!prim){
         LOG_ERROR << "ERROR static gp_Pnt2d* getPointPointerFromRef : prim " << std::endl;
         return nullptr;
@@ -147,6 +148,52 @@ void SolverInteractiveSession::UpdatePoint(int varIndex) {
     }
 }
 
+
+
+
+// Résout une RefGeometry en une liste d'indices de variables dans le vecteur X du solveur
+static std::vector<int> getVariableIndices(
+    const PartSketchConstraint::RefGeometry& ref,
+    const SketchParams& sketch,
+    const std::unordered_map<uint64_t, int>& pointIdToXIndex)
+{
+    if (ref.targetType == PartSketchConstraint::TargetType::Point) {
+        auto it = pointIdToXIndex.find(ref.Id);
+        if (it != pointIdToXIndex.end()) {
+            return { it->second, it->second + 1 }; // Retourne {idxX, idxY}
+        }
+    }
+    /*
+    else if (ref.targetType == PartSketchConstraint::TargetType::Primitive) {
+        SketchPrimitive* prim = sketch.GetPrimitiveMutable(ref.Id);
+        if (prim) {
+            // Exemple pour une ligne (récupération des points de début ou de fin selon le subElement)
+            if (std::holds_alternative<SketchLine>(*prim)) {
+                auto& line = std::get<SketchLine>(*prim);
+                uint64_t ptId = 0;
+
+                // Adapte selon ton énumération de SubElement (ex: Start, End, Whole, etc.)
+                if (ref.subElement == PartSketchConstraint::SubElement::Start) {
+                    ptId = line.startPointId;
+                } else if (ref.subElement == PartSketchConstraint::SubElement::End) {
+                    ptId = line.stopPointId;
+                }
+
+                if (ptId != 0) {
+                    auto it = pointIdToXIndex.find(ptId);
+                    if (it != pointIdToXIndex.end()) {
+                        return { it->second, it->second + 1 };
+                    }
+                }
+            }
+            // Tu pourras rajouter ici les cas pour les cercles (centre, etc.) si besoin
+        }
+    }
+    */
+    return {};
+}
+
+
 /**
  * @brief Initialise la session interactive lourde (map les variables, remplit X et ajoute les contraintes).
  * @param sketch [Entrée/Sortie] Référence vers l'esquisse à résoudre interactivement.
@@ -207,7 +254,7 @@ void SolverInteractiveSession::Initialize(SketchParams& sketch) {
             //}
 
             if constexpr (std::is_same_v<T, PartSketchConstraint::HorizontalConstraint>) {
-                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref.primitiveId);
+                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref.Id);
                 if (p1 && std::holds_alternative<SketchLine>(*p1)) {
                     auto& line = std::get<SketchLine>(*p1);
 
@@ -223,7 +270,7 @@ void SolverInteractiveSession::Initialize(SketchParams& sketch) {
                 }
             }
             else if constexpr (std::is_same_v<T, PartSketchConstraint::VerticalConstraint>) {
-                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref.primitiveId);
+                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref.Id);
                 if (p1 && std::holds_alternative<SketchLine>(*p1)) {
                     auto& line = std::get<SketchLine>(*p1);
 
@@ -237,7 +284,7 @@ void SolverInteractiveSession::Initialize(SketchParams& sketch) {
                             ));
                     }
                 } else {
-                    LOG_ERROR << "[Solver] Vertical : Primitive ID " << c.ref.primitiveId << " introuvable ou ce n'est pas une ligne !" << std::endl;
+                    LOG_ERROR << "[Solver] Vertical : Primitive ID " << c.ref.Id << " introuvable ou ce n'est pas une ligne !" << std::endl;
                 }
             }
             else if constexpr (std::is_same_v<T, PartSketchConstraint::CoincidentConstraint>) {
@@ -256,24 +303,34 @@ void SolverInteractiveSession::Initialize(SketchParams& sketch) {
             }
             else if constexpr (std::is_same_v<T, PartSketchConstraint::DistanceConstraint>) {
                 /*
-                gp_Pnt2d* p1 = Solver2D_Mapper::getPointPointerFromRef(sketch, c.ref1);
-                gp_Pnt2d* p2 = Solver2D_Mapper::getPointPointerFromRef(sketch, c.ref2);
-
-                int idx1 = getIndexOrError(p1, "Distance (ref1)");
-                int idx2 = getIndexOrError(p2, "Distance (ref2)");
-
-                if (idx1 != -1 && idx2 != -1) {
+                if ( (c.ref1.targetType == PartSketchConstraint::TargetType::Point) && (c.ref2.targetType == PartSketchConstraint::TargetType::Point)) {
                     solver.addConstraint(std::make_unique<ConstraintDistancePointPoint>(
-                        idx1, idx1 + 1,
-                        idx2, idx2 + 1,
+                        pointIdToXIndex.find(c.ref1.Id), pointIdToXIndex.find(c.ref1.Id)+1, // X1, Y1
+                        pointIdToXIndex.find(c.ref2.Id), pointIdToXIndex.find(c.ref2.Id)+1, // X2, Y2
                         c.value
                         ));
+                }else{
+                    LOG_ERROR << "[Solver] Distance :type non gere." << std::endl;
                 }
                 */
+
+                auto vars1 = getVariableIndices(c.ref1, sketch, pointIdToXIndex);
+                auto vars2 = getVariableIndices(c.ref2, sketch, pointIdToXIndex);
+
+                if (vars1.size() == 2 && vars2.size() == 2) {
+                    solver.addConstraint(std::make_unique<ConstraintDistancePointPoint>(
+                        vars1[0], vars1[1], // X1, Y1
+                        vars2[0], vars2[1], // X2, Y2
+                        c.value
+                        ));
+                } else {
+                    LOG_ERROR << "[Solver] Distance : Impossible de résoudre les références de points." << std::endl;
+                }
+
             }
             else if constexpr (std::is_same_v<T, PartSketchConstraint::RadiusConstraint>) {
                 /*
-                SketchPrimitive* prim = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
+                SketchPrimitive* prim = sketch.GetPrimitiveMutable(c.ref1.Id);
                 if (prim && std::holds_alternative<SketchCircle>(*prim)) {
                     SketchCircle& circle = std::get<SketchCircle>(*prim);
 
@@ -282,7 +339,7 @@ void SolverInteractiveSession::Initialize(SketchParams& sketch) {
                         solver.addConstraint(std::make_unique<ConstraintRadius>(rIdx, c.value));
                     }
                 } else {
-                    LOG_ERROR << "[Solver] Radius : Primitive ID " << c.ref1.primitiveId << " introuvable ou ce n'est pas un cercle !" << std::endl;
+                    LOG_ERROR << "[Solver] Radius : Primitive ID " << c.ref1.Id << " introuvable ou ce n'est pas un cercle !" << std::endl;
                 }
                 */
             }
@@ -290,8 +347,8 @@ void SolverInteractiveSession::Initialize(SketchParams& sketch) {
                 LOG_ERROR << "[Solver] Perpendicular : NON GERE !" << std::endl;
 
                 /*
-                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
-                SketchPrimitive* p2 = sketch.GetPrimitiveMutable(c.ref2.primitiveId);
+                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.Id);
+                SketchPrimitive* p2 = sketch.GetPrimitiveMutable(c.ref2.Id);
 
                 if (p1 && p2 && std::holds_alternative<SketchLine>(*p1) && std::holds_alternative<SketchLine>(*p2)) {
                     auto& line1 = std::get<SketchLine>(*p1);
@@ -327,7 +384,117 @@ void SolverInteractiveSession::Initialize(SketchParams& sketch) {
 }
 
 
+/*
 
+void SolverInteractiveSession::Initialize(SketchParams& sketch) {
+    // 1. Nettoyage / Réinitialisation des structures internes de la session courante
+    variablePointers.clear();
+    std::unordered_map<uint64_t, int> pointIdToXIndex;
+    std::unordered_map<uint64_t, int> circleToRIndex;
+
+    LOG_INFO << "SolverInteractiveSession::Initialize -> entree " << std::endl;
+
+    // --- Étape A : Mapper tous les points de la liste globale de l'esquisse ---
+    for (const auto& pt : sketch.getPoints()) {
+        uint64_t ptId = pt.id;
+        int idxX = static_cast<int>(variablePointers.size());
+
+        pointIdToXIndex[ptId] = idxX;
+
+        variablePointers.push_back(&(const_cast<gp_Pnt2d&>(pt.p2d).ChangeCoord().ChangeCoord(1))); // X
+        variablePointers.push_back(&(const_cast<gp_Pnt2d&>(pt.p2d).ChangeCoord().ChangeCoord(2))); // Y
+    }
+
+    // --- Étape B : Mapper les rayons des cercles ---
+    for (const auto& primConst : sketch.getPrimitives()) {
+        std::visit([&](const auto& concretePrim) {
+            using T = std::decay_t<decltype(concretePrim)>;
+            if constexpr (std::is_same_v<T, SketchCircle>) {
+                int idxR = static_cast<int>(variablePointers.size());
+                circleToRIndex[concretePrim.id] = idxR;
+                variablePointers.push_back(&(const_cast<double&>(concretePrim.radius)));
+            }
+        }, primConst);
+    }
+
+    int numVariables = static_cast<int>(variablePointers.size());
+    Vector_X.resize(numVariables);
+    pullFromSketch();
+    solver.setNumVariables(numVariables);
+
+    // --- Ajout des contraintes une seule fois ---
+    solver.clearConstraints();
+
+    for (const auto& constraint : sketch.getConstraints())
+    {
+        std::visit([&](const auto& c) {
+            using T = std::decay_t<decltype(c)>;
+
+            if constexpr (std::is_same_v<T, PartSketchConstraint::HorizontalConstraint>) {
+                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref.id);
+                if (p1 && std::holds_alternative<SketchLine>(*p1)) {
+                    auto& line = std::get<SketchLine>(*p1);
+
+                    int idxStart = pointIdToXIndex[line.startPointId];
+                    int idxStop  = pointIdToXIndex[line.stopPointId];
+
+                    if (idxStart != -1 && idxStop != -1) {
+                        solver.addConstraint(std::make_unique<ConstraintHorizontal>(
+                            idxStart + 1, // Y1
+                            idxStop + 1   // Y2
+                        ));
+                    }
+                }
+            }
+            else if constexpr (std::is_same_v<T, PartSketchConstraint::VerticalConstraint>) {
+                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref.id);
+                if (p1 && std::holds_alternative<SketchLine>(*p1)) {
+                    auto& line = std::get<SketchLine>(*p1);
+
+                    int idxStart = pointIdToXIndex[line.startPointId];
+                    int idxStop  = pointIdToXIndex[line.stopPointId];
+
+                    if (idxStart != -1 && idxStop != -1) {
+                        solver.addConstraint(std::make_unique<ConstraintVertical>(
+                            idxStart,
+                            idxStop
+                        ));
+                    }
+                } else {
+                    LOG_ERROR << "[Solver] Vertical : Primitive ID " << c.ref.id << " introuvable ou ce n'est pas une ligne !" << std::endl;
+                }
+            }
+            else if constexpr (std::is_same_v<T, PartSketchConstraint::CoincidentConstraint>) {
+                auto vars1 = getVariableIndices(c.ref1, sketch, pointIdToXIndex);
+                auto vars2 = getVariableIndices(c.ref2, sketch, pointIdToXIndex);
+
+                if (vars1.size() == 2 && vars2.size() == 2) {
+                    solver.addConstraint(std::make_unique<ConstraintCoincident1D>(vars1[0], vars2[0])); // X1 == X2
+                    solver.addConstraint(std::make_unique<ConstraintCoincident1D>(vars1[1], vars2[1])); // Y1 == Y2
+                } else {
+                    LOG_ERROR << "[Solver] Coincident : Impossible de résoudre les références de points." << std::endl;
+                }
+            }
+            else if constexpr (std::is_same_v<T, PartSketchConstraint::DistanceConstraint>) {
+                auto vars1 = getVariableIndices(c.ref1, sketch, pointIdToXIndex);
+                auto vars2 = getVariableIndices(c.ref2, sketch, pointIdToXIndex);
+
+                if (vars1.size() == 2 && vars2.size() == 2) {
+                    solver.addConstraint(std::make_unique<ConstraintDistancePointPoint>(
+                        vars1[0], vars1[1], // X1, Y1
+                        vars2[0], vars2[1], // X2, Y2
+                        c.value
+                    ));
+                } else {
+                    LOG_ERROR << "[Solver] Distance : Impossible de résoudre les références de points." << std::endl;
+                }
+            }
+        }, constraint);
+    }
+}
+
+
+*/
 
 // --------------------------------------------------------------------
 // Phase légère : Mise à jour d'une coordonnée et résolution instantanée (pour le MouseMove)
@@ -409,19 +576,19 @@ bool ForEachPrimitiveIndex(SketchParams& sketch, F&& callback) {
 /**
  * @brief Récupère les indices X et Y d'une poignée de primitive pour le pilotage direct.
  * @param sketch [Entrée/Sortie] Référence vers l'esquisse.
- * @param primitiveId [Entrée] Identifiant de la primitive cible.
+ * @param Id [Entrée] Identifiant de la primitive cible.
  * @param handleType [Entrée] Type de poignée recherchée (1: début, 2: fin, 3: centre).
  * @param outIndexX [Sortie] Référence pour stocker l'index X trouvé.
  * @param outIndexY [Sortie] Référence pour stocker l'index Y trouvé.
  * @return bool True si les indices ont été trouvés, false sinon.
  */
-bool SolverInteractiveSession::GetIndicesForHandle(SketchParams& sketch, int primitiveId, int handleType, int& outIndexX, int& outIndexY) {
-    SketchPrimitive* prim = sketch.GetPrimitiveMutable(primitiveId);
+bool SolverInteractiveSession::GetIndicesForHandle(SketchParams& sketch, int Id, int handleType, int& outIndexX, int& outIndexY) {
+    SketchPrimitive* prim = sketch.GetPrimitiveMutable(Id);
     if (!prim) return false;
 
     bool found = false;
     ForEachPrimitiveIndex(sketch, [&](int id, const std::vector<int>& indices) {
-        if (id == primitiveId) {
+        if (id == Id) {
             if (indices.size() >= 4) { // C'est une ligne
                 if (handleType == 1) { // Point de départ
                     outIndexX = indices[0];
@@ -471,21 +638,21 @@ bool SolverInteractiveSession::GetIndicesForHandle(SketchParams& sketch, uint64_
 /**
  * @brief Récupère l'ensemble des indices associés à une arête/primitive complète.
  * @param sketch [Entrée/Sortie] Référence vers l'esquisse.
- * @param primitiveId [Entrée] Identifiant de la primitive cible.
+ * @param Id [Entrée] Identifiant de la primitive cible.
  * @param outIndices [Sortie] Vecteur contenant la liste de tous les indices de variables de la primitive.
  * @return bool True si la primitive existe et les indices ont été récupérés, false sinon.
  */
-bool SolverInteractiveSession::GetIndicesForEntireEdge(SketchParams& sketch, int primitiveId, std::vector<int>& outIndices) {
+bool SolverInteractiveSession::GetIndicesForEntireEdge(SketchParams& sketch, int Id, std::vector<int>& outIndices) {
     outIndices.clear();
-    SketchPrimitive* prim = sketch.GetPrimitiveMutable(primitiveId);
+    SketchPrimitive* prim = sketch.GetPrimitiveMutable(Id);
     if (!prim){
-        LOG_ERROR << "[Solver] : SolverInteractiveSession::GetIndicesForEntireEdge: Impossible de récupérer les indices : la primitive ID "  + std::to_string(primitiveId) + " n'existe plus dans l'esquisse !" << std::endl;
+        LOG_ERROR << "[Solver] : SolverInteractiveSession::GetIndicesForEntireEdge: Impossible de récupérer les indices : la primitive ID "  + std::to_string(Id) + " n'existe plus dans l'esquisse !" << std::endl;
         return false;
     }
 
     bool found = false;
     ForEachPrimitiveIndex(sketch, [&](int id, const std::vector<int>& indices) {
-        if (id == primitiveId) {
+        if (id == Id) {
             outIndices = indices;
             found = true;
             return true;
@@ -493,7 +660,7 @@ bool SolverInteractiveSession::GetIndicesForEntireEdge(SketchParams& sketch, int
         return false;
     });
     if ( false == found ){
-        LOG_ERROR << "[Solver] : SolverInteractiveSession::GetIndicesForEntireEdge : not found ID "  << std::to_string(primitiveId) << std::endl ;
+        LOG_ERROR << "[Solver] : SolverInteractiveSession::GetIndicesForEntireEdge : not found ID "  << std::to_string(Id) << std::endl ;
     }
 
     return found;
@@ -595,7 +762,7 @@ bool SolverOneShot::Solve(SketchParams& sketch, bool enableDiagnostics) {
 
             if constexpr (std::is_same_v<T, PartSketchConstraint::HorizontalConstraint>) {
                 cTypeStr = "Horizontal";
-                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref.primitiveId);
+                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref.Id);
                 if (p1 && std::holds_alternative<SketchLine>(*p1)) {
                     auto& line = std::get<SketchLine>(*p1);
                     constraints.push_back(std::make_unique<ConstraintHorizontal>(
@@ -603,12 +770,12 @@ bool SolverOneShot::Solve(SketchParams& sketch, bool enableDiagnostics) {
                         pointIdToXIndex[line.stopPointId] + 1
                         ));
                 } else {
-                    LOG_ERROR << "ERROR: Horizontal attend une ligne valide." << std::endl;
+                    LOG_ERROR << "SolverOneShot::Solve : ERROR: Horizontal attend une ligne valide." << std::endl;
                 }
             }
             else if constexpr (std::is_same_v<T, PartSketchConstraint::VerticalConstraint>) {
                 cTypeStr = "Vertical";
-                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref.primitiveId);
+                SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref.Id);
                 if (p1 && std::holds_alternative<SketchLine>(*p1)) {
                     auto& line = std::get<SketchLine>(*p1);
                     constraints.push_back(std::make_unique<ConstraintVertical>(
@@ -616,20 +783,42 @@ bool SolverOneShot::Solve(SketchParams& sketch, bool enableDiagnostics) {
                         pointIdToXIndex[line.stopPointId]
                         ));
                 } else {
-                    LOG_ERROR << "ERROR: Vertical attend une ligne valide." << std::endl;
+                    LOG_ERROR << "SolverOneShot::Solve : ERROR: Vertical attend une ligne valide." << std::endl;
                 }
             }
             else if constexpr (std::is_same_v<T, PartSketchConstraint::RadiusConstraint>) {
                 cTypeStr = "Radius (" + std::to_string(c.value) + ")";
-                SketchPrimitive* prim = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
+                SketchPrimitive* prim = sketch.GetPrimitiveMutable(c.ref1.Id);
                 if (prim && std::holds_alternative<SketchCircle>(*prim)) {
                     auto& circle = std::get<SketchCircle>(*prim);
                     constraints.push_back(std::make_unique<ConstraintRadius>(circleToRIndex[circle.id], c.value));
                 }
             }
+            else if constexpr (std::is_same_v<T, PartSketchConstraint::DistanceConstraint>) {
+                cTypeStr = "Distance";
+                auto vars1 = getVariableIndices(c.ref1, sketch, pointIdToXIndex);
+                auto vars2 = getVariableIndices(c.ref2, sketch, pointIdToXIndex);
+
+                if (vars1.size() == 2 && vars2.size() == 2) {
+                    constraints.push_back(std::make_unique<ConstraintDistancePointPoint>(
+                        vars1[0], vars1[1], // X1, Y1
+                        vars2[0], vars2[1], // X2, Y2
+                        c.value
+                        ));
+                    /*
+                    solver.addConstraint(std::make_unique<ConstraintDistancePointPoint>(
+                        vars1[0], vars1[1], // X1, Y1
+                        vars2[0], vars2[1], // X2, Y2
+                        c.value
+                        ));
+                    */
+                }else{
+                    LOG_ERROR << "[Solver] Distance : vars1.size() : Impossible de résoudre les références de points." << std::endl;
+                }
+            }
             else {
                 cTypeStr = "Type non géré";
-                LOG_ERROR << "\tERROR : Type de contrainte non géré" << std::endl;
+                LOG_ERROR << "\tSolverOneShot::Solve : ERROR : Type de contrainte non géré" << std::endl;
             }
         }, constraint.data);
 
@@ -773,7 +962,7 @@ bool SolverOneShot::Solve(SketchParams& sketch, bool enableDiagnostics) {
         switch (c.type) {
         case ConstraintType::Horizontal: {
             cTypeStr = "Horizontal";
-            SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
+            SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.Id);
             if (p1 && std::holds_alternative<SketchLine>(*p1)) {
                 SketchLine& line = std::get<SketchLine>(*p1);
                 constraints.push_back(std::make_unique<ConstraintHorizontal>(
@@ -787,7 +976,7 @@ bool SolverOneShot::Solve(SketchParams& sketch, bool enableDiagnostics) {
         }
         case ConstraintType::Vertical: {
             cTypeStr = "Vertical";
-            SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
+            SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.Id);
             if (p1 && std::holds_alternative<SketchLine>(*p1)) {
                 SketchLine& line = std::get<SketchLine>(*p1);
                 constraints.push_back(std::make_unique<ConstraintVertical>(
@@ -822,7 +1011,7 @@ bool SolverOneShot::Solve(SketchParams& sketch, bool enableDiagnostics) {
         }
         case ConstraintType::Radius: {
             cTypeStr = "Radius (" + std::to_string(c.value) + ")";
-            SketchPrimitive* prim = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
+            SketchPrimitive* prim = sketch.GetPrimitiveMutable(c.ref1.Id);
             if (prim && std::holds_alternative<SketchCircle>(*prim)) {
                 constraints.push_back(std::make_unique<ConstraintRadius>(circleToRIndex[&std::get<SketchCircle>(*prim)], c.value));
             }
@@ -830,8 +1019,8 @@ bool SolverOneShot::Solve(SketchParams& sketch, bool enableDiagnostics) {
         }
         case ConstraintType::Perpendicular: {
             cTypeStr = "Perpendicular";
-            SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
-            SketchPrimitive* p2 = sketch.GetPrimitiveMutable(c.ref2.primitiveId);
+            SketchPrimitive* p1 = sketch.GetPrimitiveMutable(c.ref1.Id);
+            SketchPrimitive* p2 = sketch.GetPrimitiveMutable(c.ref2.Id);
             if (p1 && p2 && std::holds_alternative<SketchLine>(*p1) && std::holds_alternative<SketchLine>(*p2)) {
                 auto& l1 = std::get<SketchLine>(*p1);
                 auto& l2 = std::get<SketchLine>(*p2);
@@ -846,8 +1035,8 @@ bool SolverOneShot::Solve(SketchParams& sketch, bool enableDiagnostics) {
         }
         case ConstraintType::Parallel: {
             cTypeStr = "Parallel";
-            SketchPrimitive* prim1 = sketch.GetPrimitiveMutable(c.ref1.primitiveId);
-            SketchPrimitive* prim2 = sketch.GetPrimitiveMutable(c.ref2.primitiveId);
+            SketchPrimitive* prim1 = sketch.GetPrimitiveMutable(c.ref1.Id);
+            SketchPrimitive* prim2 = sketch.GetPrimitiveMutable(c.ref2.Id);
             if (prim1 && prim2 && std::holds_alternative<SketchLine>(*prim1) && std::holds_alternative<SketchLine>(*prim2)) {
                 auto& l1 = std::get<SketchLine>(*prim1);
                 auto& l2 = std::get<SketchLine>(*prim2);

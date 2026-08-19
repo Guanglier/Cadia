@@ -202,13 +202,13 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
 
         l_PickerResult = m_Parent->PickerGetPickedElement(event->position().x(), event->position().y() );
 
-        switch ( l_PickerResult.type  ){
+        switch ( l_PickerResult.Element.type  ){
         default:
             break;
 
 
-        case PickResult::TargetType::Point:{
-            DynamicDrag.m_activePrimitiveId = l_PickerResult.id;
+        case PickResult_element::TargetType::Point:{
+            DynamicDrag.m_activePrimitiveId = l_PickerResult.Element.Id;
             LOG_INFO << "Tool_Select::gererMousePress(QMouseEvent* event) -> point trouve  Id=" << DynamicDrag.m_activePrimitiveId << std::endl;
             auto* sketchParams = m_Parent->PartRefs.GetParams();
             if (!sketchParams) {
@@ -236,10 +236,10 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
         }
 
 
-        case PickResult::TargetType::Primitive:{
+        case PickResult_element::TargetType::Primitive:{
             PrimitiveIsSelected = true;
-            SelectedPrimitiveId = l_PickerResult.id;
-            DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d = l_PickerResult.Clicked_Point2D;
+            SelectedPrimitiveId = l_PickerResult.Element.Id;
+            DynamicDrag.PrimToMoseVects.mouse_when_clicked_2d = l_PickerResult.Element.Clicked_Point2D;
             if (nullptr != l_PickerResult.sourcePolyData ){
                 m_Parent->GetView()->m_Chighlighter->mettreEnSurbrillanceEdgeParId(l_PickerResult.sourcePolyData, SelectedPrimitiveId);
             }
@@ -248,7 +248,7 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
             DynamicDrag.m_isDragging = true;
             DynamicDrag.m_mode = DragMode::LigneComplete; // Ligne entière
             DynamicDrag.m_activePrimitiveId = SelectedPrimitiveId;
-            DynamicDrag.m_lastMousePos2D = l_PickerResult.Clicked_Point2D;
+            DynamicDrag.m_lastMousePos2D = l_PickerResult.Element.Clicked_Point2D;
 
             //auto* sketchParams = std::get_if<SketchParams>(&m_Parent->PartRefs.GetOperation()->getParamsMutable());
             auto* sketchParams = m_Parent->PartRefs.GetParams();
@@ -302,7 +302,7 @@ bool Tool_Select::gererMousePress(QMouseEvent* event) {
             break;
         }
 
-        case PickResult::TargetType::None:{
+        case PickResult_element::TargetType::None:{
             LOG_INFO << " Clic vide " << std::endl;
             DynamicDrag.PtrSelectedPoint = nullptr;
             if (true == PrimitiveIsSelected ) {

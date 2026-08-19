@@ -23,17 +23,6 @@ class vtk3d_MainView;
 class QMouseEvent;
 
 
-struct PickResult {
-    enum class TargetType { None, Point, Primitive };
-    TargetType type = TargetType::None;
-    int id = -1;             // ID du point ou ID de l'edge/primitive
-    gp_Pnt2d Clicked_Point2D;
-    gp_Pnt Clicked_Point3D;
-    vtkPolyData* sourcePolyData = nullptr;
-};
-
-
-
 
 
 // ─────────────────────────────────────────────────────────────────────

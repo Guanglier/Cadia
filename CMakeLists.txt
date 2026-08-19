@@ -123,6 +123,7 @@ qt_add_executable(Cad_IA
     src/vtk3d/part/vtk3d_part.h
     src/vtk3d/part/vtk3d_part.cpp
     src/vtk3d/sketch/vtk3d_sketch.h
+    src/vtk3d/sketch/vtk3d_sketch_picker.h
     src/vtk3d/sketch/vtk3d_sketch.cpp
     src/vtk3d/sketch/vtk3d_sketch_Context.h
     src/vtk3d/sketch/vtk3d_sketch_view.cpp
@@ -140,6 +141,14 @@ qt_add_executable(Cad_IA
     src/vtk3d/sketch/vtk3d_sketch_ToolDimensions.h
     src/vtk3d/sketch/vtk3d_sketch_ToolSetConstraints.cpp
     src/vtk3d/sketch/vtk3d_sketch_ToolSetConstraints.h
+    src/vtk3d/sketch/tool_constraints/vtk3d_sketch_TSC_Model.h
+    src/vtk3d/sketch/tool_constraints/vtk3d_sketch_TSC_Model.cpp
+    src/vtk3d/sketch/tool_constraints/vtk3d_sketch_TSC_Horizontal.h
+    src/vtk3d/sketch/tool_constraints/vtk3d_sketch_TSC_Horizontal.cpp
+    src/vtk3d/sketch/tool_constraints/vtk3d_sketch_TSC_Vertical.h
+    src/vtk3d/sketch/tool_constraints/vtk3d_sketch_TSC_Vertical.cpp
+    src/vtk3d/sketch/tool_constraints/vtk3d_sketch_TSC_Distance.h
+    src/vtk3d/sketch/tool_constraints/vtk3d_sketch_TSC_Distance.cpp
     src/vtk3d/sketch/vtk3d_Sketch_Render_Cotations.h
     src/vtk3d/sketch/vtk3d_Sketch_Render_Cotations.cpp
     src/vtk3d/sketch/vtk3d_sketch_SnapperManager.h

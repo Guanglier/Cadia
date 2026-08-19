@@ -114,8 +114,10 @@ void MainWindow::traiterReponseCad(const CadResponseEvent& resp) {
 
             // Connexion des signaux de la popup vers les slots de ta MainWindow (si besoin)
             connect(m_sketchHelperPopup, &Dialog_SketchHelper_Popup::doubleValueChanged,
-                    this, [](const QString& id, double val) {
-                        qDebug() << "MainWindow::traiterReponseCadValeur modifiée pour :" << id << "=" << val;
+                    this, [this](const QString& id, double val) {
+                        CadCommandEvent evt;
+                        evt.params = CadEvent::Sketch::CmdPopupTool_Valuechanged{ id.toStdString(), val };
+                        this->m_view3d->CADEvent_TraiterCommande(evt);
                     });
             connect(m_sketchHelperPopup, &Dialog_SketchHelper_Popup::OnClickedButton,
                     this, [this](const int li_button)

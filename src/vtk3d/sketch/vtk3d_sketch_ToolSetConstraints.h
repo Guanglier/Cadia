@@ -9,7 +9,7 @@
 
 
 
-
+#include "tool_constraints/vtk3d_sketch_TSC_Model.h"
 
 
 
@@ -38,7 +38,7 @@ struct Tool_SetConstraints  {
 
     void ajusterEchelleElements( double li_echelle);
     void CADEvent_TraiterCommande(const CadCommandEvent& event);
-    void resetSelection ();
+
     void update_esquisse ();
 
     //bool    m_b_MouseLIsPressed = false;
@@ -61,18 +61,22 @@ struct Tool_SetConstraints  {
 
 
 
-
+    ConstraintToolBase* getActiveTool() { return m_activeConstraintTool.get(); }
 
     Vtk3d_Sketch*   m_Parent = nullptr;
-
+    //DialogSketchHelper::Helper m_ToolHelper;
+    void popup_sendpopup ();
 
 private:
-    DialogSketchHelper::Helper m_ToolHelper;
-    void popup_create ();
-    void popup_sendpopup ();
-    void popup_StateMachine ();
-    void popup_StateMachine (int selectedId, const QString& typeName);
-    void popup_StateMachineOnBtnClicked ( CadEvent::Sketch::CmdPopupToolBtnClicked li_btn);
+
+    //ConstraintToolBase* m_activeConstraintTool = nullptr;
+    std::unique_ptr<ConstraintToolBase> m_activeConstraintTool;
+
+
+
+    // void popup_StateMachine ();
+    // void popup_StateMachine (int selectedId, const QString& typeName);
+    // void popup_StateMachineOnBtnClicked ( CadEvent::Sketch::CmdPopupToolBtnClicked li_btn);
 };
 
 

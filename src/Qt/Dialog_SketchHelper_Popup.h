@@ -24,6 +24,8 @@ public:
     void clickedReset (void);
     void clickedOk (void);
 
+    //double m_value;
+
 
 signals:
     // Signaux pour remonter les actions à ton outil / moteur

@@ -51,6 +51,7 @@ namespace CadEvent::Sketch {
     struct CmdSetPrecisionValue { double value; };
     enum class CmdPopupToolBtnClicked { Btn_Cancel, Btn_Reset, Btn_OK };
     struct CmdPopupTool { CmdPopupToolBtnClicked btn; };
+    struct CmdPopupTool_Valuechanged { std::string String_Id; double value; };
 
     //----------- réponses ou envoi vers QT -------
     struct RespStatus { std::string text; };
@@ -124,6 +125,7 @@ using CadCommandParams = std::variant<
     CadEvent::Sketch::CmdCancel,
     CadEvent::Sketch::CmdSetPrecisionValue,
     CadEvent::Sketch::CmdPopupTool,
+    CadEvent::Sketch::CmdPopupTool_Valuechanged,
 
 
     // Assembly

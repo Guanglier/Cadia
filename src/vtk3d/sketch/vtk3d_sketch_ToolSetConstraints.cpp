@@ -8,6 +8,9 @@
 #include <vtkPointData.h>
 #include "Logger.h"
 
+#include "tool_constraints/vtk3d_sketch_TSC_Horizontal.h"
+#include "tool_constraints/vtk3d_sketch_TSC_Vertical.h"
+#include "tool_constraints/vtk3d_sketch_TSC_Distance.h"
 
 
 //#define gererMouseReleaseSketch_DBG
@@ -25,7 +28,32 @@ void Tool_SetConstraints::activate( const CadEvent::Sketch::Tool_SubMode& submod
         LOG_ERROR << "Tool_Rectangle::activate getif submode invalide " << std::endl;
         m_mode = CadEvent::Sketch::ConstraintSubMode::Horizontal;
     }
-    popup_create();
+
+
+    // --- FABRIQUE D'OUTILS ---
+    switch (m_mode) {
+    default:
+    case CadEvent::Sketch::ConstraintSubMode::Horizontal:
+        m_activeConstraintTool = std::make_unique<ConstraintTool_Horizontal>(this);
+        m_activeConstraintTool->SetSketchId( m_Parent->PartRefs.GetSketchId() ) ;
+        m_activeConstraintTool->SetSketchParams( m_Parent->PartRefs.GetParams() );
+        break;
+    case CadEvent::Sketch::ConstraintSubMode::Vertical:
+        m_activeConstraintTool = std::make_unique<ConstraintTool_Vertical>(this);
+        m_activeConstraintTool->SetSketchId( m_Parent->PartRefs.GetSketchId() ) ;
+        m_activeConstraintTool->SetSketchParams( m_Parent->PartRefs.GetParams() );
+        break;
+    case CadEvent::Sketch::ConstraintSubMode::Distance:
+        m_activeConstraintTool = std::make_unique<ConstraintTool_Distance>(this);
+        m_activeConstraintTool->SetSketchId( m_Parent->PartRefs.GetSketchId() ) ;
+        m_activeConstraintTool->SetSketchParams( m_Parent->PartRefs.GetParams() );
+        break;
+    }
+
+
+
+    m_activeConstraintTool->popup_create();
+    //popup_create();
     popup_sendpopup ();
 }
 
@@ -60,12 +88,20 @@ bool Tool_SetConstraints::gererMouseRelease(QMouseEvent* event) {
 
 bool Tool_SetConstraints::gererMousePress(QMouseEvent* event) {
     PickResult  l_PickerResult;
+    bool        lb_SelectionValide = false;
 
     if (event->button() != Qt::LeftButton) return false;
     if (data.select_state >= 2) return false;
 
     l_PickerResult = m_Parent->PickerGetPickedElement(event->position().x(), event->position().y() );
+    lb_SelectionValide = m_activeConstraintTool->OnSelectedElement( l_PickerResult.Element );
 
+    if (nullptr != l_PickerResult.sourcePolyData && true == lb_SelectionValide){
+        m_Parent->GetView()->m_Chighlighter->mettreEnSurbrillanceEdgeParId(l_PickerResult.sourcePolyData, l_PickerResult.Element.Id);
+    }
+
+    popup_sendpopup ();
+/*
     switch ( l_PickerResult.type  )
     {
         default:
@@ -134,7 +170,7 @@ bool Tool_SetConstraints::gererMousePress(QMouseEvent* event) {
 
     //m_MouseclickStartPosition = event->position().toPoint();
     //m_b_MouseLIsPressed = true;
-
+*/
 
     m_Parent->GetView()->renderWindow()->Render();
     return true;
@@ -150,148 +186,27 @@ bool Tool_SetConstraints::gererkeyPressEvent(QKeyEvent* event) {
 
 void Tool_SetConstraints::CADEvent_TraiterCommande(const CadCommandEvent& event){
     if (auto* cmd = std::get_if<CadEvent::Sketch::CmdPopupTool>(&event.params)  ) {
-        popup_StateMachineOnBtnClicked ( cmd->btn);
+        //popup_StateMachineOnBtnClicked ( cmd->btn);
+        m_activeConstraintTool->OnBtnClicked( cmd->btn );
     }
-}
-
-void Tool_SetConstraints::resetSelection() {
-    data.select_state = 0;
-    data.first_element.PrimitiveIsSelected = false;
-    data.first_element.m_SelectedPrimitiveId = -1;
-    data.second_element.PrimitiveIsSelected = false;
-    data.second_element.m_SelectedPrimitiveId = -1;
-
-    // On régénère le setup initial propre via popup_create()
-    m_ToolHelper.champMultiple.clear();
-    popup_create();
-    m_ToolHelper.isButtonOkEnabled = false;
-    popup_sendpopup();
-}
-
-
-void Tool_SetConstraints::popup_create(){
-
-
-    // 1. On prépare la structure de données initiale (Helper)
-    m_ToolHelper.title = "Création de contrainte" + QString::fromStdString( CadEvent::Sketch::CadEvent_Sketch_ConstraintSubmode_To_String ( m_mode ) );
-    m_ToolHelper.instructionText = "Veuillez cliquer sur deux points ou sur une ligne.";
-    m_ToolHelper.isSelectionComplete = false;
-    m_ToolHelper.showButtonCancel = true;
-    m_ToolHelper.showButtonReset = false;
-    m_ToolHelper.showButtonOk = true;
-    m_ToolHelper.isButtonOkEnabled = false;
-
-
-    switch ( m_mode ){
-        case CadEvent::Sketch::ConstraintSubMode::Horizontal:
-        case CadEvent::Sketch::ConstraintSubMode::Vertical:
-            m_ToolHelper.instructionText = "Veuillez cliquer sur une ligne.";
-            break;
-        case CadEvent::Sketch::ConstraintSubMode::Parallel:
-        case CadEvent::Sketch::ConstraintSubMode::Perpendicular:
-            m_ToolHelper.instructionText = "Veuillez cliquer sur deux lignes.";
-            break;
-
-        case CadEvent::Sketch::ConstraintSubMode::Distance:
-            m_ToolHelper.instructionText = "Veuillez cliquer sur deux points.";
-            break;
-    };
-
-
-
-    // PREMIER champ
-    DialogSketchHelper::ChampInputSelection champFirstRef;
-    champFirstRef.id = "premiere_entite";
-    champFirstRef.title = " ??? ";
-    champFirstRef.IsOk = false;
-    champFirstRef.field_text = "Ligne ou point (sélectionner)";
-    champFirstRef.b_IsFocus = true;      // Met le focus dessus
-    champFirstRef.b_IsDisabled = false;  // Actif
-    champFirstRef.b_IsValid = false;      // Valide au départ
-
-
-
-
-    switch ( m_mode ){
-        case CadEvent::Sketch::ConstraintSubMode::Horizontal:
-        case CadEvent::Sketch::ConstraintSubMode::Vertical:
-        case CadEvent::Sketch::ConstraintSubMode::Parallel:
-        case CadEvent::Sketch::ConstraintSubMode::Perpendicular:
-            champFirstRef.title = "Ligne :";
-            break;
-
-        case CadEvent::Sketch::ConstraintSubMode::Distance:
-            champFirstRef.title = "Point ou ligne :";
-            break;
-    };
-
-    m_ToolHelper.champMultiple.push_back(champFirstRef);
-
-
-    DialogSketchHelper::ChampInputSelection SecondChamp;
-    // SECOND champ
-    switch ( m_mode ){
-        case CadEvent::Sketch::ConstraintSubMode::Horizontal:
-        case CadEvent::Sketch::ConstraintSubMode::Vertical:
-            break;
-        case CadEvent::Sketch::ConstraintSubMode::Parallel:
-        case CadEvent::Sketch::ConstraintSubMode::Perpendicular:
-            SecondChamp.id = "sel_point";
-            SecondChamp.title = "Ligne";
-            SecondChamp.IsOk = false;          // Pas encore sélectionné
-            SecondChamp.b_IsFocus = false;
-            SecondChamp.b_IsDisabled = true;
-            SecondChamp.b_IsValid = false;     // Invalide -> Affichera la bordure/croix rouge
-            champFirstRef.field_text = "Ligne ou point (sélectionner)";
-            m_ToolHelper.champMultiple.push_back(SecondChamp);
-            break;
-
-        case CadEvent::Sketch::ConstraintSubMode::Distance:
-            SecondChamp.id = "sel_point";
-            SecondChamp.title = "Point ou ligne :";
-            SecondChamp.IsOk = false;          // Pas encore sélectionné
-            SecondChamp.b_IsFocus = false;
-            SecondChamp.b_IsDisabled = true;
-            SecondChamp.b_IsValid = false;     // Invalide -> Affichera la bordure/croix rouge
-            champFirstRef.field_text = "Ligne ou point (sélectionner)";
-            m_ToolHelper.champMultiple.push_back(SecondChamp);
-            break;
-    };
-
-
-    // 3e champ
-    DialogSketchHelper::ChampInputDouble TroisiemeChampDistance;
-
-    switch ( m_mode ){
-        case CadEvent::Sketch::ConstraintSubMode::Horizontal:
-        case CadEvent::Sketch::ConstraintSubMode::Vertical:
-        case CadEvent::Sketch::ConstraintSubMode::Parallel:
-        case CadEvent::Sketch::ConstraintSubMode::Perpendicular:
-            break;
-
-        case CadEvent::Sketch::ConstraintSubMode::Distance:
-            TroisiemeChampDistance.id = "sel_value";
-            TroisiemeChampDistance.title = "Valeur :";
-            TroisiemeChampDistance.b_IsFocus = false;
-            TroisiemeChampDistance.b_IsDisabled = true;
-            TroisiemeChampDistance.b_IsValid = true;
-            TroisiemeChampDistance.value = 15.0;
-            m_ToolHelper.champMultiple.push_back(TroisiemeChampDistance);
-            break;
-    };
-
+    if (auto* cmd = std::get_if<CadEvent::Sketch::CmdPopupTool_Valuechanged>(&event.params)  ) {
+        //popup_StateMachineOnBtnClicked ( cmd->btn);
+        m_activeConstraintTool->OnInputValueChanged( cmd->String_Id, cmd->value );
+    }
 }
 
 
 void Tool_SetConstraints::popup_sendpopup(){
-    CadResponseEvent    l_event;
-
-    l_event.PartId = 0;
-    l_event.params = CadEvent::Sketch::RespSendPopupDef { m_ToolHelper };
-
-    m_Parent->CADEvent_RemonterEvent (l_event);
+    if ( nullptr != m_activeConstraintTool ){
+        CadResponseEvent    l_event;
+        l_event.PartId = 0;
+        l_event.params = CadEvent::Sketch::RespSendPopupDef { m_activeConstraintTool->GetDialogHelper() };
+        m_Parent->CADEvent_RemonterEvent (l_event);
+    }
 }
 
+
+/*
 void Tool_SetConstraints::popup_StateMachineOnBtnClicked ( CadEvent::Sketch::CmdPopupToolBtnClicked li_btn){
     std::string  l_string = "";
 
@@ -352,7 +267,7 @@ void Tool_SetConstraints::popup_StateMachineOnBtnClicked ( CadEvent::Sketch::Cmd
             break;
     }
 }
-
+*/
 
 
 void Tool_SetConstraints::update_esquisse () {
@@ -370,6 +285,7 @@ void Tool_SetConstraints::update_esquisse () {
     }
 }
 
+/*
 void Tool_SetConstraints::popup_StateMachine (int selectedId, const QString& typeName) {
 
 
@@ -459,7 +375,7 @@ void Tool_SetConstraints::popup_StateMachine (int selectedId, const QString& typ
 
 
 }
-
+*/
 
 
 

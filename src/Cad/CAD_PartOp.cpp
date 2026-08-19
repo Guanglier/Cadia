@@ -178,16 +178,16 @@ bool SketchParams::removePrimitive(uint64_t idASupprimer) {
                               std::is_same_v<T, PartSketchConstraint::PerpendicularConstraint> ||
                               std::is_same_v<T, PartSketchConstraint::CoincidentConstraint>) {
                     // Contraintes impliquant deux références (ref1 et ref2)
-                    return ct.ref1.primitiveId == idASupprimer || ct.ref2.primitiveId == idASupprimer;
+                    return ct.ref1.Id == idASupprimer || ct.ref2.Id == idASupprimer;
                 }
                 else if constexpr (std::is_same_v<T, PartSketchConstraint::VerticalConstraint> ||
                                    std::is_same_v<T, PartSketchConstraint::HorizontalConstraint>) {
                     // Contraintes impliquant une seule référence nommée 'ref'
-                    return ct.ref.primitiveId == idASupprimer;
+                    return ct.ref.Id == idASupprimer;
                 }
                 else if constexpr (std::is_same_v<T, PartSketchConstraint::RadiusConstraint>) {
                     // Contrainte de rayon impliquant une référence unique nommée 'ref1'
-                    return ct.ref1.primitiveId == idASupprimer;
+                    return ct.ref1.Id == idASupprimer;
                 }
                 return false;
             }, c.data);
@@ -357,10 +357,12 @@ std::string CadPartOp::getConstraintTypeString(const PartSketchConstraint::Sketc
 std::string CadPartOp::getConstraintSubElementString( const PartSketchConstraint::SubElement li_SubElmt) const {
     switch ( li_SubElmt ){
         case PartSketchConstraint::SubElement::Whole:           return "Whole"; break;
-        case PartSketchConstraint::SubElement::StartPoint:      return "StartPoint"; break;
-        case PartSketchConstraint::SubElement::EndPoint:        return "EndPoint"; break;
         case PartSketchConstraint::SubElement::CenterPoint:     return "CenterPoint"; break;
-        default : return "??"; break;
+        default :
+            std::cout<<"ERROR CadPartOp::getConstraintSubElementString ERROR" << std::endl;
+            std::cerr<<"ERROR CadPartOp::getConstraintSubElementString ERROR" << std::endl;
+            return "??";
+            break;
     }
 }
 

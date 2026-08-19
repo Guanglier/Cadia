@@ -290,8 +290,8 @@ void Vtk3d_Sketch::SolveEsquisse() {
 PickResult Vtk3d_Sketch::PickerGetPickedElement(int screenX, int screenY){
 
     PickResult  l_result;
-    l_result.id = -1;
-    l_result.type = PickResult::TargetType::None;
+    l_result.Element.Id = -1;
+    l_result.Element.type = PickResult_element::TargetType::None;
 
 
 
@@ -332,8 +332,8 @@ PickResult Vtk3d_Sketch::PickerGetPickedElement(int screenX, int screenY){
         LOG_ERROR << " Vtk3d_Sketch::PickerGetPickedElement: calculerIntersectionSourisSurPlan pas d intersection " << std::endl;
         return l_result;
     }
-    l_result.Clicked_Point2D = startPoint2D;
-    l_result.Clicked_Point3D = startPoint3D;
+    l_result.Element.Clicked_Point2D = startPoint2D;
+    l_result.Element.Clicked_Point3D = startPoint3D;
 
     // --- PRIORITÉ 2 : Si on n'a pas touché de poignée, tester L'ESQUISSE GLOBALE (les lignes) ---
     if (!pickedActor) {
@@ -363,9 +363,9 @@ PickResult Vtk3d_Sketch::PickerGetPickedElement(int screenX, int screenY){
         auto edgeIdArray = vtkIntArray::SafeDownCast(polyData->GetPointData()->GetArray("OpenCascadeEdgeID"));
 
         int edgeId = edgeIdArray->GetValue(VtkPointId);
-        l_result.id = edgeId;
-        l_result.type = PickResult::TargetType::Point;
-        LOG_INFO << " Vtk3d_Sketch::PickerGetPickedElement: Clic point id=" << l_result.id << std::endl;
+        l_result.Element.Id = edgeId;
+        l_result.Element.type = PickResult_element::TargetType::Point;
+        LOG_INFO << " Vtk3d_Sketch::PickerGetPickedElement: Clic point id=" << l_result.Element.Id << std::endl;
     }
 
 
@@ -381,32 +381,20 @@ PickResult Vtk3d_Sketch::PickerGetPickedElement(int screenX, int screenY){
                 LOG_ERROR << " Vtk3d_Sketch::PickerGetPickedElement:  cellId invalide ou edgeIdsArray null " << std::endl;
                 return l_result; // Ou return; selon la fonction
             }
-            l_result.id = edgeIdsArray->GetValue(cellId);
-            l_result.type = PickResult::TargetType::Primitive;
-            LOG_INFO << " Vtk3d_Sketch::PickerGetPickedElement: Clic ligne id=" << l_result.id << std::endl;
+            l_result.Element.Id = edgeIdsArray->GetValue(cellId);
+            l_result.Element.type = PickResult_element::TargetType::Primitive;
+            LOG_INFO << " Vtk3d_Sketch::PickerGetPickedElement: Clic ligne id=" << l_result.Element.Id << std::endl;
         }
     }
     else {
         LOG_INFO << " Vtk3d_Sketch::PickerGetPickedElement: Clic vide " << std::endl;
-        l_result.type = PickResult::TargetType::None;
+        l_result.Element.type = PickResult_element::TargetType::None;
     }
     return l_result;
 
 }
 
-vtkPolyData* Vtk3d_Sketch::TrouverPolyDataParCible(PickResult::TargetType type) {
-    if (type == PickResult::TargetType::Primitive) {
-        if (m_ActorSketchDisplay && m_ActorSketchDisplay->GetMapper()) {
-            return vtkPolyData::SafeDownCast(m_ActorSketchDisplay->GetMapper()->GetInput());
-        }
-    }
-    else if (type == PickResult::TargetType::Point) {
-        if (m_ActorPointsOfPrim && m_ActorPointsOfPrim->GetMapper()) {
-            return vtkPolyData::SafeDownCast(m_ActorPointsOfPrim->GetMapper()->GetInput());
-        }
-    }
-    return nullptr;
-}
+
 
 
 

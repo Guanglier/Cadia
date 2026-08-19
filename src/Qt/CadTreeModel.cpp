@@ -121,25 +121,30 @@ void CadTreeModel::refreshFromPart(const CAD_Part& part) {
                                               std::is_same_v<TC, PartSketchConstraint::PerpendicularConstraint> ||
                                               std::is_same_v<TC, PartSketchConstraint::CoincidentConstraint>) {
 
-                                    QString const_ref1 = "op:" + QString::number(c.ref1.operationId) + "; primId:" + QString::number(c.ref1.primitiveId) + " " +
+                                    QString const_ref1 = "op:" + QString::number(c.ref1.operationId) + "; primId:" + QString::number(c.ref1.Id) + " " +
                                                          QString::fromStdString(op.getConstraintSubElementString(c.ref1.subElement));
-                                    QString const_ref2 = "op:" + QString::number(c.ref2.operationId) + " primId:" + QString::number(c.ref2.primitiveId) + " " +
+                                    QString const_ref2 = "op:" + QString::number(c.ref2.operationId) + " primId:" + QString::number(c.ref2.Id) + " " +
                                                          QString::fromStdString(op.getConstraintSubElementString(c.ref2.subElement));
 
                                     contrainteType->appendRow(new QStandardItem(const_ref1));
                                     contrainteType->appendRow(new QStandardItem(const_ref2));
+
+                                    if constexpr (std::is_same_v<TC, PartSketchConstraint::DistanceConstraint>){
+                                        QString const_dist = "Distance: " + QString::number( c.value ) + " mm" ;
+                                        contrainteType->appendRow(new QStandardItem(const_dist));
+                                    }
                                 }
                                 else if constexpr (std::is_same_v<TC, PartSketchConstraint::VerticalConstraint> ||
                                                    std::is_same_v<TC, PartSketchConstraint::HorizontalConstraint>) {
 
-                                    QString const_ref = "op:" + QString::number(c.ref.operationId) + "; primId:" + QString::number(c.ref.primitiveId) + " " +
+                                    QString const_ref = "op:" + QString::number(c.ref.operationId) + "; primId:" + QString::number(c.ref.Id) + " " +
                                                         QString::fromStdString(op.getConstraintSubElementString(c.ref.subElement));
 
                                     contrainteType->appendRow(new QStandardItem(const_ref));
                                 }
                                 else if constexpr (std::is_same_v<TC, PartSketchConstraint::RadiusConstraint>) {
 
-                                    QString const_ref1 = "op:" + QString::number(c.ref1.operationId) + "; primId:" + QString::number(c.ref1.primitiveId) + " " +
+                                    QString const_ref1 = "op:" + QString::number(c.ref1.operationId) + "; primId:" + QString::number(c.ref1.Id) + " " +
                                                          QString::fromStdString(op.getConstraintSubElementString(c.ref1.subElement));
 
                                     contrainteType->appendRow(new QStandardItem(const_ref1));

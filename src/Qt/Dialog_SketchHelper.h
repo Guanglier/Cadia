@@ -16,14 +16,14 @@ namespace DialogSketchHelper{
 
 	// Champ pour faire rentrer ou afficher une valeur double
 	struct ChampInputDouble : public AttributsChamps{
-		QString id;             // Identifiant unique (ex: "val_distance", "val_angle")
+        QString id;             // Identifiant unique (ex: "val_distance", "val_angle")
 		QString title;          // Libellé affiché (ex: "Distance :", "Angle :")
 		double  value = 0.0;    // Valeur par défaut ou actuelle
 	};
 
 	// Champ pour afficher une sélection
 	struct ChampInputSelection : public AttributsChamps{
-		QString id;             // Identifiant unique (ex: "sel_point1", "sel_line2")
+        QString id;             // Identifiant unique (ex: "sel_point1", "sel_line2")
 		QString title;          // Libellé affiché (ex: "Premier point :")
         QString field_text;     // texte affiché dans la zone de sélection du champ
 		bool    IsOk = false;   // Vrai si l'élément a été sélectionné
@@ -31,7 +31,7 @@ namespace DialogSketchHelper{
 
 	// Champ pour afficher une image ou un statut visuel
 	struct ChampInputImage {
-		QString id;             // Identifiant unique (ex: "img_status")
+        QString id;             // Identifiant unique (ex: "img_status")
 		QString title;          // Libellé (optionnel)
 		QString imagePath;      // Chemin de l'image
 	};

@@ -53,8 +53,12 @@ namespace PartSketchConstraint{
 	//----------------------------------------------------------------------
 	//		
 	//----------------------------------------------------------------------
+    enum class TargetType {
+        Primitive,
+        Point
+    };
 	enum class SubElement {
-		Whole, StartPoint, EndPoint, CenterPoint
+        Whole, CenterPoint
 	};
 	//std::ostream& operator<<(std::ostream& os, ConstraintSubElement sub);
 
@@ -62,14 +66,16 @@ namespace PartSketchConstraint{
 	//		
 	//----------------------------------------------------------------------
 	struct RefGeometry {
-		uint64_t             			operationId = 0;
-		uint64_t             			primitiveId = 0;
-		SubElement 	subElement = SubElement::Whole;
+        uint64_t        operationId = 0;
+        uint64_t        Id = 0;
+        TargetType      targetType = TargetType::Primitive; // Distingue point ou primitive
+        SubElement      subElement = SubElement::Whole;
 
         bool operator==(const RefGeometry& other) const {
             return
                 operationId == other.operationId &&
-                primitiveId == other.primitiveId &&
+                Id == other.Id &&
+                targetType == other.targetType &&
                 subElement == other.subElement;
         }
 	};

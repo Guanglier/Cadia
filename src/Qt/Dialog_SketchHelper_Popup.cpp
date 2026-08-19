@@ -6,6 +6,7 @@
 #include <QDoubleValidator>
 #include <QPushButton>
 #include <QVariant>
+#include <iostream>
 
 Dialog_SketchHelper_Popup::Dialog_SketchHelper_Popup(QWidget* parent)
     : QDialog(parent)
@@ -96,6 +97,8 @@ void Dialog_SketchHelper_Popup::buildUI(const DialogSketchHelper::Helper& helper
                 lineEdit->setProperty("field_id", champ.id);
                 lineEdit->setValidator(new QDoubleValidator(lineEdit));
 
+                //m_value = champ.value;
+
                 connect(lineEdit, &QLineEdit::textChanged, this, [this, id = champ.id](const QString& text) {
                     bool ok = false;
                     double val = text.toDouble(&ok);
@@ -142,6 +145,8 @@ void Dialog_SketchHelper_Popup::buildUI(const DialogSketchHelper::Helper& helper
         }, champVariant);
     }
 }
+
+
 /*
 void Dialog_SketchHelper_Popup::updateUI(const DialogSketchHelper::Helper& newHelper)
 {
